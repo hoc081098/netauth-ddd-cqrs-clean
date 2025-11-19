@@ -23,7 +23,10 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
     // ---------------------------
     // In-memory fake DB
     // ---------------------------
-    private readonly ConcurrentBag<User> _users = [];
+    private readonly ConcurrentBag<User> _users =
+    [
+        new(Id: Guid.NewGuid(), Email: "hoc081098@gmail.com", PasswordHash: "123456")
+    ];
 
     public async Task<User> Register(string email, string password, CancellationToken cancellationToken = default)
     {
