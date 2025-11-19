@@ -51,7 +51,8 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
         return _users.FirstOrDefault(u => u.Email == email) switch
         {
             null => throw new UserNotFoundException(email),
-            var user when user.PasswordHash != password => throw new WrongPasswordException(),
+            var user when user.PasswordHash != password // DEMO ONLY
+                => throw new WrongPasswordException(),
             var user => user
         };
     }
