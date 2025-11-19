@@ -1,0 +1,6 @@
+@NetAuth_HostAddress = http://localhost:5215
+
+GET {{NetAuth_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
