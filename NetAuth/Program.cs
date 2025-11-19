@@ -40,34 +40,45 @@ app.UseAuthorization();
 // Map endpoints
 
 app.MapPost("/auth/login",
-    async (Login.Request request, Login.Handler handler) =>
-    {
-        try
+        async (Login.Request request, Login.Handler handler) =>
         {
-            var response = await handler.Handle(request);
-            return Results.Ok(response);
-        }
-        catch (Exception exception) when (exception is UserNotFoundException or WrongPasswordException)
-        {
-            return Results.Json(new { error = "invalid_credentials" },
-                statusCode: StatusCodes.Status401Unauthorized);
-        }
-    });
+            try
+            {
+                var response = await handler.Handle(request);
+                return Results.Ok(response);
+            }
+            catch (Exception exception) when (exception is UserNotFoundException or WrongPasswordException)
+            {
+                return Results.Json(new { error = "invalid_credentials" },
+                    statusCode: StatusCodes.Status401Unauthorized);
+            }
+        })
+    .WithName("Login")
+    .WithSummary("Authenticate user with email & password.")
+    .WithDescription("Returns JWT access token when credentials are valid.")
+    .Produces<Login.Response>()
+    .Produces(StatusCodes.Status401Unauthorized);
+;
 
 app.MapPost("/auth/register",
-    async (Register.Request request, Register.Handler handler) =>
-    {
-        try
+        async (Register.Request request, Register.Handler handler) =>
         {
-            var response = await handler.Handle(request);
-            return Results.Created($"/users/{response.Id}", response);
-        }
-        catch (UserAlreadyExistsException)
-        {
-            return Results.Json(new { error = "user_already_exists" },
-                statusCode: StatusCodes.Status409Conflict);
-        }
-    });
+            try
+            {
+                var response = await handler.Handle(request);
+                return Results.Created($"/users/{response.Id}", response);
+            }
+            catch (UserAlreadyExistsException)
+            {
+                return Results.Json(new { error = "user_already_exists" },
+                    statusCode: StatusCodes.Status409Conflict);
+            }
+        })
+    .WithName("Register")
+    .WithSummary("Register a new user with email & password.")
+    .WithDescription("Creates a new user account.")
+    .Produces<Register.Response>(StatusCodes.Status201Created)
+    .Produces(StatusCodes.Status409Conflict);
 
 app.MapGet("/me", (ClaimsPrincipal user) =>
     {
@@ -80,6 +91,11 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
             Email = email
         });
     })
-    .RequireAuthorization();
+    .RequireAuthorization()
+    .WithName("GetCurrentUser")
+    .WithSummary("Get current authenticated user.")
+    .WithDescription("Returns the details of the currently authenticated user.")
+    .Produces(StatusCodes.Status200OK)
+    .Produces(StatusCodes.Status401Unauthorized);
 
 app.Run();
