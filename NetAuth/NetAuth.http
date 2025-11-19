@@ -2,8 +2,21 @@
 
 GET {{NetAuth_HostAddress}}/weatherforecast/
 Accept: application/json
+Content-Type: application/json
 
 ###
 
 GET {{NetAuth_HostAddress}}/me
 Accept: application/json
+Content-Type: application/json
+
+### Login
+
+POST {{NetAuth_HostAddress}}/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "hoc@gmail.com",
+  "password": "123"
+}

@@ -1,7 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using NetAuth;
 
@@ -35,7 +37,10 @@ builder.Services
     .AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => options.TokenValidationParameters = tokenValidationParameters);
 builder.Services.AddAuthorization();
+
 builder.Services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
+builder.Services.AddSingleton<IAuthenticationRepository, FakeAuthenticationRepository>();
+builder.Services.AddScoped<Login.Handler>();
 
 var app = builder.Build();
 
@@ -52,6 +57,22 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 // Map endpoints
+
+app.MapPost("/auth/login",
+    async (Login.Request request, Login.Handler handler) =>
+    {
+        try
+        {
+            var response = await handler.Handle(request);
+            return Results.Ok(response);
+        }
+        catch (UserNotFoundException)
+        {
+            return Results.Json(new { error = "invalid_credentials" },
+                statusCode: StatusCodes.Status401Unauthorized);
+        }
+    });
+
 app.MapGet("/me", (ClaimsPrincipal user, IJwtTokenProvider tokenProvider) =>
 {
     var id = user.FindFirstValue(ClaimTypes.NameIdentifier);
