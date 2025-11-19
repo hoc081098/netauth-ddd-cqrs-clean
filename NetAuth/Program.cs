@@ -25,6 +25,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
 builder.Services.AddSingleton<IAuthenticationRepository, FakeAuthenticationRepository>();
 builder.Services.AddScoped<Login.Handler>();
+builder.Services.AddScoped<Register.Handler>();
 
 var app = builder.Build();
 
@@ -57,6 +58,21 @@ app.MapPost("/auth/login",
         }
     });
 
+app.MapPost("/auth/register",
+    async (Register.Request request, Register.Handler handler) =>
+    {
+        try
+        {
+            var response = await handler.Handle(request);
+            return Results.Created($"/users/{response.Id}", response);
+        }
+        catch (UserAlreadyExistsException)
+        {
+            return Results.Json(new { error = "user_already_exists" },
+                statusCode: StatusCodes.Status409Conflict);
+        }
+    });
+
 app.MapGet("/me", (ClaimsPrincipal user) =>
     {
         var id = user.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -64,8 +80,7 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
 
         return Results.Ok(new
         {
-            Message = "Hello, authenticated user",
-            UserId = id,
+            Id = id,
             Email = email
         });
     })

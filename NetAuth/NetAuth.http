@@ -9,7 +9,7 @@ Content-Type: application/json
 GET {{NetAuth_HostAddress}}/me
 Accept: application/json
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyZTMxY2ZkZi04MTI2LTRlZTQtYmVlOC0zOWE3MTczMDkwYjYiLCJlbWFpbCI6ImhvYzA4MTA5OEBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjJlMzFjZmRmLTgxMjYtNGVlNC1iZWU4LTM5YTcxNzMwOTBiNiIsImV4cCI6MTc2MzU2MzY5OCwiaXNzIjoiaG9jMDgxMDk4IiwiYXVkIjoiTXlBcHBDbGllbnRzIn0.IHFhmV7hr86qBikZXOtH0Mps7bNcaH7YZV81gM29k-k
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNTFkY2UzNC1jZDNhLTRkNWQtOTEzMy01YWQzYmUxYjVhMjciLCJlbWFpbCI6ImhvYzA4MTA5OF8wMUBnbWFpbC5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6IjA1MWRjZTM0LWNkM2EtNGQ1ZC05MTMzLTVhZDNiZTFiNWEyNyIsImV4cCI6MTc2MzU2NDMyNywiaXNzIjoiaG9jMDgxMDk4IiwiYXVkIjoiTXlBcHBDbGllbnRzIn0.thbPSLZDIqAD3R5rC1AdH9Id2jOmbJvCymb4lEWF7pk
 
 ### Login
 
@@ -18,6 +18,17 @@ Accept: application/json
 Content-Type: application/json
 
 {
-  "email": "hoc081098@gmail.com",
+  "email": "hoc081098_01@gmail.com",
+  "password": "123456"
+}
+
+### Register
+
+POST {{NetAuth_HostAddress}}/auth/register
+Accept: application/json
+Content-Type: application/json
+
+{
+  "email": "hoc081098_01@gmail.com",
   "password": "123456"
 }
