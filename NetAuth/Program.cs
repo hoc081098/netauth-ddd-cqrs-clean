@@ -66,7 +66,7 @@ app.MapPost("/auth/login",
             var response = await handler.Handle(request);
             return Results.Ok(response);
         }
-        catch (UserNotFoundException)
+        catch (Exception exception) when (exception is UserNotFoundException or WrongPasswordException)
         {
             return Results.Json(new { error = "invalid_credentials" },
                 statusCode: StatusCodes.Status401Unauthorized);

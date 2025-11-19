@@ -1,3 +1,5 @@
+using System.Collections.Concurrent;
+
 namespace NetAuth;
 
 public interface IAuthenticationRepository
@@ -10,6 +12,9 @@ public interface IAuthenticationRepository
 public sealed class UserNotFoundException(string email)
     : Exception($"User with email '{email}' not found.");
 
+public sealed class WrongPasswordException()
+    : Exception("The provided password is incorrect.");
+
 public sealed class UserAlreadyExistsException(string email)
     : Exception($"User with email '{email}' already exists.");
 
@@ -18,13 +23,13 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
     // ---------------------------
     // In-memory fake DB
     // ---------------------------
-    private readonly List<User> _users = [];
+    private readonly ConcurrentBag<User> _users = [];
 
     public async Task<User> Register(string email, string password, CancellationToken cancellationToken = default)
     {
         await Task.Delay(50, cancellationToken); // Simulate async DB call
 
-        if (_users.Find(u => u.Email == email) is not null)
+        if (_users.FirstOrDefault(u => u.Email == email) is not null)
         {
             throw new UserAlreadyExistsException(email);
         }
@@ -40,10 +45,11 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
     public async Task<User> Login(string email, string password, CancellationToken cancellationToken = default)
     {
         await Task.Delay(50, cancellationToken); // Simulate async DB call
-        var user = _users.Find(u =>
-                u.Email == email &&
-                u.PasswordHash == password // DEMO ONLY
-        );
-        return user ?? throw new UserNotFoundException(email);
+        return _users.FirstOrDefault(u => u.Email == email) switch
+        {
+            null => throw new UserNotFoundException(email),
+            var user when user.PasswordHash != password => throw new WrongPasswordException(),
+            var user => user
+        };
     }
 }
