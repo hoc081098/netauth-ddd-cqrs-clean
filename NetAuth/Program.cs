@@ -14,28 +14,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddOpenApi();
 
 // Bind section "Jwt" → JwtConfig
-var jwtSection = builder.Configuration.GetSection("Jwt");
-builder.Services.Configure<JwtConfig>(jwtSection);
-
-var jwtConfig = jwtSection.Get<JwtConfig>() ?? throw new InvalidOperationException("Missing Jwt config.");
-var tokenValidationParameters = new TokenValidationParameters
-{
-    ValidateIssuer = true,
-    ValidIssuer = jwtConfig.Issuer,
-
-    ValidateAudience = true,
-    ValidAudience = jwtConfig.Audience,
-
-    ValidateIssuerSigningKey = true,
-    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.SecretKey)),
-
-    ValidateLifetime = true,
-    ClockSkew = TimeSpan.Zero // don't allow clock skew
-};
+builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("Jwt"));
+builder.Services.ConfigureOptions<ConfigureJwtBearerOptions>();
 
 builder.Services
     .AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options => options.TokenValidationParameters = tokenValidationParameters);
+    .AddJwtBearer();
 builder.Services.AddAuthorization();
 
 builder.Services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
@@ -73,17 +57,18 @@ app.MapPost("/auth/login",
         }
     });
 
-app.MapGet("/me", (ClaimsPrincipal user, IJwtTokenProvider tokenProvider) =>
-{
-    var id = user.FindFirstValue(ClaimTypes.NameIdentifier);
-    var email = user.FindFirstValue(JwtRegisteredClaimNames.Email);
-
-    return Results.Ok(new
+app.MapGet("/me", (ClaimsPrincipal user) =>
     {
-        Message = "Hello, authenticated user",
-        UserId = id,
-        Email = email
-    });
-}).RequireAuthorization();
+        var id = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        var email = user.FindFirstValue(JwtRegisteredClaimNames.Email);
+
+        return Results.Ok(new
+        {
+            Message = "Hello, authenticated user",
+            UserId = id,
+            Email = email
+        });
+    })
+    .RequireAuthorization();
 
 app.Run();
