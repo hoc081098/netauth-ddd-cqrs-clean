@@ -1,6 +1,9 @@
-@NetAuth_HostAddress = http://localhost:5215
+@NetAuth_HostAddress = https://localhost:7169
 
 GET {{NetAuth_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+GET {{NetAuth_HostAddress}}/me
+Accept: application/json
