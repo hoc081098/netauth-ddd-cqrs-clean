@@ -7,14 +7,14 @@ namespace NetAuth;
 
 public interface IJwtTokenProvider
 {
-    string CreateJwtToken(User user);
+    string CreateJwtToken(LegacyUser user);
 }
 
 internal sealed class JwtTokenProvider(
     IOptions<JwtConfig> jwtConfigOptions
 ) : IJwtTokenProvider
 {
-    public string CreateJwtToken(User user)
+    public string CreateJwtToken(LegacyUser user)
     {
         var jwtConfig = jwtConfigOptions.Value;
 

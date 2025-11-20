@@ -1,12 +1,20 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using LanguageExt.Pretty;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NetAuth;
+using NetAuth.Data;
 using NetAuth.Domain.Users;
 using User = NetAuth.Domain.Users.User;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<AppDbContext>(optionsBuilder =>
+    optionsBuilder
+        .UseNpgsql(builder.Configuration.GetConnectionString("Database"))
+        .UseSnakeCaseNamingConvention());
 
 // Add Swagger UI
 builder.Services.AddEndpointsApiExplorer();
@@ -82,6 +90,15 @@ var app = builder.Build();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    using var serviceScope = app.Services.CreateScope();
+    var appDbContext = serviceScope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    var isDbAvailable = appDbContext
+        .Database
+        .CanConnect();
+    Console.WriteLine("isDbAvailable=" + isDbAvailable);
+    appDbContext.Database.Migrate();
+
     app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();

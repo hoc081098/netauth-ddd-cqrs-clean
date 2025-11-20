@@ -4,31 +4,31 @@ namespace NetAuth;
 
 public interface IAuthenticationRepository
 {
-    Task<User> Register(string username, string email, string password, CancellationToken cancellationToken = default);
+    Task<LegacyUser> Register(string username, string email, string password, CancellationToken cancellationToken = default);
 
-    Task<User> Login(string email, string password, CancellationToken cancellationToken = default);
+    Task<LegacyUser> Login(string email, string password, CancellationToken cancellationToken = default);
 }
 
 public sealed class UserNotFoundException(string email)
-    : Exception($"User with email '{email}' not found.");
+    : Exception($"LegacyUser with email '{email}' not found.");
 
 public sealed class WrongPasswordException()
     : Exception("The provided password is incorrect.");
 
 public sealed class UserAlreadyExistsException(string email)
-    : Exception($"User with email '{email}' already exists.");
+    : Exception($"LegacyUser with email '{email}' already exists.");
 
 internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
 {
     // ---------------------------
     // In-memory fake DB
     // ---------------------------
-    private readonly ConcurrentBag<User> _users =
+    private readonly ConcurrentBag<LegacyUser> _users =
     [
         new(Id: Guid.NewGuid(), Username: "hoc081098", Email: "hoc081098@gmail.com", PasswordHash: "123456")
     ];
 
-    public async Task<User> Register(string username, string email, string password, CancellationToken cancellationToken = default)
+    public async Task<LegacyUser> Register(string username, string email, string password, CancellationToken cancellationToken = default)
     {
         await Task.Delay(50, cancellationToken); // Simulate async DB call
 
@@ -37,7 +37,7 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
             throw new UserAlreadyExistsException(email);
         }
 
-        var user = new User(Id: Guid.NewGuid(),
+        var user = new LegacyUser(Id: Guid.NewGuid(),
             Username: username,
             Email: email,
             PasswordHash: password // DEMO ONLY
@@ -46,7 +46,7 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
         return user;
     }
 
-    public async Task<User> Login(string email, string password, CancellationToken cancellationToken = default)
+    public async Task<LegacyUser> Login(string email, string password, CancellationToken cancellationToken = default)
     {
         await Task.Delay(50, cancellationToken); // Simulate async DB call
         return _users.FirstOrDefault(u => u.Email == email) switch
