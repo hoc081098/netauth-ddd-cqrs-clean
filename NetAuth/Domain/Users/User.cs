@@ -1,4 +1,3 @@
-using LanguageExt.Pipes;
 using NetAuth.Domain.Core.Abstractions;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users.DomainEvents;
@@ -9,8 +8,8 @@ public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
 {
     private string _passwordHash = string.Empty;
 
-    public Email Email { get; private set; } = null!;
-    public Username Username { get; private set; } = null!;
+    public Email Email { get; } = null!;
+    public Username Username { get; } = null!;
 
     /// <remarks>Required by EF Core.</remarks>
     private User()
