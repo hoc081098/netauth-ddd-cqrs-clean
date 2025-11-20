@@ -4,7 +4,7 @@ namespace NetAuth;
 
 public interface IAuthenticationRepository
 {
-    Task<User> Register(string email, string password, CancellationToken cancellationToken = default);
+    Task<User> Register(string username, string email, string password, CancellationToken cancellationToken = default);
 
     Task<User> Login(string email, string password, CancellationToken cancellationToken = default);
 }
@@ -25,10 +25,10 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
     // ---------------------------
     private readonly ConcurrentBag<User> _users =
     [
-        new(Id: Guid.NewGuid(), Email: "hoc081098@gmail.com", PasswordHash: "123456")
+        new(Id: Guid.NewGuid(), Username: "hoc081098", Email: "hoc081098@gmail.com", PasswordHash: "123456")
     ];
 
-    public async Task<User> Register(string email, string password, CancellationToken cancellationToken = default)
+    public async Task<User> Register(string username, string email, string password, CancellationToken cancellationToken = default)
     {
         await Task.Delay(50, cancellationToken); // Simulate async DB call
 
@@ -38,6 +38,7 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
         }
 
         var user = new User(Id: Guid.NewGuid(),
+            Username: username,
             Email: email,
             PasswordHash: password // DEMO ONLY
         );

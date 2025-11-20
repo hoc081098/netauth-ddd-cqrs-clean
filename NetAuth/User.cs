@@ -1,3 +1,3 @@
 namespace NetAuth;
 
-public record User(Guid Id, string Email, string PasswordHash);
+public record User(Guid Id, string Username, string Email, string PasswordHash);

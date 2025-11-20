@@ -3,6 +3,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 using NetAuth;
+using NetAuth.Domain.Users;
+using User = NetAuth.Domain.Users.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -146,6 +148,13 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
     .WithDescription("Returns the details of the currently authenticated user.")
     .Produces<MeResponse>()
     .Produces(StatusCodes.Status401Unauthorized);
+
+(from username in Username.Create("johndoe")
+        from email in Email.Create("hoc081098@gmail.com")
+        select User.Create(email: email, username: username, passwordHash: "123456"))
+    .Match(
+        Right: user => Console.WriteLine("Created user: " + user),
+        Left: error => Console.WriteLine("Failed to create user: " + error));
 
 app.Run();
 
