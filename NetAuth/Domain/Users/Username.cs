@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using System.Text.RegularExpressions;
 using LanguageExt;
 using NetAuth.Domain.Core.Primitives;
@@ -24,6 +25,7 @@ public sealed class Username : ValueObject
 
     public static implicit operator string(Username username) => username.Value;
 
+    [Pure]
     public static Either<DomainError, Username> Create(string username) =>
         username switch
         {

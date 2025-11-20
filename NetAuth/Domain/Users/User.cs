@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using NetAuth.Domain.Core.Abstractions;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users.DomainEvents;
@@ -11,6 +12,7 @@ public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
     public Email Email { get; } = null!;
     public Username Username { get; } = null!;
 
+    // ReSharper disable once UnusedMember.Local
     /// <remarks>Required by EF Core.</remarks>
     private User()
     {
@@ -40,6 +42,7 @@ public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
         => !string.IsNullOrWhiteSpace(password) &&
            passwordHashChecker.IsMatch(passwordHash: _passwordHash, providedPassword: password);
 
+    [Pure]
     public static User Create(Email email, Username username, string passwordHash)
     {
         var user = new User(id: Guid.CreateVersion7(),

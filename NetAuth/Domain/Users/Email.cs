@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using System.Text.RegularExpressions;
 using LanguageExt;
 using NetAuth.Domain.Core.Primitives;
@@ -23,6 +24,7 @@ public sealed class Email : ValueObject
 
     public static implicit operator string(Email email) => email.Value;
 
+    [Pure]
     public static Either<DomainError, Email> Create(string email) =>
         email switch
         {
