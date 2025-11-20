@@ -82,10 +82,10 @@ app.MapPost("/auth/register",
 
 app.MapGet("/me", (ClaimsPrincipal user) =>
     {
-        var id = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        var email = user.FindFirstValue(JwtRegisteredClaimNames.Email);
+        var id = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
+        var email = user.FindFirstValue(JwtRegisteredClaimNames.Email)!;
 
-        return Results.Ok(new MeResponse(Guid.Parse(id!), email!));
+        return Results.Ok(new MeResponse(Guid.Parse(id), email));
     })
     .RequireAuthorization()
     .WithName("GetCurrentUser")
