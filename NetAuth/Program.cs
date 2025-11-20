@@ -85,17 +85,15 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
         var id = user.FindFirstValue(ClaimTypes.NameIdentifier);
         var email = user.FindFirstValue(JwtRegisteredClaimNames.Email);
 
-        return Results.Ok(new
-        {
-            Id = id,
-            Email = email
-        });
+        return Results.Ok(new MeResponse(Guid.Parse(id!), email!));
     })
     .RequireAuthorization()
     .WithName("GetCurrentUser")
     .WithSummary("Get current authenticated user.")
     .WithDescription("Returns the details of the currently authenticated user.")
-    .Produces(StatusCodes.Status200OK)
+    .Produces<MeResponse>()
     .Produces(StatusCodes.Status401Unauthorized);
 
 app.Run();
+
+public record MeResponse(Guid Id, string Email);
