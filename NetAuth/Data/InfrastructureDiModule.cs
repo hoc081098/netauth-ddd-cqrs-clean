@@ -4,9 +4,9 @@ using NetAuth.Application.Abstractions.Data;
 
 namespace NetAuth.Data;
 
-public static class DataDiModule
+public static class InfrastructureDiModule
 {
-    public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // Add DbContext
         services.AddDbContext<AppDbContext>(optionsBuilder =>

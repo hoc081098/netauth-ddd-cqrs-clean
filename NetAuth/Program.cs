@@ -10,7 +10,8 @@ using User = NetAuth.Domain.Users.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddData(builder.Configuration);
+builder.Services
+    .AddInfrastructure(builder.Configuration);
 
 // Add Swagger UI
 builder.Services.AddEndpointsApiExplorer();
