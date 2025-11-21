@@ -49,14 +49,12 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashCheck
 
         // Format: version.iterations.salt.hash
         var parts = passwordHash.Split('.', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length != 4)
-            // hash is invalid
-            return false;
 
-        var version = parts[0];
-        if (version != Pbkdf2PasswordHashingOptions.Version)
-            // unsupported version
+        if (parts.Length != 4 || parts[0] != Pbkdf2PasswordHashingOptions.Version)
+        {
+            // invalid format or unsupported version
             return false;
+        }
 
         if (!int.TryParse(parts[1], out var iterations))
         {
