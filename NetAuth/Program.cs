@@ -1,5 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using LanguageExt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -84,6 +85,14 @@ if (app.Environment.IsDevelopment())
         .CanConnect();
     Console.WriteLine("isDbAvailable=" + isDbAvailable);
     appDbContext.Database.Migrate();
+
+    await serviceScope.ServiceProvider.GetRequiredService<IUserRepository>()
+        .GetByEmailAsync(
+            Email.Create("hoc081098@gmail.com").Match(
+                Right: Prelude.identity,
+                Left: (e) => throw new Exception(e.Message)
+            )
+        );
 
     app.MapOpenApi();
     app.UseSwagger();

@@ -1,0 +1,14 @@
+using Microsoft.EntityFrameworkCore;
+using NetAuth.Domain.Users;
+
+namespace NetAuth.Data.Repositories;
+
+internal sealed class UserRepository(AppDbContext dbContext) :
+    GenericRepository<User>(dbContext),
+    IUserRepository
+{
+    public Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default) =>
+        EntitySet.AsNoTracking()
+            .Where(u => u.Email.Value == email)
+            .FirstOrDefaultAsync(cancellationToken);
+}
