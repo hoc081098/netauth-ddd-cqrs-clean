@@ -28,7 +28,7 @@ public sealed class Email : ValueObject
     public static Either<DomainError, Email> Create(string email) =>
         email switch
         {
-            _ when string.IsNullOrEmpty(email)
+            _ when string.IsNullOrWhiteSpace(email)
                 => DomainErrors.Email.NullOrEmpty,
 
             { Length: > MaxLength }

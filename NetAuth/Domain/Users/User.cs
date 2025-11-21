@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+using Ardalis.GuardClauses;
 using NetAuth.Domain.Core.Abstractions;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users.DomainEvents;
@@ -21,6 +22,10 @@ public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
     private User(Guid id, Email email, Username username, string passwordHash)
         : base(id)
     {
+        Guard.Against.NullOrWhiteSpace(email);
+        Guard.Against.NullOrWhiteSpace(username);
+        Guard.Against.NullOrWhiteSpace(passwordHash);
+
         Email = email;
         Username = username;
         _passwordHash = passwordHash;
