@@ -30,16 +30,16 @@ public sealed class Username : ValueObject
         username switch
         {
             _ when string.IsNullOrWhiteSpace(username)
-                => DomainErrors.Username.NullOrEmpty,
+                => UsersDomainErrors.Username.NullOrEmpty,
 
             { Length: < MinLength }
-                => DomainErrors.Username.TooShort,
+                => UsersDomainErrors.Username.TooShort,
 
             { Length: > MaxLength }
-                => DomainErrors.Username.TooLong,
+                => UsersDomainErrors.Username.TooLong,
 
             _ when !UsernameRegex.Value.IsMatch(username)
-                => DomainErrors.Username.InvalidFormat,
+                => UsersDomainErrors.Username.InvalidFormat,
 
             _ => new Username { Value = username }
         };

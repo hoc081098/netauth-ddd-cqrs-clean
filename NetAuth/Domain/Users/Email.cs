@@ -29,13 +29,13 @@ public sealed class Email : ValueObject
         email switch
         {
             _ when string.IsNullOrWhiteSpace(email)
-                => DomainErrors.Email.NullOrEmpty,
+                => UsersDomainErrors.Email.NullOrEmpty,
 
             { Length: > MaxLength }
-                => DomainErrors.Email.TooLong,
+                => UsersDomainErrors.Email.TooLong,
 
             _ when !EmailRegex.Value.IsMatch(email)
-                => DomainErrors.Email.InvalidFormat,
+                => UsersDomainErrors.Email.InvalidFormat,
 
             _ => new Email { Value = email }
         };
