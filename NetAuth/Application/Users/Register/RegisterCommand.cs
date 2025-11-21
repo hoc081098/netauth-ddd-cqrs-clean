@@ -12,9 +12,9 @@ public sealed record RegisterCommand(
     string Username,
     string Email,
     string Password
-) : ICommand<Either<DomainError, RegisterResponse>>;
+) : ICommand<Either<DomainError, RegisterResult>>;
 
-public sealed record RegisterResponse(string AccessToken);
+public sealed record RegisterResult(string AccessToken);
 
 // ReSharper disable once UnusedType.Global
 internal sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>

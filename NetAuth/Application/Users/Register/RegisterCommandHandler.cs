@@ -13,9 +13,9 @@ internal sealed class RegisterCommandHandler(
     IUnitOfWork unitOfWork,
     IPasswordHasher passwordHasher,
     IJwtProvider jwtProvider
-) : ICommandHandler<RegisterCommand, Either<DomainError, RegisterResponse>>
+) : ICommandHandler<RegisterCommand, Either<DomainError, RegisterResult>>
 {
-    public Task<Either<DomainError, RegisterResponse>> Handle(RegisterCommand command,
+    public Task<Either<DomainError, RegisterResult>> Handle(RegisterCommand command,
         CancellationToken cancellationToken)
     {
         var userInfoEither = from email in Email.Create(command.Email)
@@ -28,7 +28,7 @@ internal sealed class RegisterCommandHandler(
 
     private record UserInfo(Email Email, Username Username, Password Password);
 
-    private async Task<Either<DomainError, RegisterResponse>> CheckUniquenessAndInsertAsync(
+    private async Task<Either<DomainError, RegisterResult>> CheckUniquenessAndInsertAsync(
         UserInfo userInfo,
         CancellationToken cancellationToken)
     {
@@ -48,6 +48,6 @@ internal sealed class RegisterCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var accessToken = jwtProvider.CreateJwtToken(user);
-        return new RegisterResponse(AccessToken: accessToken);
+        return new RegisterResult(AccessToken: accessToken);
     }
 }
