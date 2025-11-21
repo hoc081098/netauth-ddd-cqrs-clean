@@ -8,7 +8,7 @@ internal sealed class UserIdentifierProvider(
     IHttpContextAccessor httpContextAccessor
 ) : IUserIdentifierProvider
 {
-    public Guid UserId { get; } = GetUserId(httpContextAccessor);
+    public Guid UserId => GetUserId(httpContextAccessor);
 
     private static Guid GetUserId(IHttpContextAccessor httpContextAccessor)
     {
