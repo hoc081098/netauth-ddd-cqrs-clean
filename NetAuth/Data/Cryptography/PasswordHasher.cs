@@ -48,7 +48,8 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashCheck
         Guard.Against.NullOrEmpty(providedPassword);
 
         // Format: version.iterations.salt.hash
-        var parts = passwordHash.Split('.', StringSplitOptions.RemoveEmptyEntries);
+        var parts = passwordHash.Split(Pbkdf2PasswordHashingOptions.Delimiter,
+            StringSplitOptions.RemoveEmptyEntries);
 
         if (parts.Length != 4)
         {
