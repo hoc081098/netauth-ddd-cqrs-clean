@@ -1,10 +1,10 @@
 using LanguageExt;
+using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
-using NetAuth.Infrastructure.Authentication;
 
 namespace NetAuth.Application.Users.Register;
 

@@ -1,4 +1,4 @@
-using NetAuth.Infrastructure.Authentication;
+using NetAuth.Application.Abstractions.Authentication;
 
 namespace NetAuth;
 

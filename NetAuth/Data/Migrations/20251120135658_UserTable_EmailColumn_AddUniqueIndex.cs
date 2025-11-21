@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace NetAuth.Data.Migrations
+namespace NetAuth.Infrastructure.Migrations
 {
     /// <inheritdoc />
     public partial class UserTable_EmailColumn_AddUniqueIndex : Migration
