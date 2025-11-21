@@ -50,9 +50,16 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashCheck
         // Format: version.iterations.salt.hash
         var parts = passwordHash.Split('.', StringSplitOptions.RemoveEmptyEntries);
 
-        if (parts is not [Pbkdf2PasswordHashingOptions.Version, _, _, _])
+        if (parts.Length != 4)
         {
-            // invalid format or unsupported version
+            // invalid format
+            return false;
+        }
+
+        if (parts[0] != Pbkdf2PasswordHashingOptions.Version)
+        {
+            // TODO: handle other versions (v2 = Argon2, etc.)
+            // unsupported version
             return false;
         }
 
