@@ -26,6 +26,11 @@ internal sealed class RegisterCommandHandler(
 
         return userEither.BindAsync<DomainError, User, RegisterResponse>(async user =>
         {
+            if (!await userRepository.IsEmailUniqueAsync(user.Email, cancellationToken))
+            {
+                return UsersDomainErrors.User.DuplicateEmail;
+            }
+
             userRepository.Insert(user);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 

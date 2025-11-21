@@ -4,6 +4,12 @@ namespace NetAuth.Domain.Users;
 
 public static class UsersDomainErrors
 {
+    public static class User
+    {
+        public static DomainError DuplicateEmail =>
+            new(code: "User.DuplicateEmail", message: "The email is already in use.");
+    }
+
     public static class Email
     {
         public static DomainError NullOrEmpty =>

@@ -11,4 +11,9 @@ internal sealed class UserRepository(AppDbContext dbContext) :
         EntitySet.AsNoTracking()
             .Where(u => u.Email.Value == email)
             .FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<bool> IsEmailUniqueAsync(Email email, CancellationToken cancellationToken = default) =>
+        !await EntitySet
+            .AsNoTracking()
+            .AnyAsync(u => u.Email.Value == email, cancellationToken);
 }

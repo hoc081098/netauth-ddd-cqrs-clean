@@ -7,4 +7,6 @@ public interface IUserRepository
     public Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default);
 
     public void Insert(User user);
+
+    public Task<bool> IsEmailUniqueAsync(Email email, CancellationToken cancellationToken = default);
 }
