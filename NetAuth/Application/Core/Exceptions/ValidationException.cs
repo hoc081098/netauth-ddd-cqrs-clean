@@ -9,7 +9,10 @@ public sealed class ValidationException(
 {
     public IReadOnlyList<DomainError> Errors { get; } =
         failures
-            .Select(failure => new DomainError(failure.ErrorCode, failure.ErrorMessage))
+            .Select(failure =>
+                new DomainError(code: failure.ErrorCode,
+                    message: failure.ErrorMessage,
+                    type: DomainError.ErrorType.Validation))
             .Distinct()
-            .ToList();
+            .ToArray();
 }
