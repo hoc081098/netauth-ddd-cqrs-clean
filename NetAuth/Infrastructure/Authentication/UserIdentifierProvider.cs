@@ -14,7 +14,7 @@ internal sealed class UserIdentifierProvider(
     {
         var userIdClaim = httpContextAccessor.HttpContext
             ?.User
-            ?.FindFirstValue(ClaimTypes.NameIdentifier);
+            .FindFirstValue(ClaimTypes.NameIdentifier);
 
         Guard.Against.NullOrEmpty(userIdClaim);
 
