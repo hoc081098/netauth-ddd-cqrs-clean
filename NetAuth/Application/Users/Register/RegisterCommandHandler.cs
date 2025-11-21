@@ -18,24 +18,36 @@ internal sealed class RegisterCommandHandler(
     public Task<Either<DomainError, RegisterResponse>> Handle(RegisterCommand command,
         CancellationToken cancellationToken)
     {
-        var userEither = from email in Email.Create(command.Email)
+        var userInfoEither = from email in Email.Create(command.Email)
             from username in Username.Create(command.Username)
             from password in Password.Create(command.Password)
-            let passwordHash = passwordHasher.HashPassword(password)
-            select User.Create(email: email, username: username, passwordHash: passwordHash);
+            select new UserInfo(email, username, password);
 
-        return userEither.BindAsync<DomainError, User, RegisterResponse>(async user =>
+        return userInfoEither.BindAsync(info => CheckUniquenessAndInsertAsync(info, cancellationToken));
+    }
+
+    private record UserInfo(Email Email, Username Username, Password Password);
+
+    private async Task<Either<DomainError, RegisterResponse>> CheckUniquenessAndInsertAsync(
+        UserInfo userInfo,
+        CancellationToken cancellationToken)
+    {
+        if (!await userRepository.IsEmailUniqueAsync(userInfo.Email, cancellationToken))
         {
-            if (!await userRepository.IsEmailUniqueAsync(user.Email, cancellationToken))
-            {
-                return UsersDomainErrors.User.DuplicateEmail;
-            }
+            return UsersDomainErrors.User.DuplicateEmail;
+        }
 
-            userRepository.Insert(user);
-            await unitOfWork.SaveChangesAsync(cancellationToken);
+        var passwordHash = passwordHasher.HashPassword(userInfo.Password);
+        var user = User.Create(
+            email: userInfo.Email,
+            username: userInfo.Username,
+            passwordHash: passwordHash
+        );
 
-            var accessToken = jwtTokenProvider.CreateJwtToken(user);
-            return new RegisterResponse(AccessToken: accessToken);
-        });
+        userRepository.Insert(user);
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var accessToken = jwtTokenProvider.CreateJwtToken(user);
+        return new RegisterResponse(AccessToken: accessToken);
     }
 }

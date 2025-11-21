@@ -16,6 +16,7 @@ public sealed record RegisterCommand(
 
 public sealed record RegisterResponse(string AccessToken);
 
+// ReSharper disable once UnusedType.Global
 internal sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
     public RegisterCommandValidator()
