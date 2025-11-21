@@ -24,16 +24,13 @@ internal sealed class RegisterCommandHandler(
             let passwordHash = passwordHasher.HashPassword(password)
             select User.Create(email: email, username: username, passwordHash: passwordHash);
 
-        return userEither
-            .ToAsync()
-            .MapAsync(async user =>
-            {
-                userRepository.Insert(user);
-                await unitOfWork.SaveChangesAsync(cancellationToken);
+        return userEither.BindAsync<DomainError, User, RegisterResponse>(async user =>
+        {
+            userRepository.Insert(user);
+            await unitOfWork.SaveChangesAsync(cancellationToken);
 
-                var accessToken = jwtTokenProvider.CreateJwtToken(user);
-                return new RegisterResponse(AccessToken: accessToken);
-            })
-            .ToEither();
+            var accessToken = jwtTokenProvider.CreateJwtToken(user);
+            return new RegisterResponse(AccessToken: accessToken);
+        });
     }
 }
