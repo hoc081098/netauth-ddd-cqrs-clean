@@ -6,7 +6,9 @@ using NetAuth.Domain.Users;
 
 namespace NetAuth.Data.Cryptography;
 
-internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashChecker
+internal sealed class Pbkdf2PasswordHasher(ILogger<Pbkdf2PasswordHasher> logger) :
+    IPasswordHasher,
+    IPasswordHashChecker
 {
     public string HashPassword(Password password)
     {
@@ -54,24 +56,37 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashCheck
         if (parts.Length != 4)
         {
             // invalid format
+            logger.LogWarning("Password hash format invalid. Expected 4 parts.");
             return false;
         }
 
         if (parts[0] != Pbkdf2PasswordHashingOptions.Version)
         {
-            // TODO: handle other versions (v2 = Argon2, etc.)
             // unsupported version
+            // TODO: handle other versions (v2 = Argon2, etc.)
+            logger.LogWarning("Password hash version {Version} is not supported.", parts[0]);
             return false;
         }
 
         if (!int.TryParse(parts[1], out var iterations))
         {
             // iterations value is invalid
+            logger.LogWarning("Invalid iterations value in password hash: {Value}", parts[1]);
             return false;
         }
 
-        var salt = Convert.FromBase64String(parts[2]);
-        var expectedKey = Convert.FromBase64String(parts[3]);
+        byte[] salt;
+        byte[] expectedKey;
+        try
+        {
+            salt = Convert.FromBase64String(parts[2]);
+            expectedKey = Convert.FromBase64String(parts[3]);
+        }
+        catch (FormatException exception)
+        {
+            logger.LogWarning(exception, "Failed to parse Base64 strings from password hash.");
+            return false;
+        }
 
         // 1) Rehash provided password using same salt and iterations
         var actualKey = Rfc2898DeriveBytes.Pbkdf2(

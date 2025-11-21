@@ -4,6 +4,8 @@ namespace NetAuth.Data.Cryptography;
 
 internal static class Pbkdf2PasswordHashingOptions
 {
+    // Format: version.iterations.salt.hash
+    
     // PBKDF2 iterations → higher means slower but more secure
     internal const int Iterations = 80_000;
 
