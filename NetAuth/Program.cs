@@ -1,13 +1,10 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using LanguageExt;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NetAuth;
-using NetAuth.Domain.Users;
 using NetAuth.Infrastructure;
-using User = NetAuth.Domain.Users.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,20 +76,7 @@ if (app.Environment.IsDevelopment())
 {
     using var serviceScope = app.Services.CreateScope();
     var appDbContext = serviceScope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-    var isDbAvailable = appDbContext
-        .Database
-        .CanConnect();
-    Console.WriteLine("isDbAvailable=" + isDbAvailable);
     appDbContext.Database.Migrate();
-
-    await serviceScope.ServiceProvider.GetRequiredService<IUserRepository>()
-        .GetByEmailAsync(
-            Email.Create("hoc081098@gmail.com").Match(
-                Right: Prelude.identity,
-                Left: (e) => throw new Exception(e.Message)
-            )
-        );
 
     app.MapOpenApi();
     app.UseSwagger();
@@ -160,13 +144,6 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
     .WithDescription("Returns the details of the currently authenticated user.")
     .Produces<MeResponse>()
     .Produces(StatusCodes.Status401Unauthorized);
-
-(from username in Username.Create("johndoe")
-        from email in Email.Create("hoc081098@gmail.com")
-        select User.Create(email: email, username: username, passwordHash: "123456"))
-    .Match(
-        Right: user => Console.WriteLine("Created user: " + user),
-        Left: error => Console.WriteLine("Failed to create user: " + error));
 
 app.Run();
 
