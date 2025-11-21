@@ -10,10 +10,7 @@ using User = NetAuth.Domain.Users.User;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<AppDbContext>(optionsBuilder =>
-    optionsBuilder
-        .UseNpgsql(builder.Configuration.GetConnectionString("Database"))
-        .UseSnakeCaseNamingConvention());
+builder.Services.AddData(builder.Configuration);
 
 // Add Swagger UI
 builder.Services.AddEndpointsApiExplorer();
@@ -70,17 +67,6 @@ builder.Services.AddSwaggerGen(o =>
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
-// Bind section "Jwt" → JwtConfig
-builder.Services.Configure<JwtConfig>(builder.Configuration.GetSection("Jwt"));
-builder.Services.ConfigureOptions<ConfigureJwtBearerOptions>();
-
-builder.Services
-    .AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer();
-builder.Services.AddAuthorization();
-
-builder.Services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
-builder.Services.AddSingleton<IAuthenticationRepository, FakeAuthenticationRepository>();
 builder.Services.AddScoped<Login.Handler>();
 builder.Services.AddScoped<Register.Handler>();
 

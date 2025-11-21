@@ -13,13 +13,17 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
         builder.HasKey(user => user.Id);
 
         var snakeCaseNameRewriter = new SnakeCaseNameRewriter(CultureInfo.InvariantCulture);
-        
+
         builder.OwnsOne(user => user.Email, emailBuilder =>
         {
             emailBuilder.Property(email => email.Value)
                 .HasColumnName(snakeCaseNameRewriter.RewriteName(nameof(User.Email)))
                 .IsRequired()
                 .HasMaxLength(Email.MaxLength);
+
+            emailBuilder.HasIndex(e => e.Value)
+                .IsUnique()
+                .HasDatabaseName("ux_user_email");
         });
 
         builder.OwnsOne(user => user.Username, usernameBuilder =>
