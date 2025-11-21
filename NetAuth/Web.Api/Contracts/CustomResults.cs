@@ -30,16 +30,15 @@ public static class CustomResults
     private static int GetStatusCode(DomainError.ErrorType type) =>
         type switch
         {
-            _ when !Enum.IsDefined(type) =>
-                throw new ArgumentOutOfRangeException(
-                    nameof(type),
-                    type,
-                    message: "Unknown DomainError.ErrorType: " + type),
             DomainError.ErrorType.Failure => StatusCodes.Status500InternalServerError,
             DomainError.ErrorType.Validation => StatusCodes.Status400BadRequest,
             DomainError.ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
             DomainError.ErrorType.Forbidden => StatusCodes.Status403Forbidden,
             DomainError.ErrorType.NotFound => StatusCodes.Status404NotFound,
             DomainError.ErrorType.Conflict => StatusCodes.Status409Conflict,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(type),
+                type,
+                message: "Unknown DomainError.ErrorType: " + type)
         };
 }
