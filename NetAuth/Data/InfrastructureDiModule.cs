@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Data.Authentication;
+using NetAuth.Data.Cryptography;
 using NetAuth.Data.Repositories;
 using NetAuth.Domain.Users;
 
@@ -34,6 +36,9 @@ public static class InfrastructureDiModule
         services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
         services.AddSingleton<IAuthenticationRepository, FakeAuthenticationRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+
+        services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddScoped<IPasswordHashChecker, Pbkdf2PasswordHasher>();
 
         return services;
     }
