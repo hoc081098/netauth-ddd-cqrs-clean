@@ -1,3 +1,5 @@
+using NetAuth.Data.Authentication;
+
 namespace NetAuth;
 
 public static class Login

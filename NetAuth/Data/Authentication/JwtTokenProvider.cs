@@ -2,12 +2,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using NetAuth.Domain.Users;
 
-namespace NetAuth;
+namespace NetAuth.Data.Authentication;
 
 public interface IJwtTokenProvider
 {
     string CreateJwtToken(LegacyUser user);
+    string CreateJwtToken(User user);
 }
 
 internal sealed class JwtTokenProvider(
@@ -35,6 +37,31 @@ internal sealed class JwtTokenProvider(
             claims: claims,
             expires: DateTime.UtcNow.Add(jwtConfig.Expiration),
             signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public string CreateJwtToken(User user)
+    {
+        var jwtConfig = jwtConfigOptions.Value;
+
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+        };
+
+        var credentials = new SigningCredentials(
+            jwtConfig.IssuerSigningKey,
+            SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: jwtConfig.Issuer,
+            audience: jwtConfig.Audience,
+            claims: claims,
+            expires: DateTime.UtcNow.Add(jwtConfig.Expiration),
+            signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
     }

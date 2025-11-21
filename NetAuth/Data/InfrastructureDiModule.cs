@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using NetAuth.Application.Abstractions.Data;
+using NetAuth.Data.Authentication;
 
 namespace NetAuth.Data;
 

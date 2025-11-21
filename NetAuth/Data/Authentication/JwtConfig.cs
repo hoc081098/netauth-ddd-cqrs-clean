@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace NetAuth;
+namespace NetAuth.Data.Authentication;
 
 public record JwtConfig
 {
