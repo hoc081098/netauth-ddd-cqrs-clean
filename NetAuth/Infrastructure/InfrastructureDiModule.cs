@@ -1,13 +1,15 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;
-using NetAuth.Data.Authentication;
-using NetAuth.Data.Cryptography;
-using NetAuth.Data.Repositories;
 using NetAuth.Domain.Users;
+using NetAuth.Infrastructure.Authentication;
+using NetAuth.Infrastructure.Common;
+using NetAuth.Infrastructure.Cryptography;
+using NetAuth.Infrastructure.Repositories;
 
-namespace NetAuth.Data;
+namespace NetAuth.Infrastructure;
 
 public static class InfrastructureDiModule
 {
@@ -23,7 +25,7 @@ public static class InfrastructureDiModule
             serviceProvider.GetRequiredService<AppDbContext>());
 
         // Bind section "Jwt" → JwtConfig
-        services.Configure<JwtConfig>(configuration.GetSection("Jwt"));
+        services.Configure<JwtConfig>(configuration.GetSection(JwtConfig.SectionKey));
         services.ConfigureOptions<ConfigureJwtBearerOptions>();
 
         // Add authentication and authorization services
@@ -32,13 +34,18 @@ public static class InfrastructureDiModule
             .AddJwtBearer();
         services.AddAuthorization();
 
-        // Add repositories, providers and services
-        services.AddScoped<IJwtTokenProvider, JwtTokenProvider>();
         services.AddSingleton<IAuthenticationRepository, FakeAuthenticationRepository>();
-        services.AddScoped<IUserRepository, UserRepository>();
 
-        services.AddScoped<IPasswordHasher, Pbkdf2PasswordHasher>();
-        services.AddScoped<IPasswordHashChecker, Pbkdf2PasswordHasher>();
+        // Add repositories and providers
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IJwtProvider, JwtProvider>();
+
+        // Add password hasher
+        services.AddTransient<IPasswordHasher, Pbkdf2PasswordHasher>();
+        services.AddTransient<IPasswordHashChecker, Pbkdf2PasswordHasher>();
+
+        // Common
+        services.AddTransient<IClock, SystemClock>();
 
         return services;
     }

@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
 
-namespace NetAuth.Data.Cryptography;
+namespace NetAuth.Infrastructure.Cryptography;
 
 internal static class Pbkdf2PasswordHashingOptions
 {
     // Format: version.iterations.salt.hash
-    
+
     // PBKDF2 iterations → higher means slower but more secure
     internal const int Iterations = 80_000;
 
@@ -20,7 +20,7 @@ internal static class Pbkdf2PasswordHashingOptions
 
     // Hash version → allows future migration from v1 to v2 (e.g., Argon2)
     internal const string Version = "v1";
-    
+
     // Delimiter between segments of the hash string
     internal const char Delimiter = '.';
 }

@@ -4,7 +4,7 @@ using Ardalis.GuardClauses;
 using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Domain.Users;
 
-namespace NetAuth.Data.Cryptography;
+namespace NetAuth.Infrastructure.Cryptography;
 
 internal sealed class Pbkdf2PasswordHasher(ILogger<Pbkdf2PasswordHasher> logger) :
     IPasswordHasher,

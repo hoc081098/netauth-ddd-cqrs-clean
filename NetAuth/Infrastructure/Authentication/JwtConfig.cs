@@ -4,10 +4,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace NetAuth.Data.Authentication;
+namespace NetAuth.Infrastructure.Authentication;
 
+/// <summary>
+/// Represents the JWT configuration settings.
+/// </summary>
 public record JwtConfig
 {
+    public const string SectionKey = "Jwt";
+
     private readonly Lock _lock = new();
 
     public required string SecretKey { get; init; }
@@ -42,7 +47,7 @@ public sealed class ConfigureJwtBearerOptions(
 
         // Preserve all claims from the token (including "sub")
         options.MapInboundClaims = false;
-        
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,

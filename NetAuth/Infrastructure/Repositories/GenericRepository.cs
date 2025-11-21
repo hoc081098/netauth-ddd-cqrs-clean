@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NetAuth.Domain.Core.Primitives;
 
-namespace NetAuth.Data.Repositories;
+namespace NetAuth.Infrastructure.Repositories;
 
 internal abstract class GenericRepository<TEntity> where TEntity : Entity
 {

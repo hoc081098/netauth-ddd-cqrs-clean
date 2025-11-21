@@ -4,17 +4,19 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using NetAuth.Domain.Users;
 
-namespace NetAuth.Data.Authentication;
+namespace NetAuth.Infrastructure.Authentication;
 
-public interface IJwtTokenProvider
+public interface IJwtProvider
 {
+    [Obsolete("Use CreateJwtToken(User user) instead.")]
     string CreateJwtToken(LegacyUser user);
+
     string CreateJwtToken(User user);
 }
 
-internal sealed class JwtTokenProvider(
+internal sealed class JwtProvider(
     IOptions<JwtConfig> jwtConfigOptions
-) : IJwtTokenProvider
+) : IJwtProvider
 {
     public string CreateJwtToken(LegacyUser user)
     {

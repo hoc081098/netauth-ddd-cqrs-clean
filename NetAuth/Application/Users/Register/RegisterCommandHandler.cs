@@ -2,9 +2,9 @@ using LanguageExt;
 using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Abstractions.Messaging;
-using NetAuth.Data.Authentication;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
+using NetAuth.Infrastructure.Authentication;
 
 namespace NetAuth.Application.Users.Register;
 
@@ -12,7 +12,7 @@ internal sealed class RegisterCommandHandler(
     IUserRepository userRepository,
     IUnitOfWork unitOfWork,
     IPasswordHasher passwordHasher,
-    IJwtTokenProvider jwtTokenProvider
+    IJwtProvider jwtProvider
 ) : ICommandHandler<RegisterCommand, Either<DomainError, RegisterResponse>>
 {
     public Task<Either<DomainError, RegisterResponse>> Handle(RegisterCommand command,
@@ -47,7 +47,7 @@ internal sealed class RegisterCommandHandler(
         userRepository.Insert(user);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var accessToken = jwtTokenProvider.CreateJwtToken(user);
+        var accessToken = jwtProvider.CreateJwtToken(user);
         return new RegisterResponse(AccessToken: accessToken);
     }
 }

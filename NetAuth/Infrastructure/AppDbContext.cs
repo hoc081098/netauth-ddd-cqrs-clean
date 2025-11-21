@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using NetAuth.Application.Abstractions.Data;
 
-namespace NetAuth.Data;
+namespace NetAuth.Infrastructure;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options),
     IUnitOfWork

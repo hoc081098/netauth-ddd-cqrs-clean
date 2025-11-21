@@ -2,22 +2,28 @@ using System.Collections.Concurrent;
 
 namespace NetAuth;
 
+[Obsolete]
 public interface IAuthenticationRepository
 {
-    Task<LegacyUser> Register(string username, string email, string password, CancellationToken cancellationToken = default);
+    Task<LegacyUser> Register(string username, string email, string password,
+        CancellationToken cancellationToken = default);
 
     Task<LegacyUser> Login(string email, string password, CancellationToken cancellationToken = default);
 }
 
+[Obsolete]
 public sealed class UserNotFoundException(string email)
     : Exception($"LegacyUser with email '{email}' not found.");
 
+[Obsolete]
 public sealed class WrongPasswordException()
     : Exception("The provided password is incorrect.");
 
+[Obsolete]
 public sealed class UserAlreadyExistsException(string email)
     : Exception($"LegacyUser with email '{email}' already exists.");
 
+[Obsolete]
 internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
 {
     // ---------------------------
@@ -28,7 +34,8 @@ internal sealed class FakeAuthenticationRepository : IAuthenticationRepository
         new(Id: Guid.NewGuid(), Username: "hoc081098", Email: "hoc081098@gmail.com", PasswordHash: "123456")
     ];
 
-    public async Task<LegacyUser> Register(string username, string email, string password, CancellationToken cancellationToken = default)
+    public async Task<LegacyUser> Register(string username, string email, string password,
+        CancellationToken cancellationToken = default)
     {
         await Task.Delay(50, cancellationToken); // Simulate async DB call
 

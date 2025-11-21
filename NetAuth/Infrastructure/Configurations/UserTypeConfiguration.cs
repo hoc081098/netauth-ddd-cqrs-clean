@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NetAuth.Domain.Users;
 
-namespace NetAuth.Data.Configurations;
+namespace NetAuth.Infrastructure.Configurations;
 
 public class UserTypeConfiguration : IEntityTypeConfiguration<User>
 {

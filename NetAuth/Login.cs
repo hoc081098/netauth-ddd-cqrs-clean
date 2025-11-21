@@ -1,4 +1,4 @@
-using NetAuth.Data.Authentication;
+using NetAuth.Infrastructure.Authentication;
 
 namespace NetAuth;
 
@@ -10,7 +10,7 @@ public static class Login
 
     public class Handler(
         IAuthenticationRepository authenticationRepository,
-        IJwtTokenProvider jwtTokenProvider
+        IJwtProvider jwtProvider
     )
     {
         public async Task<Response> Handle(
@@ -20,7 +20,7 @@ public static class Login
             var user = await authenticationRepository.Login(email: request.Email,
                 password: request.Password,
                 cancellationToken);
-            var accessToken = jwtTokenProvider.CreateJwtToken(user);
+            var accessToken = jwtProvider.CreateJwtToken(user);
             return new Response(AccessToken: accessToken);
         }
     }

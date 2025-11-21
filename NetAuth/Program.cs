@@ -5,8 +5,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NetAuth;
-using NetAuth.Data;
 using NetAuth.Domain.Users;
+using NetAuth.Infrastructure;
 using User = NetAuth.Domain.Users.User;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -170,4 +170,7 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
 
 app.Run();
 
-public record MeResponse(Guid Id, string Email);
+namespace NetAuth
+{
+    public record MeResponse(Guid Id, string Email);
+}

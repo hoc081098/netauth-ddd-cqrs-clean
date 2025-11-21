@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using NetAuth.Domain.Users;
 
-namespace NetAuth.Data.Repositories;
+namespace NetAuth.Infrastructure.Repositories;
 
 internal sealed class UserRepository(AppDbContext dbContext) :
     GenericRepository<User>(dbContext),
