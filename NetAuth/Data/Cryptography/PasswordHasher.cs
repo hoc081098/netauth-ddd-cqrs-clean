@@ -12,16 +12,16 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashCheck
     {
         Guard.Against.NullOrEmpty(password);
 
-        // 1) Tạo salt random, độ dài tùy config
-        // Salt KHÔNG cần bí mật → chỉ cần random & unique
+        // 1) Generate random salt based on configuration
+        // Salt doesn't need to be secret—just random and unique
         var salt = RandomNumberGenerator.GetBytes(Pbkdf2PasswordHashingOptions.SaltSize);
 
-        // 2) Derive key bằng PBKDF2
-        // - password: mật khẩu
-        // - salt: random salt ở trên
-        // - iterations: số vòng lặp → giúp chậm
-        // - algorithm: SHA256 → chuẩn OWASP
-        // - keySize: độ dài key (bytes)
+        // 2) Derive key using PBKDF2
+        // - password: the password
+        // - salt: random salt from above
+        // - iterations: number of rounds to slow down hashing
+        // - algorithm: SHA256 per OWASP guidance
+        // - keySize: key length (bytes)
         var key = Rfc2898DeriveBytes.Pbkdf2(
             password: password,
             salt: salt,
@@ -29,8 +29,8 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashCheck
             hashAlgorithm: Pbkdf2PasswordHashingOptions.HashAlgorithm,
             outputLength: Pbkdf2PasswordHashingOptions.KeySize);
 
-        // 3) Lưu format: version.iterations.salt.hash
-        // Tất cả thông tin đều lưu chung → dễ verify, dễ migrate
+        // 3) Store format: version.iterations.salt.hash
+        // Keep all metadata together for easy verification and migration
         return new StringBuilder()
             .Append(Pbkdf2PasswordHashingOptions.Version)
             .Append(Pbkdf2PasswordHashingOptions.Delimiter)
@@ -50,24 +50,24 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashCheck
         // Format: version.iterations.salt.hash
         var parts = passwordHash.Split('.', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length != 4)
-            // hash không hợp lệ
+            // hash is invalid
             return false;
 
         var version = parts[0];
         if (version != Pbkdf2PasswordHashingOptions.Version)
-            // version không hỗ trợ
+            // unsupported version
             return false;
 
         if (!int.TryParse(parts[1], out var iterations))
         {
-            // iterations không hợp lệ
+            // iterations value is invalid
             return false;
         }
 
         var salt = Convert.FromBase64String(parts[2]);
         var expectedKey = Convert.FromBase64String(parts[3]);
 
-        // 1) Hash lại password user nhập, dùng cùng salt + iterations
+        // 1) Rehash provided password using same salt and iterations
         var actualKey = Rfc2898DeriveBytes.Pbkdf2(
             password: providedPassword,
             salt: salt,
@@ -76,8 +76,8 @@ internal sealed class Pbkdf2PasswordHasher : IPasswordHasher, IPasswordHashCheck
             outputLength: expectedKey.Length
         );
 
-        // 2) Compare constant-time để tránh timing attack
-        // Nếu dùng == là lỗi bảo mật DEADLY
+        // 2) Compare in constant time to avoid timing attacks
+        // Using == would be a critical vulnerability
         return CryptographicOperations.FixedTimeEquals(actualKey, expectedKey);
     }
 }
