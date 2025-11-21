@@ -40,6 +40,7 @@ public static class InfrastructureDiModule
         // Add repositories and providers
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IJwtProvider, JwtProvider>();
+        services.AddScoped<IUserIdentifierProvider, UserIdentifierProvider>();
 
         // Add password hasher
         services.AddTransient<IPasswordHasher, Pbkdf2PasswordHasher>();
