@@ -12,7 +12,7 @@ namespace NetAuth.Application.Core.Behaviors;
 
 internal static class EitherLeftMethodCache
 {
-    private static readonly ConcurrentDictionary<Type, MethodInfo> _leftMethodInfosCache = new();
+    private static readonly ConcurrentDictionary<Type, MethodInfo> LeftMethodInfosCache = new();
 
     private static MethodInfo GetMethod(Type rightType)
     {
@@ -34,7 +34,7 @@ internal static class EitherLeftMethodCache
             exceptionCreator: () => new InvalidOperationException("Could not find Left method on Either type."));
     }
 
-    internal static MethodInfo GetOrAdd(Type rightType) => _leftMethodInfosCache.GetOrAdd(rightType, GetMethod);
+    internal static MethodInfo GetOrAdd(Type rightType) => LeftMethodInfosCache.GetOrAdd(rightType, GetMethod);
 }
 
 internal sealed class ValidationBehavior<TRequest, TResponse>(
