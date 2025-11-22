@@ -11,6 +11,8 @@ internal sealed class JwtProvider(
     IOptions<JwtConfig> jwtConfigOptions
 ) : IJwtProvider
 {
+    private readonly JwtSecurityTokenHandler _handler = new();
+
     public string Create(User user)
     {
         var jwtConfig = jwtConfigOptions.Value;
@@ -18,7 +20,9 @@ internal sealed class JwtProvider(
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.Username),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
         };
 
@@ -33,6 +37,6 @@ internal sealed class JwtProvider(
             expires: DateTime.UtcNow.Add(jwtConfig.Expiration),
             signingCredentials: credentials);
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        return _handler.WriteToken(token);
     }
 }
