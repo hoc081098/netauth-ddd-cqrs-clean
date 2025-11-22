@@ -1,10 +1,8 @@
-using System.Data;
 using FluentValidation;
 using LanguageExt;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Application.Core.Extensions;
 using NetAuth.Domain.Core.Primitives;
-using NetAuth.Domain.Users;
 
 namespace NetAuth.Application.Users.Register;
 

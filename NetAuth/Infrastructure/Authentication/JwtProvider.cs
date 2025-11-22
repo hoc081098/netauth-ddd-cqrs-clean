@@ -37,7 +37,7 @@ internal sealed class JwtProvider(
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-    public string CreateJwtToken(User user)
+    public string Create(User user)
     {
         var jwtConfig = jwtConfigOptions.Value;
 

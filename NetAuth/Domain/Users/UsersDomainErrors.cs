@@ -11,6 +11,13 @@ public static class UsersDomainErrors
                 code: "User.DuplicateEmail",
                 message: "The email is already in use.",
                 type: DomainError.ErrorType.Conflict);
+
+        public static DomainError InvalidCredentials =>
+            new(
+                code: "User.InvalidCredentials",
+                message: "The specified email or password are incorrect.",
+                type: DomainError.ErrorType.Unauthorized
+            );
     }
 
     public static class Email

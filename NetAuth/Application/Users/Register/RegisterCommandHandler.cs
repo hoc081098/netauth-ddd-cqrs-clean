@@ -47,7 +47,7 @@ internal sealed class RegisterCommandHandler(
         userRepository.Insert(user);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var accessToken = jwtProvider.CreateJwtToken(user);
+        var accessToken = jwtProvider.Create(user);
         return new RegisterResult(AccessToken: accessToken);
     }
 }

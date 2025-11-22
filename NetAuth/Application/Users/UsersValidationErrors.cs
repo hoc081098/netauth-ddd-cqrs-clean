@@ -24,4 +24,19 @@ public static class UsersValidationErrors
                 message: "Password is required.",
                 type: DomainError.ErrorType.Validation);
     }
+    
+    public static class Login
+    {
+        public static DomainError EmailIsRequired =>
+            new(
+                code: "Login.EmailIsRequired",
+                message: "Email is required.",
+                type: DomainError.ErrorType.Validation);
+
+        public static DomainError PasswordIsRequired =>
+            new(
+                code: "Login.PasswordIsRequired",
+                message: "Password is required.",
+                type: DomainError.ErrorType.Validation);
+    }
 }
