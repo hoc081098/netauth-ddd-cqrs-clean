@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Reflection;
+using Ardalis.GuardClauses;
 using FluentValidation;
 using FluentValidation.Results;
 using LanguageExt;
@@ -6,6 +9,33 @@ using NetAuth.Application.Core.Exceptions;
 using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Application.Core.Behaviors;
+
+internal static class EitherLeftMethodCache
+{
+    private static readonly ConcurrentDictionary<Type, MethodInfo> _leftMethodInfosCache = new();
+
+    private static MethodInfo GetMethod(Type rightType)
+    {
+        // Create closed generic type Either<DomainError, R>
+        var closedEitherType = typeof(Either<,>)
+            .MakeGenericType(typeof(DomainError), rightType);
+
+        // use Reflection to call `public static method Either<DomainError, R>.Left(validationError)`
+        var leftMethod = closedEitherType
+            .GetMethod(
+                name: nameof(Either<object, object>.Left),
+                bindingAttr: BindingFlags.Static | BindingFlags.Public,
+                binder: null,
+                types: [typeof(DomainError)],
+                modifiers: null
+            );
+
+        return Guard.Against.Null(leftMethod,
+            exceptionCreator: () => new InvalidOperationException("Could not find Left method on Either type."));
+    }
+
+    internal static MethodInfo GetOrAdd(Type rightType) => _leftMethodInfosCache.GetOrAdd(rightType, GetMethod);
+}
 
 internal sealed class ValidationBehavior<TRequest, TResponse>(
     IEnumerable<IValidator<TRequest>> validators
@@ -50,7 +80,7 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         if (typeof(TResponse).GetGenericTypeDefinition() == typeof(Either<,>))
         {
             var genericArguments = typeof(TResponse).GetGenericArguments();
-            if (genericArguments[0] == typeof(DomainError) || typeof(DomainError).IsAssignableFrom(genericArguments[0]))
+            if (genericArguments[0] == typeof(DomainError))
             {
                 rightType = genericArguments[1];
                 return true;
@@ -63,22 +93,10 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
 
     private static TResponse ReturnValidationErrorAsLeft(List<ValidationFailure> failures, Type rightType)
     {
-        // Create closed generic type Either<DomainError, R>
-        var closedEitherType = typeof(Either<,>)
-            .MakeGenericType(typeof(DomainError), rightType);
-
-        // use Reflection to call `public static method Either<DomainError, R>.Left(validationError)`
-        var leftMethod = closedEitherType
-            .GetMethod(
-                name: nameof(Either<object, object>.Left),
-                bindingAttr: System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public,
-                binder: null,
-                types: [typeof(DomainError)],
-                modifiers: null
-            );
+        var leftMethod = EitherLeftMethodCache.GetOrAdd(rightType);
 
         var validationError = new ValidationError(failures);
-        var leftValue = leftMethod!.Invoke(obj: null, parameters: [validationError])!;
+        var leftValue = leftMethod.Invoke(obj: null, parameters: [validationError])!;
 
         return (TResponse)leftValue;
     }
