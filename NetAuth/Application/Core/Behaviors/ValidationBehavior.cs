@@ -67,7 +67,7 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
             : validationResults
                 .SelectMany(r => r.Errors)
                 .Where(f => f is not null)
-                .ToList();
+                .ToArray();
     }
 
     private static bool IsDomainErrorEither(out Type rightType)
