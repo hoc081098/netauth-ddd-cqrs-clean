@@ -19,11 +19,14 @@ internal sealed class JwtProvider(
 
         var claims = new[]
         {
+            // Subject: uniquely identifies the user
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            // JWT ID: uniquely identifies the token
             new Claim(JwtRegisteredClaimNames.Jti, Guid.CreateVersion7().ToString()),
+            // Email: user's email
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.Name, user.Username),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
+            // Preferred Username: user's username
+            new Claim(JwtRegisteredClaimNames.PreferredUsername, user.Username),
         };
 
         var credentials = new SigningCredentials(
