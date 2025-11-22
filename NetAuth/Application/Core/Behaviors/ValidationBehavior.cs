@@ -17,18 +17,12 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         CancellationToken cancellationToken)
     {
         var failures = await ValidateAsync(request);
-        if (failures.Count == 0)
+        return failures switch
         {
-            return await next(cancellationToken);
-        }
-
-        // If TResponse is Either<DomainError, T>, return a Left with ValidationError
-        if (IsEitherDomainError(out var rightType))
-        {
-            return ReturnValidationErrorAsLeft(failures, rightType);
-        }
-
-        throw new ValidationException(failures);
+            { Count: 0 } => await next(cancellationToken),
+            _ when IsEitherDomainError(out var rightType) => ReturnValidationErrorAsLeft(failures, rightType),
+            _ => throw new ValidationException(failures)
+        };
     }
 
     private async Task<List<ValidationFailure>> ValidateAsync(TRequest request)
