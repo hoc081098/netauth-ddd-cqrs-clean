@@ -1,3 +1,4 @@
+using Ardalis.GuardClauses;
 using FluentValidation.Results;
 using NetAuth.Domain.Core.Primitives;
 
@@ -11,7 +12,7 @@ public sealed class ValidationError(
     type: ErrorType.Validation)
 {
     public IReadOnlyList<DomainError> Errors { get; } =
-        failures
+        Guard.Against.NullOrEmpty(failures)
             .Select(failure =>
                 new DomainError(code: failure.ErrorCode,
                     message: failure.ErrorMessage,
