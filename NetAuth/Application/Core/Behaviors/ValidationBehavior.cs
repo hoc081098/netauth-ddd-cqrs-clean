@@ -23,11 +23,9 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         }
 
         // If TResponse is Either<DomainError, T>, return a Left with ValidationError
-        if (typeof(TResponse).IsGenericType &&
-            typeof(TResponse).GetGenericTypeDefinition() == typeof(Either<,>) &&
-            typeof(TResponse).GetGenericArguments()[0] == typeof(DomainError))
+        if (IsEitherDomainError(out var rightType))
         {
-            return ReturnValidationErrorAsLeft(failures);
+            return ReturnValidationErrorAsLeft(failures, rightType);
         }
 
         throw new ValidationException(failures);
@@ -46,11 +44,33 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
                 .ToList();
     }
 
-    private static TResponse ReturnValidationErrorAsLeft(List<ValidationFailure> failures)
+    private static bool IsEitherDomainError(out Type rightType)
+    {
+        if (!typeof(TResponse).IsGenericType)
+        {
+            rightType = typeof(void);
+            return false;
+        }
+
+        if (typeof(TResponse).GetGenericTypeDefinition() == typeof(Either<,>))
+        {
+            var genericArguments = typeof(TResponse).GetGenericArguments();
+            if (genericArguments[0] == typeof(DomainError) || typeof(DomainError).IsAssignableFrom(genericArguments[0]))
+            {
+                rightType = genericArguments[1];
+                return true;
+            }
+        }
+
+        rightType = typeof(void);
+        return false;
+    }
+
+    private static TResponse ReturnValidationErrorAsLeft(List<ValidationFailure> failures, Type rightType)
     {
         // Create closed generic type Either<DomainError, R>
         var closedEitherType = typeof(Either<,>)
-            .MakeGenericType(typeof(DomainError), typeof(TResponse).GetGenericArguments()[1]);
+            .MakeGenericType(typeof(DomainError), rightType);
 
         // use Reflection to call `public static method Either<DomainError, R>.Left(validationError)`
         var leftMethod = closedEitherType
