@@ -1,5 +1,3 @@
 namespace NetAuth.Web.Api.Contracts;
 
-public sealed record ApiError(string Code, string Message);
-
-public sealed record ApiErrorResponse(IReadOnlyCollection<ApiError> Errors);
+public sealed record ApiErrorResponse(string Code, string Message, string ErrorType);

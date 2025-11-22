@@ -15,21 +15,6 @@ public static class CustomResults
 
         return Results.Problem(
             title: GetTitle(error),
-        )
-
-        var apiErrors = errors
-            .Select(e =>
-                new ApiError(
-                    Code: e.Code,
-                    Message: e.Message)
-            )
-            .ToArray();
-
-        var response = new ApiErrorResponse(apiErrors);
-        var statusCode = GetStatusCode(errors[0].Type);
-
-        return Results.Problem(
-            title: GetTitle(error),
             detail: GetDetail(error),
             statusCode: GetStatusCode(error.Type),
             type: GetType(error.Type),
@@ -91,10 +76,23 @@ public static class CustomResults
 
     private static IDictionary<string, object?>? GetErrors(DomainError error)
     {
-        error switch
+        return error switch
         {
-            ValidationError validationError =>
-                
-        }
+            ValidationError validationError => new Dictionary<string, object?>()
+            {
+                {
+                    "errors",
+                    validationError.Errors
+                        .Select(e => new ApiErrorResponse(
+                                Code: e.Code,
+                                Message: e.Message,
+                                ErrorType: e.Type.ToString()
+                            )
+                        )
+                        .ToArray()
+                }
+            },
+            _ => null
+        };
     }
 }
