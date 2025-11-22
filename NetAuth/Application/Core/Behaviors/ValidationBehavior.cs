@@ -16,7 +16,7 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         RequestHandlerDelegate<TResponse> next,
         CancellationToken cancellationToken)
     {
-        var failures = await ValidateAsync(request);
+        var failures = await ValidateAsync(request, cancellationToken);
         return failures switch
         {
             { Count: 0 } => await next(cancellationToken),
@@ -25,10 +25,11 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         };
     }
 
-    private async Task<List<ValidationFailure>> ValidateAsync(TRequest request)
+    private async Task<List<ValidationFailure>> ValidateAsync(TRequest request, CancellationToken cancellationToken)
     {
         var validationContext = new ValidationContext<TRequest>(request);
-        var validationResults = await Task.WhenAll(validators.Select(v => v.ValidateAsync(validationContext)));
+        var validationResults = await Task.WhenAll(validators.Select(v =>
+            v.ValidateAsync(validationContext, cancellationToken)));
 
         return validationResults.Length == 0
             ? []
