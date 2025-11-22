@@ -31,6 +31,7 @@ internal sealed class LoginEndpoint : IEndpoint
             .WithSummary("Authenticate user with email & password.")
             .WithDescription("Returns JWT access token when credentials are valid.")
             .Produces<Response>()
-            .ProducesProblem(StatusCodes.Status401Unauthorized);
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status400BadRequest);
     }
 }
