@@ -50,7 +50,7 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         return failures switch
         {
             { Count: 0 } => await next(cancellationToken),
-            _ when IsEitherDomainError(out var rightType) => ReturnValidationErrorAsLeft(failures, rightType),
+            _ when IsDomainErrorEither(out var rightType) => ReturnValidationErrorAsLeft(failures, rightType),
             _ => throw new ValidationException(failures)
         };
     }
@@ -69,7 +69,7 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
                 .ToList();
     }
 
-    private static bool IsEitherDomainError(out Type rightType)
+    private static bool IsDomainErrorEither(out Type rightType)
     {
         if (!typeof(TResponse).IsGenericType)
         {
@@ -80,7 +80,7 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         if (typeof(TResponse).GetGenericTypeDefinition() == typeof(Either<,>))
         {
             var genericArguments = typeof(TResponse).GetGenericArguments();
-            if (genericArguments[0] == typeof(DomainError))
+            if (genericArguments[0] == typeof(DomainError) || genericArguments[0] == typeof(ValidationError))
             {
                 rightType = genericArguments[1];
                 return true;
