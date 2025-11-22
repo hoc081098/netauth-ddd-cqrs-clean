@@ -86,7 +86,7 @@ public static class CustomResults
                         .Select(e => new ApiErrorResponse(
                                 Code: e.Code,
                                 Message: e.Message,
-                                ErrorType: e.Type.ToString()
+                                ErrorType: GetErrorType(e)
                             )
                         )
                         .ToArray()
@@ -94,5 +94,17 @@ public static class CustomResults
             },
             _ => null
         };
+
+        static string GetErrorType(DomainError e) =>
+            e.Type switch
+            {
+                DomainError.ErrorType.Validation => "Validation",
+                DomainError.ErrorType.NotFound => "NotFound",
+                DomainError.ErrorType.Conflict => "Conflict",
+                DomainError.ErrorType.Unauthorized => "Unauthorized",
+                DomainError.ErrorType.Forbidden => "Forbidden",
+                DomainError.ErrorType.Failure => "Failure",
+                _ => "InternalServerError"
+            };
     }
 }
