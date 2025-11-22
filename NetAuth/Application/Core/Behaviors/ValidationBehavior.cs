@@ -80,8 +80,8 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         if (typeof(TResponse).GetGenericTypeDefinition() == typeof(Either<,>))
         {
             var genericArguments = typeof(TResponse).GetGenericArguments();
-            // Only accept these EXACT two types: DomainError or ValidationError as Left type
-            if (genericArguments[0] == typeof(DomainError) || genericArguments[0] == typeof(ValidationError))
+            // Only accept Either<DomainError, R>
+            if (genericArguments[0] == typeof(DomainError))
             {
                 rightType = genericArguments[1];
                 return true;
