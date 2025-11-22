@@ -1,4 +1,3 @@
-using System.Reflection;
 using FluentValidation;
 using NetAuth.Application.Core.Behaviors;
 
@@ -9,12 +8,12 @@ public static class ApplicationDiModule
     public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
     {
         // Add FluentValidation
-        services.AddValidatorsFromAssembly(Assembly.GetExecutingAssembly());
+        services.AddValidatorsFromAssembly(typeof(ApplicationDiModule).Assembly, includeInternalTypes: true);
 
         // Add MediatR with Behaviors
         services.AddMediatR(config =>
         {
-            config.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly());
+            config.RegisterServicesFromAssembly(typeof(ApplicationDiModule).Assembly);
             config.AddOpenBehavior(typeof(ValidationBehavior<,>));
         });
 

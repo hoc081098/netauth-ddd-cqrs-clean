@@ -35,11 +35,14 @@ public static class InfrastructureDiModule
             .AddJwtBearer();
         services.AddAuthorization();
 
+        // Add HttpContextAccessor
+        services.AddHttpContextAccessor();
+
         services.AddSingleton<IAuthenticationRepository, FakeAuthenticationRepository>();
 
         // Add repositories and providers
         services.AddScoped<IUserRepository, UserRepository>();
-        services.AddScoped<IJwtProvider, JwtProvider>();
+        services.AddSingleton<IJwtProvider, JwtProvider>();
         services.AddScoped<IUserIdentifierProvider, UserIdentifierProvider>();
 
         // Add password hasher
@@ -47,7 +50,7 @@ public static class InfrastructureDiModule
         services.AddTransient<IPasswordHashChecker, Pbkdf2PasswordHasher>();
 
         // Common
-        services.AddTransient<IClock, SystemClock>();
+        services.AddSingleton<IClock, SystemClock>();
 
         return services;
     }
