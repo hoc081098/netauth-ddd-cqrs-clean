@@ -50,12 +50,13 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         return failures switch
         {
             { Count: 0 } => await next(cancellationToken),
-            _ when IsDomainErrorEither(out var rightType) => ReturnValidationErrorAsLeft(failures, rightType),
+            _ when IsDomainErrorEither(out var rightType) => CreateValidationErrorLeft(failures, rightType),
             _ => throw new ValidationException(failures)
         };
     }
 
-    private async Task<List<ValidationFailure>> ValidateAsync(TRequest request, CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<ValidationFailure>> ValidateAsync(TRequest request,
+        CancellationToken cancellationToken)
     {
         var validationContext = new ValidationContext<TRequest>(request);
         var validationResults = await Task.WhenAll(validators.Select(v =>
@@ -92,7 +93,7 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         return false;
     }
 
-    private static TResponse ReturnValidationErrorAsLeft(List<ValidationFailure> failures, Type rightType)
+    private static TResponse CreateValidationErrorLeft(IReadOnlyList<ValidationFailure> failures, Type rightType)
     {
         var leftMethod = EitherLeftMethodCache.GetOrAdd(rightType);
 
