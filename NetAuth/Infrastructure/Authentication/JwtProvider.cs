@@ -11,32 +11,6 @@ internal sealed class JwtProvider(
     IOptions<JwtConfig> jwtConfigOptions
 ) : IJwtProvider
 {
-    [Obsolete("Obsolete")]
-    public string CreateJwtToken(LegacyUser user)
-    {
-        var jwtConfig = jwtConfigOptions.Value;
-
-        var claims = new[]
-        {
-            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString())
-        };
-
-        var creds = new SigningCredentials(
-            jwtConfig.IssuerSigningKey,
-            SecurityAlgorithms.HmacSha256);
-
-        var token = new JwtSecurityToken(
-            issuer: jwtConfig.Issuer,
-            audience: jwtConfig.Audience,
-            claims: claims,
-            expires: DateTime.UtcNow.Add(jwtConfig.Expiration),
-            signingCredentials: creds);
-
-        return new JwtSecurityTokenHandler().WriteToken(token);
-    }
-
     public string Create(User user)
     {
         var jwtConfig = jwtConfigOptions.Value;

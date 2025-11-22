@@ -38,8 +38,6 @@ public static class InfrastructureDiModule
         // Add HttpContextAccessor
         services.AddHttpContextAccessor();
 
-        services.AddSingleton<IAuthenticationRepository, FakeAuthenticationRepository>();
-
         // Add repositories and providers
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IJwtProvider, JwtProvider>();
