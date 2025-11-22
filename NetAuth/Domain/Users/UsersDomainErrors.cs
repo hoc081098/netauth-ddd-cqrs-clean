@@ -15,7 +15,7 @@ public static class UsersDomainErrors
         public static DomainError InvalidCredentials =>
             new(
                 code: "User.InvalidCredentials",
-                message: "The specified email or password are incorrect.",
+                message: "The specified email or password is incorrect.",
                 type: DomainError.ErrorType.Unauthorized
             );
     }
