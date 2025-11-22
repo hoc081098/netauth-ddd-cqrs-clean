@@ -1,6 +1,6 @@
 namespace NetAuth.Domain.Core.Primitives;
 
-public sealed class DomainError(
+public class DomainError(
     string code,
     string message,
     DomainError.ErrorType type

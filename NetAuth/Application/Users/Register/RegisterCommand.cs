@@ -23,7 +23,7 @@ internal sealed class RegisterCommandValidator : AbstractValidator<RegisterComma
     {
         RuleFor(command => command.Username)
             .NotEmpty()
-            .WithDomainError(UsersValidationErrors.Register.FirstNameIsRequired);
+            .WithDomainError(UsersValidationErrors.Register.UsernameIsRequired);
 
         RuleFor(command => command.Email)
             .NotEmpty()

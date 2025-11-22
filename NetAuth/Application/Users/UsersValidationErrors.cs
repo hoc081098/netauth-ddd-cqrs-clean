@@ -6,10 +6,10 @@ public static class UsersValidationErrors
 {
     public static class Register
     {
-        public static DomainError FirstNameIsRequired =>
+        public static DomainError UsernameIsRequired =>
             new(
-                code: "Register.FirstNameIsRequired",
-                message: "First name is required.",
+                code: "Register.UsernameIsRequired",
+                message: "Username is required.",
                 type: DomainError.ErrorType.Validation);
 
         public static DomainError EmailIsRequired =>

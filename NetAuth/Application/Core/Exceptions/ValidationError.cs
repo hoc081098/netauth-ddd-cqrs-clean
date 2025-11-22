@@ -3,9 +3,12 @@ using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Application.Core.Exceptions;
 
-public sealed class ValidationException(
+public sealed class ValidationError(
     IEnumerable<ValidationFailure> failures
-) : Exception
+) : DomainError(
+    code: "General.ValidationError",
+    message: "One or more validation errors occurred.",
+    type: ErrorType.Validation)
 {
     public IReadOnlyList<DomainError> Errors { get; } =
         failures
