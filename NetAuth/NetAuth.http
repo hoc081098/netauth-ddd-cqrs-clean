@@ -25,10 +25,10 @@ Content-Type: application/json
 ### Register
 
 POST {{NetAuth_HostAddress}}/auth/register
-Accept: application/json
 Content-Type: application/json
 
 {
-  "email": "hoc081098_01@gmail.com",
-  "password": "123456"
+"email": "hoc081098@gmail.com",
+"username": "hoc081098",
+"password": "123456Aa@"
 }
