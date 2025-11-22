@@ -13,14 +13,12 @@ internal sealed class LoginCommandHandler(
     ICommandHandler<LoginCommand, Either<DomainError, LoginResult>>
 {
     public Task<Either<DomainError, LoginResult>> Handle(LoginCommand command,
-        CancellationToken cancellationToken)
-    {
-        return Email.Create(command.Email)
+        CancellationToken cancellationToken) =>
+        Email.Create(command.Email)
             .MapAsync(email => userRepository.GetByEmailAsync(email, cancellationToken))
-            .BindAsync(user => CheckPassword(command, user));
-    }
+            .BindAsync(user => AuthenticateUser(command, user));
 
-    private Either<DomainError, LoginResult> CheckPassword(LoginCommand command, User? user)
+    private Either<DomainError, LoginResult> AuthenticateUser(LoginCommand command, User? user)
     {
         if (user is null || !user.VerifyPasswordHash(command.Password, passwordHashChecker))
         {
