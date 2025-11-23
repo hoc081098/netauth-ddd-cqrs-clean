@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Cryptography;
@@ -8,6 +9,7 @@ using NetAuth.Domain.Users;
 using NetAuth.Infrastructure.Authentication;
 using NetAuth.Infrastructure.Common;
 using NetAuth.Infrastructure.Cryptography;
+using NetAuth.Infrastructure.Interceptors;
 using NetAuth.Infrastructure.Repositories;
 
 namespace NetAuth.Infrastructure;
@@ -17,10 +19,15 @@ public static class InfrastructureDiModule
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // Add DbContext
-        services.AddDbContext<AppDbContext>(optionsBuilder =>
+        services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
+        services.AddScoped<ISaveChangesInterceptor, SoftDeletableEntityInterceptor>();
+
+        services.AddDbContext<AppDbContext>((serviceProvider, optionsBuilder) =>
             optionsBuilder
                 .UseNpgsql(configuration.GetConnectionString("Database"))
-                .UseSnakeCaseNamingConvention());
+                .UseSnakeCaseNamingConvention()
+                .AddInterceptors(serviceProvider.GetRequiredService<ISaveChangesInterceptor>())
+        );
 
         services.AddScoped<IUnitOfWork>(serviceProvider =>
             serviceProvider.GetRequiredService<AppDbContext>());
