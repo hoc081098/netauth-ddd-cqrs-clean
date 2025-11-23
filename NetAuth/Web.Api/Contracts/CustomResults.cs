@@ -85,7 +85,7 @@ public static class CustomResults
             };
         }
 
-        static Dictionary<string, object?>? GetErrors(DomainError error)
+        static IDictionary<string, object?>? GetErrors(DomainError error)
         {
             return error switch
             {

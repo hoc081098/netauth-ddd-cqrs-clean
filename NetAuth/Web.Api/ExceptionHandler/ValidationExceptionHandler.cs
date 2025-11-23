@@ -22,7 +22,7 @@ internal sealed class ValidationExceptionHandler(
             return false;
         }
 
-        logger.LogError(validationException, "An unhandled exception occurred");
+        logger.LogError(validationException, "Validation exception occurred");
 
         // Set status code of the response to 400 Bad Request
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
