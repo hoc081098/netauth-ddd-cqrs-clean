@@ -1,4 +1,4 @@
-using NetAuth.Web.Api.ExceptionHandler;
+using NetAuth.Web.Api.ExceptionHandlers;
 using NetAuth.Web.Api.Extensions;
 
 namespace NetAuth.Web.Api;

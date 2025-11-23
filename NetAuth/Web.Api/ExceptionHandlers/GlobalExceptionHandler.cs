@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics;
 
-namespace NetAuth.Web.Api.ExceptionHandler;
+namespace NetAuth.Web.Api.ExceptionHandlers;
 
 /// <summary>
 /// A global exception handler that catches all unhandled exceptions.

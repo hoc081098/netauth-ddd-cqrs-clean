@@ -2,7 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using NetAuth.Web.Api.Contracts;
 
-namespace NetAuth.Web.Api.ExceptionHandler;
+namespace NetAuth.Web.Api.ExceptionHandlers;
 
 /// <summary>
 /// An exception handler for handling FluentValidation's <see cref="ValidationException"/>.
