@@ -55,7 +55,7 @@ public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
             username: username,
             passwordHash: passwordHash);
 
-        user.AddDomainEvent(new UserCreatedDomainEvent(user));
+        user.AddDomainEvent(new UserCreatedDomainEvent(user.Id));
 
         return user;
     }

@@ -1,8 +1,10 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using NetAuth.Application;
 using NetAuth.Application.Abstractions.Authentication;
+using NetAuth.Domain.Users.DomainEvents;
 using NetAuth.Infrastructure;
 using NetAuth.Web.Api;
 using NetAuth.Web.Api.Extensions;
