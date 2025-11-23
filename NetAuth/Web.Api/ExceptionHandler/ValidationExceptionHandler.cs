@@ -27,6 +27,7 @@ internal sealed class ValidationExceptionHandler(
         // Set status code of the response to 400 Bad Request
         httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
 
+        // Create standardized problem details for the validation error
         var problemDetailsContext = new ProblemDetailsContext
         {
             HttpContext = httpContext,
