@@ -89,6 +89,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Adds exception handling middleware to the request pipeline
+app.UseExceptionHandler();
+
 // Map endpoints
 app.MapEndpoints();
 
