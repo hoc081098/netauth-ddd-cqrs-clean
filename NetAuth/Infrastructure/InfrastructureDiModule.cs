@@ -26,8 +26,7 @@ public static class InfrastructureDiModule
             optionsBuilder
                 .UseNpgsql(configuration.GetConnectionString("Database"))
                 .UseSnakeCaseNamingConvention()
-                .AddInterceptors(serviceProvider.GetRequiredService<ISaveChangesInterceptor>())
-        );
+                .AddInterceptors(serviceProvider.GetServices<ISaveChangesInterceptor>()));
 
         services.AddScoped<IUnitOfWork>(serviceProvider =>
             serviceProvider.GetRequiredService<AppDbContext>());
