@@ -31,7 +31,7 @@ internal sealed class GlobalExceptionHandler(
             ProblemDetails =
             {
                 Title = "General.ServerError",
-                Detail = "An unexpected error occurred while processing your request.",
+                Detail = "An unexpected error occurred.",
                 Status = StatusCodes.Status500InternalServerError,
                 Type = "https://datatracker.ietf.org/doc/html/rfc7231#section-6.6.1"
             }
