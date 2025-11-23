@@ -1,3 +1,4 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Ardalis.GuardClauses;
 using NetAuth.Application.Abstractions.Authentication;
@@ -14,7 +15,7 @@ internal sealed class UserIdentifierProvider(
     {
         var userIdClaim = httpContextAccessor.HttpContext
             ?.User
-            .FindFirstValue(ClaimTypes.NameIdentifier);
+            .FindFirstValue(JwtRegisteredClaimNames.Sub);
 
         Guard.Against.NullOrEmpty(userIdClaim);
 

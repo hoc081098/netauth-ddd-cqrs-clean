@@ -1,10 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
-using NetAuth;
 using NetAuth.Application;
+using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Infrastructure;
 using NetAuth.Web.Api;
 using NetAuth.Web.Api.Extensions;
@@ -94,23 +92,11 @@ app.UseAuthorization();
 // Map endpoints
 app.MapEndpoints();
 
-app.MapGet("/me", (ClaimsPrincipal user) =>
-    {
-        var id = user.FindFirstValue(ClaimTypes.NameIdentifier)!;
-        var email = user.FindFirstValue(JwtRegisteredClaimNames.Email)!;
-
-        return Results.Ok(new MeResponse(Guid.Parse(id), email));
-    })
+app.MapGet("/me", (IUserIdentifierProvider userIdentifierProvider) => new { userIdentifierProvider.UserId })
     .RequireAuthorization()
     .WithName("GetCurrentUser")
     .WithSummary("Get current authenticated user.")
     .WithDescription("Returns the details of the currently authenticated user.")
-    .Produces<MeResponse>()
     .Produces(StatusCodes.Status401Unauthorized);
 
 app.Run();
-
-namespace NetAuth
-{
-    public record MeResponse(Guid Id, string Email);
-}
