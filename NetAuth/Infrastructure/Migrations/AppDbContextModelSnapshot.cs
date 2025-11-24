@@ -53,9 +53,9 @@ namespace NetAuth.Infrastructure.Migrations
                         .HasColumnName("password_hash");
 
                     b.HasKey("Id")
-                        .HasName("pk_user");
+                        .HasName("pk_users");
 
-                    b.ToTable("user", (string)null);
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("NetAuth.Infrastructure.Outbox.OutboxMessage", b =>
@@ -89,15 +89,15 @@ namespace NetAuth.Infrastructure.Migrations
                         .HasColumnName("type");
 
                     b.HasKey("Id")
-                        .HasName("pk_outbox_message");
+                        .HasName("pk_outbox_messages");
 
-                    b.HasIndex(new[] { "OccurredOnUtc", "ProcessedOnUtc" }, "idx_outbox_messages_unprocessed")
-                        .HasDatabaseName("ix_outbox_message_occurred_on_utc_processed_on_utc")
+                    b.HasIndex("OccurredOnUtc", "ProcessedOnUtc")
+                        .HasDatabaseName("idx_outbox_messages_unprocessed")
                         .HasFilter("\"processed_on_utc\" IS NULL");
 
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex(new[] { "OccurredOnUtc", "ProcessedOnUtc" }, "idx_outbox_messages_unprocessed"), new[] { "Id", "Type", "Content" });
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("OccurredOnUtc", "ProcessedOnUtc"), new[] { "Id", "Type", "Content" });
 
-                    b.ToTable("outbox_message", (string)null);
+                    b.ToTable("outbox_messages", (string)null);
                 });
 
             modelBuilder.Entity("NetAuth.Domain.Users.User", b =>
@@ -120,11 +120,11 @@ namespace NetAuth.Infrastructure.Migrations
                                 .IsUnique()
                                 .HasDatabaseName("ux_user_email");
 
-                            b1.ToTable("user");
+                            b1.ToTable("users");
 
                             b1.WithOwner()
                                 .HasForeignKey("UserId")
-                                .HasConstraintName("fk_user_user_id");
+                                .HasConstraintName("fk_users_users_id");
                         });
 
                     b.OwnsOne("NetAuth.Domain.Users.Username", "Username", b1 =>
@@ -141,11 +141,11 @@ namespace NetAuth.Infrastructure.Migrations
 
                             b1.HasKey("UserId");
 
-                            b1.ToTable("user");
+                            b1.ToTable("users");
 
                             b1.WithOwner()
                                 .HasForeignKey("UserId")
-                                .HasConstraintName("fk_user_user_id");
+                                .HasConstraintName("fk_users_users_id");
                         });
 
                     b.Navigation("Email")

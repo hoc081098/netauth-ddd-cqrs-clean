@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using NetAuth.Application.Abstractions.Common;

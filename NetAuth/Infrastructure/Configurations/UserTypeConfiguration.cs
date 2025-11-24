@@ -1,5 +1,6 @@
 using System.Globalization;
 using EFCore.NamingConventions.Internal;
+using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NetAuth.Domain.Users;
@@ -10,9 +11,11 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.HasKey(user => user.Id);
-
         var snakeCaseNameRewriter = new SnakeCaseNameRewriter(CultureInfo.InvariantCulture);
+
+        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(User).Pluralize()));
+
+        builder.HasKey(user => user.Id);
 
         builder.OwnsOne(user => user.Email, emailBuilder =>
         {
