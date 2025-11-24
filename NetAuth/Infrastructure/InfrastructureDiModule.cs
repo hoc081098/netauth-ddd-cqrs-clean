@@ -12,6 +12,7 @@ using NetAuth.Infrastructure.Cryptography;
 using NetAuth.Infrastructure.Interceptors;
 using NetAuth.Infrastructure.Outbox;
 using NetAuth.Infrastructure.Repositories;
+using Npgsql;
 using Quartz;
 
 namespace NetAuth.Infrastructure;
@@ -78,6 +79,12 @@ public static class InfrastructureDiModule
         });
         services.ConfigureOptions<OutboxMessagesProcessorJobSetup>();
 
+        services.AddSingleton(_ =>
+        {
+            var connectionString = configuration.GetConnectionString("Database");
+            return new NpgsqlDataSourceBuilder(connectionString).Build();
+        });
+        
         return services;
     }
 }
