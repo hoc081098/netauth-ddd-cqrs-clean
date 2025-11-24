@@ -20,7 +20,7 @@ public static class InfrastructureDiModule
 {
     private const string QuartzSchedulerId = "NetAuth.Scheduler.Core";
     private const string QuartzSchedulerName = "NetAuth.Quartz.AspNetCore.Scheduler";
-    
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // Add DbContext
