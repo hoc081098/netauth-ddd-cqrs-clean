@@ -18,6 +18,9 @@ namespace NetAuth.Infrastructure;
 
 public static class InfrastructureDiModule
 {
+    private const string QuartzSchedulerId = "NetAuth.Scheduler.Core";
+    private const string QuartzSchedulerName = "NetAuth.Quartz.AspNetCore.Scheduler";
+    
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // Add DbContext
@@ -64,9 +67,8 @@ public static class InfrastructureDiModule
         services.AddQuartz(options =>
         {
             // base Quartz scheduler, job and trigger configuration
-            var schedulerId = Guid.CreateVersion7();
-            options.SchedulerId = $"id-{schedulerId}";
-            options.SchedulerName = $"name-{schedulerId}";
+            options.SchedulerId = QuartzSchedulerId;
+            options.SchedulerName = QuartzSchedulerName;
         });
         // ASP.NET Core hosting
         services.AddQuartzHostedService(options =>
