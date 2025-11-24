@@ -10,7 +10,9 @@ using NetAuth.Infrastructure.Authentication;
 using NetAuth.Infrastructure.Common;
 using NetAuth.Infrastructure.Cryptography;
 using NetAuth.Infrastructure.Interceptors;
+using NetAuth.Infrastructure.Outbox;
 using NetAuth.Infrastructure.Repositories;
+using Quartz;
 
 namespace NetAuth.Infrastructure;
 
@@ -55,6 +57,24 @@ public static class InfrastructureDiModule
 
         // Common
         services.AddSingleton<IClock, SystemClock>();
+
+        // Add Quartz.NET services
+        // Bind section "OutboxSettings" → OutboxSettings
+        services.Configure<OutboxSettings>(configuration.GetSection(OutboxSettings.SectionKey));
+        services.AddQuartz(options =>
+        {
+            // base Quartz scheduler, job and trigger configuration
+            var schedulerId = Guid.CreateVersion7();
+            options.SchedulerId = $"id-{schedulerId}";
+            options.SchedulerName = $"name-{schedulerId}";
+        });
+        // ASP.NET Core hosting
+        services.AddQuartzHostedService(options =>
+        {
+            // When shutting down we want jobs to complete gracefully
+            options.WaitForJobsToComplete = true;
+        });
+        services.ConfigureOptions<OutboxMessagesProcessorJobSetup>();
 
         return services;
     }
