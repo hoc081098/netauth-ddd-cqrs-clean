@@ -27,10 +27,15 @@ public static class InfrastructureDiModule
         // Add DbContext
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         services.AddScoped<ISaveChangesInterceptor, SoftDeletableEntityInterceptor>();
-
+        services.AddSingleton(_ =>
+        {
+            var connectionString = configuration.GetConnectionString("Database");
+            return new NpgsqlDataSourceBuilder(connectionString).Build();
+        });
+        // https://www.npgsql.org/efcore/release-notes/7.0.html#support-for-dbdatasource
         services.AddDbContext<AppDbContext>((serviceProvider, optionsBuilder) =>
             optionsBuilder
-                .UseNpgsql(configuration.GetConnectionString("Database"))
+                .UseNpgsql(serviceProvider.GetRequiredService<NpgsqlDataSource>())
                 .UseSnakeCaseNamingConvention()
                 .AddInterceptors(serviceProvider.GetServices<ISaveChangesInterceptor>()));
 
@@ -79,12 +84,8 @@ public static class InfrastructureDiModule
         });
         services.ConfigureOptions<OutboxMessagesProcessorJobSetup>();
         services.AddScoped<OutboxProcessor>();
-        services.AddSingleton(_ =>
-        {
-            var connectionString = configuration.GetConnectionString("Database");
-            return new NpgsqlDataSourceBuilder(connectionString).Build();
-        });
-        
+
+
         return services;
     }
 }
