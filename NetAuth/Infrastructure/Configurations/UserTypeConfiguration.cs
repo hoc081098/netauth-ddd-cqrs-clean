@@ -58,11 +58,11 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
             .UsingEntity<RoleUser>(roleUserBuilder =>
             {
                 roleUserBuilder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(RoleUser).Pluralize()));
-                
+
                 roleUserBuilder.HasKey(roleUser => new { roleUser.UserId, roleUser.RoleId });
-                
+
                 roleUserBuilder.Property(roleUser => roleUser.UserId);
-                
+
                 roleUserBuilder.Property(roleUser => roleUser.RoleId)
                     .HasConversion(
                         id => id.Value,
@@ -77,5 +77,8 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
                     .WithMany()
                     .HasForeignKey(roleUser => roleUser.RoleId);
             });
+            
+            // Configure the navigation property to use field access
+            builder.Navigation(u => u.Roles).HasField("_roles").UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }
