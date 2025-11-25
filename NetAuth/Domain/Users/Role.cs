@@ -23,6 +23,5 @@ public sealed class Role : Entity<RoleId>
 
     public string Name { get; } = null!;
 
-    public ICollection<User> Users { get; } = [];
     public ICollection<Permission> Permissions { get; } = [];
 }

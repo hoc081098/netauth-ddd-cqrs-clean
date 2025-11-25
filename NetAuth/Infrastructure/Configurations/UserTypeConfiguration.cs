@@ -52,5 +52,30 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
 
         // Query filter to exclude soft-deleted users for any queries targeting the User entity
         builder.HasQueryFilter(user => !user.IsDeleted);
+
+        builder.HasMany(user => user.Roles)
+            .WithMany()
+            .UsingEntity<RoleUser>(roleUserBuilder =>
+            {
+                roleUserBuilder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(RoleUser).Pluralize()));
+                
+                roleUserBuilder.HasKey(roleUser => new { roleUser.UserId, roleUser.RoleId });
+                
+                roleUserBuilder.Property(roleUser => roleUser.UserId);
+                
+                roleUserBuilder.Property(roleUser => roleUser.RoleId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new RoleId(value)
+                    );
+
+                roleUserBuilder.HasOne<User>()
+                    .WithMany()
+                    .HasForeignKey(roleUser => roleUser.UserId);
+
+                roleUserBuilder.HasOne<Role>()
+                    .WithMany()
+                    .HasForeignKey(roleUser => roleUser.RoleId);
+            });
     }
 }

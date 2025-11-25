@@ -1,5 +1,6 @@
 using System.Globalization;
 using EFCore.NamingConventions.Internal;
+using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NetAuth.Domain.Users;
@@ -12,7 +13,7 @@ public class PermissionTypeConfiguration : IEntityTypeConfiguration<Permission>
     {
         var snakeCaseNameRewriter = new SnakeCaseNameRewriter(CultureInfo.InvariantCulture);
 
-        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(Permission)));
+        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(Permission).Pluralize()));
 
         builder.HasKey(r => r.Id);
 

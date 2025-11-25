@@ -1,5 +1,6 @@
 using System.Globalization;
 using EFCore.NamingConventions.Internal;
+using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NetAuth.Domain.Users;
@@ -11,7 +12,7 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
     public void Configure(EntityTypeBuilder<Role> builder)
     {
         var snakeCaseNameRewriter = new SnakeCaseNameRewriter(CultureInfo.InvariantCulture);
-        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(Role)));
+        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(Role).Pluralize()));
 
         builder.HasKey(r => r.Id);
 
@@ -25,6 +26,38 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
         builder.Property(r => r.Name)
             .HasMaxLength(50)
             .IsRequired();
+
+        builder.HasMany(role => role.Permissions)
+            .WithMany()
+            .UsingEntity<RolePermission>(rolePermissionBuilder =>
+            {
+                rolePermissionBuilder.ToTable(
+                    snakeCaseNameRewriter.RewriteName(nameof(RolePermission).Pluralize()));
+
+                rolePermissionBuilder.HasKey(rolePermission => new
+                {
+                    rolePermission.RoleId,
+                    rolePermission.PermissionId
+                });
+
+                rolePermissionBuilder.Property(rolePermission => rolePermission.RoleId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new RoleId(value));
+
+                rolePermissionBuilder.Property(rolePermission => rolePermission.PermissionId)
+                    .HasConversion(
+                        id => id.Value,
+                        value => new PermissionId(value));
+
+                rolePermissionBuilder.HasOne<Role>()
+                    .WithMany()
+                    .HasForeignKey(rolePermission => rolePermission.RoleId);
+
+                rolePermissionBuilder.HasOne<Permission>()
+                    .WithMany()
+                    .HasForeignKey(rolePermission => rolePermission.PermissionId);
+            });
 
         // Add predefined roles
         builder.HasData(Role.Administrator, Role.Member);

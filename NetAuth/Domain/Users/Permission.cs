@@ -22,6 +22,4 @@ public sealed class Permission : Entity<PermissionId>
     private Permission(PermissionId id, string code) : base(id) => Code = code;
 
     public string Code { get; } = null!;
-    
-    public ICollection<Role> Roles { get; } = [];
 }
