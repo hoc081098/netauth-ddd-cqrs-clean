@@ -3,10 +3,10 @@ using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Application.Users.Register;
 
-internal sealed class UserRegisteredDomainEventHandler(
-    ILogger<UserRegisteredDomainEventHandler> logger) : INotificationHandler<UserRegisteredDomainEvent>
+internal sealed class UserCreatedDomainEventHandler(
+    ILogger<UserCreatedDomainEventHandler> logger) : INotificationHandler<UserCreatedDomainEvent>
 {
-    public Task Handle(UserRegisteredDomainEvent notification,
+    public Task Handle(UserCreatedDomainEvent notification,
         CancellationToken cancellationToken)
     {
         // TODO: Send welcome email or perform other actions upon user registration.
