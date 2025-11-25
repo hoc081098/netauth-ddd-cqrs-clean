@@ -2,8 +2,8 @@ namespace NetAuth.Domain.Users;
 
 public sealed class Role
 {
-    public static readonly Role Administrator = new("Administrator");
-    public static readonly Role Member = new("Member");
+    public static readonly Role Administrator = new(name: "Administrator");
+    public static readonly Role Member = new(name: "Member");
 
     // ReSharper disable once UnusedMember.Local
     /// <remarks>Required by EF Core.</remarks>
