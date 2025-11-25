@@ -85,7 +85,6 @@ public static class InfrastructureDiModule
         services.ConfigureOptions<OutboxMessagesProcessorJobSetup>();
         services.AddScoped<OutboxProcessor>();
 
-
         return services;
     }
 }
