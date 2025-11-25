@@ -14,12 +14,20 @@ public class PermissionTypeConfiguration : IEntityTypeConfiguration<Permission>
 
         builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(Permission)));
 
-        builder.HasKey(permission => permission.Code);
+        builder.HasKey(r => r.Id);
+
+        builder.Property(r => r.Id)
+            .HasConversion(
+                id => id.Value,
+                value => new PermissionId(value)
+            )
+            .ValueGeneratedNever();
 
         builder.Property(permission => permission.Code)
             .HasMaxLength(100)
             .IsRequired();
 
+        // Add predefined permissions
         builder.HasData(Permission.GetUsers, Permission.ModifyUser);
     }
 }

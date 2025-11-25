@@ -1,14 +1,27 @@
+using NetAuth.Domain.Core.Primitives;
+
 namespace NetAuth.Domain.Users;
 
-public sealed class Permission
+public record struct PermissionId(int Value)
 {
-    public static readonly Permission GetUsers = new(code: "users:read");
-    public static readonly Permission ModifyUser = new(code: "users:update");
+    internal static readonly PermissionId GetUsersId = new(1);
+    internal static readonly PermissionId ModifyUserId = new(2);
+}
 
-    public Permission(string code)
+public sealed class Permission : Entity<PermissionId>
+{
+    public static readonly Permission GetUsers = new(PermissionId.GetUsersId, "users:read");
+    public static readonly Permission ModifyUser = new(PermissionId.ModifyUserId, "users:update");
+
+    // ReSharper disable once UnusedMember.Local
+    /// <remarks>Required by EF Core.</remarks>
+    private Permission()
     {
-        Code = code;
     }
 
-    public string Code { get; }
+    private Permission(PermissionId id, string code) : base(id) => Code = code;
+
+    public string Code { get; } = null!;
+    
+    public ICollection<Role> Roles { get; } = [];
 }

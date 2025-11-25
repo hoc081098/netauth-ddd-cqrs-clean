@@ -22,4 +22,7 @@ public sealed class Role : Entity<RoleId>
     private Role(RoleId id, string name) : base(id) => Name = name;
 
     public string Name { get; } = null!;
+
+    public ICollection<User> Users { get; } = [];
+    public ICollection<Permission> Permissions { get; } = [];
 }

@@ -26,7 +26,7 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
             .HasMaxLength(50)
             .IsRequired();
 
-        // Add seed data
+        // Add predefined roles
         builder.HasData(Role.Administrator, Role.Member);
     }
 }
