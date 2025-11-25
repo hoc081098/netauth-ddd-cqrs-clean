@@ -2,7 +2,14 @@ using NetAuth.Domain.Core.Events;
 
 namespace NetAuth.Domain.Core.Primitives;
 
-public abstract class AggregateRoot : Entity
+public interface IAggregateRoot
+{
+    IReadOnlyList<IDomainEvent> DomainEvents { get; }
+    void ClearDomainEvents();
+}
+
+public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot
+    where TId : IEquatable<TId>
 {
     /// <remarks>
     /// Required by EF Core.
@@ -11,7 +18,7 @@ public abstract class AggregateRoot : Entity
     {
     }
 
-    protected AggregateRoot(Guid id)
+    protected AggregateRoot(TId id)
         : base(id)
     {
     }

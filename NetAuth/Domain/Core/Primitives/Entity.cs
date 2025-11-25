@@ -1,8 +1,9 @@
 namespace NetAuth.Domain.Core.Primitives;
 
-public abstract class Entity : IEquatable<Entity>
+public abstract class Entity<TId> : IEquatable<Entity<TId>>
+    where TId : IEquatable<TId>
 {
-    public Guid Id { get; init; }
+    public TId Id { get; } = default!;
 
     /// <remarks>
     /// Required by EF Core.
@@ -11,7 +12,7 @@ public abstract class Entity : IEquatable<Entity>
     {
     }
 
-    protected Entity(Guid id)
+    protected Entity(TId id)
         : this() =>
         Id = id;
 
@@ -19,22 +20,26 @@ public abstract class Entity : IEquatable<Entity>
     {
         if (obj is null) return false;
         if (ReferenceEquals(this, obj)) return true;
-        return obj.GetType() == GetType() && Equals((Entity)obj);
+        return obj.GetType() == GetType() && Equals((Entity<TId>)obj);
     }
 
     public override int GetHashCode() => Id.GetHashCode();
 
-    public bool Equals(Entity? other)
+    public bool Equals(Entity<TId>? other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
 
         // Transient entities (Id empty) are never equal
-        if (Id == Guid.Empty || other.Id == Guid.Empty) return false;
-        return Id == other.Id;
+        if (Id is Guid id && other.Id is Guid otherId)
+        {
+            if (id == Guid.Empty || otherId == Guid.Empty) return false;
+        }
+
+        return Id.Equals(other.Id);
     }
 
-    public static bool operator ==(Entity? left, Entity? right) => Equals(left, right);
+    public static bool operator ==(Entity<TId>? left, Entity<TId>? right) => Equals(left, right);
 
-    public static bool operator !=(Entity? left, Entity? right) => !(left == right);
+    public static bool operator !=(Entity<TId>? left, Entity<TId>? right) => !(left == right);
 }

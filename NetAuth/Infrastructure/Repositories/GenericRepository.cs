@@ -3,7 +3,9 @@ using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Infrastructure.Repositories;
 
-internal abstract class GenericRepository<TEntity> where TEntity : Entity
+internal abstract class GenericRepository<TId, TEntity>
+    where TEntity : Entity<TId>
+    where TId : IEquatable<TId>
 {
     protected GenericRepository(AppDbContext dbContext)
     {
@@ -13,10 +15,10 @@ internal abstract class GenericRepository<TEntity> where TEntity : Entity
     protected AppDbContext DbContext { get; }
     protected DbSet<TEntity> EntitySet => DbContext.Set<TEntity>();
 
-    public Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+    public Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default) =>
         EntitySet
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == id, cancellationToken: cancellationToken);
+            .FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken: cancellationToken);
 
     public ValueTask<TEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default) =>
         EntitySet.FindAsync([id], cancellationToken);

@@ -6,7 +6,7 @@ using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Domain.Users;
 
-public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
+public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletableEntity
 {
     private string _passwordHash = string.Empty;
     private readonly List<Role> _roles = [];

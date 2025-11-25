@@ -37,7 +37,7 @@ public sealed class AppDbContext(
     {
         var utcNow = clock.UtcNow;
 
-        var outboxMessages = ChangeTracker.Entries<AggregateRoot>()
+        var outboxMessages = ChangeTracker.Entries<IAggregateRoot>()
             .Select(entry => entry.Entity)
             .SelectMany(entity =>
             {
@@ -55,7 +55,7 @@ public sealed class AppDbContext(
                 Error = null
             })
             .ToArray();
-        
+
         Set<OutboxMessage>().AddRange(outboxMessages);
     }
 }

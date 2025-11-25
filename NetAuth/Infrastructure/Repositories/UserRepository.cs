@@ -4,7 +4,7 @@ using NetAuth.Domain.Users;
 namespace NetAuth.Infrastructure.Repositories;
 
 internal sealed class UserRepository(AppDbContext dbContext) :
-    GenericRepository<User>(dbContext),
+    GenericRepository<Guid, User>(dbContext),
     IUserRepository
 {
     public Task<User?> GetByEmailAsync(Email email, CancellationToken cancellationToken = default) =>

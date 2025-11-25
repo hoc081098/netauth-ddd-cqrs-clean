@@ -1,9 +1,17 @@
+using NetAuth.Domain.Core.Primitives;
+
 namespace NetAuth.Domain.Users;
 
-public sealed class Role
+public record struct RoleId(int Value)
 {
-    public static readonly Role Administrator = new(name: "Administrator");
-    public static readonly Role Member = new(name: "Member");
+    internal static readonly RoleId AdministratorId = new(1);
+    internal static readonly RoleId MemberId = new(2);
+}
+
+public sealed class Role : Entity<RoleId>
+{
+    public static readonly Role Administrator = new(RoleId.AdministratorId, "Administrator");
+    public static readonly Role Member = new(RoleId.MemberId, "Member");
 
     // ReSharper disable once UnusedMember.Local
     /// <remarks>Required by EF Core.</remarks>
@@ -11,7 +19,7 @@ public sealed class Role
     {
     }
 
-    private Role(string name) => Name = name;
+    private Role(RoleId id, string name) : base(id) => Name = name;
 
     public string Name { get; } = null!;
 }
