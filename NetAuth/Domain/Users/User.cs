@@ -9,6 +9,7 @@ namespace NetAuth.Domain.Users;
 public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
 {
     private string _passwordHash = string.Empty;
+    private readonly List<Role> _roles = [];
 
     public Email Email { get; } = null!;
     public Username Username { get; } = null!;
@@ -30,6 +31,8 @@ public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
         Username = username;
         _passwordHash = passwordHash;
     }
+
+    public IReadOnlyCollection<Role> Roles => [.._roles];
 
     /// <inheritdoc />
     public DateTimeOffset CreatedOnUtc { get; }
@@ -55,6 +58,7 @@ public sealed class User : AggregateRoot, IAuditableEntity, ISoftDeletableEntity
             username: username,
             passwordHash: passwordHash);
 
+        user._roles.Add(Role.Member);
         user.AddDomainEvent(new UserCreatedDomainEvent(user.Id));
 
         return user;
