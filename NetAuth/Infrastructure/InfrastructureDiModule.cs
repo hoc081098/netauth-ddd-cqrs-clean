@@ -78,7 +78,7 @@ public static class InfrastructureDiModule
             options.WaitForJobsToComplete = true;
         });
         services.ConfigureOptions<OutboxMessagesProcessorJobSetup>();
-
+        services.AddScoped<OutboxProcessor>();
         services.AddSingleton(_ =>
         {
             var connectionString = configuration.GetConnectionString("Database");

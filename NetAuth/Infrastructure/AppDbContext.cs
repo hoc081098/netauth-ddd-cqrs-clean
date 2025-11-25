@@ -48,7 +48,7 @@ public sealed class AppDbContext(
             .Select(domainEvent => new OutboxMessage
             {
                 Id = Guid.CreateVersion7(),
-                Type = domainEvent.GetType().Name,
+                Type = domainEvent.GetType().FullName!,
                 Content = JsonSerializer.Serialize(domainEvent, domainEvent.GetType()),
                 OccurredOnUtc = utcNow,
                 ProcessedOnUtc = null,
