@@ -55,30 +55,32 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasMany(user => user.Roles)
             .WithMany()
-            .UsingEntity<RoleUser>(roleUserBuilder =>
-            {
-                roleUserBuilder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(RoleUser).Pluralize()));
+            .UsingEntity<RoleUser>(
+                configureRight: roleUserBuilder =>
+                    roleUserBuilder.HasOne<Role>()
+                        .WithMany()
+                        .HasForeignKey(roleUser => roleUser.RoleId),
+                configureLeft: roleUserBuilder =>
+                    roleUserBuilder.HasOne<User>()
+                        .WithMany()
+                        .HasForeignKey(roleUser => roleUser.UserId),
+                configureJoinEntityType: roleUserBuilder =>
+                {
+                    roleUserBuilder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(RoleUser).Pluralize()));
 
-                roleUserBuilder.HasKey(roleUser => new { roleUser.UserId, roleUser.RoleId });
+                    roleUserBuilder.HasKey(roleUser => new { roleUser.UserId, roleUser.RoleId });
 
-                roleUserBuilder.Property(roleUser => roleUser.UserId);
+                    roleUserBuilder.Property(roleUser => roleUser.UserId);
 
-                roleUserBuilder.Property(roleUser => roleUser.RoleId)
-                    .HasConversion(
-                        id => id.Value,
-                        value => new RoleId(value)
-                    );
+                    roleUserBuilder.Property(roleUser => roleUser.RoleId)
+                        .HasConversion(
+                            id => id.Value,
+                            value => new RoleId(value)
+                        );
+                }
+            );
 
-                roleUserBuilder.HasOne<User>()
-                    .WithMany()
-                    .HasForeignKey(roleUser => roleUser.UserId);
-
-                roleUserBuilder.HasOne<Role>()
-                    .WithMany()
-                    .HasForeignKey(roleUser => roleUser.RoleId);
-            });
-            
-            // Configure the navigation property to use field access
-            builder.Navigation(u => u.Roles).HasField("_roles").UsePropertyAccessMode(PropertyAccessMode.Field);
+        // Configure the navigation property to use field access
+        builder.Navigation(u => u.Roles).UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

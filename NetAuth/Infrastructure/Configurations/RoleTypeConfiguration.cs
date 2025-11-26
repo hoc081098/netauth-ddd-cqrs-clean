@@ -29,35 +29,37 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
 
         builder.HasMany(role => role.Permissions)
             .WithMany()
-            .UsingEntity<RolePermission>(rolePermissionBuilder =>
-            {
-                rolePermissionBuilder.ToTable(
-                    snakeCaseNameRewriter.RewriteName(nameof(RolePermission).Pluralize()));
-
-                rolePermissionBuilder.HasKey(rolePermission => new
+            .UsingEntity<RolePermission>(
+                configureRight: rolePermissionBuilder =>
+                    rolePermissionBuilder.HasOne<Permission>()
+                        .WithMany()
+                        .HasForeignKey(rolePermission => rolePermission.PermissionId),
+                configureLeft: rolePermissionBuilder =>
+                    rolePermissionBuilder.HasOne<Role>()
+                        .WithMany()
+                        .HasForeignKey(rolePermission => rolePermission.RoleId),
+                configureJoinEntityType: rolePermissionBuilder =>
                 {
-                    rolePermission.RoleId,
-                    rolePermission.PermissionId
-                });
+                    rolePermissionBuilder.ToTable(
+                        snakeCaseNameRewriter.RewriteName(nameof(RolePermission).Pluralize()));
 
-                rolePermissionBuilder.Property(rolePermission => rolePermission.RoleId)
-                    .HasConversion(
-                        id => id.Value,
-                        value => new RoleId(value));
+                    rolePermissionBuilder.HasKey(rolePermission => new
+                    {
+                        rolePermission.RoleId,
+                        rolePermission.PermissionId
+                    });
 
-                rolePermissionBuilder.Property(rolePermission => rolePermission.PermissionId)
-                    .HasConversion(
-                        id => id.Value,
-                        value => new PermissionId(value));
+                    rolePermissionBuilder.Property(rolePermission => rolePermission.RoleId)
+                        .HasConversion(
+                            id => id.Value,
+                            value => new RoleId(value));
 
-                rolePermissionBuilder.HasOne<Role>()
-                    .WithMany()
-                    .HasForeignKey(rolePermission => rolePermission.RoleId);
-
-                rolePermissionBuilder.HasOne<Permission>()
-                    .WithMany()
-                    .HasForeignKey(rolePermission => rolePermission.PermissionId);
-            });
+                    rolePermissionBuilder.Property(rolePermission => rolePermission.PermissionId)
+                        .HasConversion(
+                            id => id.Value,
+                            value => new PermissionId(value));
+                }
+            );
 
         // Add predefined roles
         builder.HasData(Role.Administrator, Role.Member);
