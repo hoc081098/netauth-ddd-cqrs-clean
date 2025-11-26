@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Dapper;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -17,6 +19,11 @@ internal sealed class OutboxProcessor(
     IOutboxMessageResolver outboxMessageResolver
 )
 {
+    private static readonly JsonSerializerOptions SnakeCaseNamingJsonSerializerOptions = new JsonSerializerOptions
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+    };
+
     private const int MaxParallelism = 5;
 
     public async Task Execute()
@@ -66,11 +73,11 @@ internal sealed class OutboxProcessor(
 
         // 3. Mark messages as processed
         stepStopwatch.Restart();
-        if (!updateQueue.IsEmpty)
+        var rowsAffected = updateQueue switch
         {
-            await MarkMessagesAsProcessed(connection, transaction, updateQueue);
-        }
-
+            { IsEmpty: false } => await MarkMessagesAsProcessed(connection, transaction, updateQueue),
+            _ => 0
+        };
         var updateTime = stepStopwatch.ElapsedMilliseconds;
 
         // 4. Commit transaction
@@ -83,44 +90,45 @@ internal sealed class OutboxProcessor(
             queryTime: queryTime,
             publishTime: publishTime,
             updateTime: updateTime,
-            messageCount: messages.Count
+            messageCount: messages.Count,
+            rowsAffected: rowsAffected
         );
     }
 
-    private static async Task MarkMessagesAsProcessed(NpgsqlConnection connection,
+    private static async Task<int> MarkMessagesAsProcessed(
+        NpgsqlConnection connection,
         NpgsqlTransaction transaction,
         IReadOnlyCollection<OutboxUpdate> updates)
     {
+        // Serialize all updates to JSON array once
+        var updatesJson = JsonSerializer.Serialize(updates, SnakeCaseNamingJsonSerializerOptions);
+
         // Create a single UPDATE statement using a VALUES list for efficiency
 
-        var tuples = string.Join(
-            ",",
-            updates.Select((_, index) => $"(@Id{index}, @ProcessedOnUtc{index}, @Error{index})")
-        );
-        var updateSql =
-            $"""
-             UPDATE outbox_messages
-             SET processed_on_utc = v.processed_on_utc,
-                 error = v.error,
-                 attempt_count = CASE
-                    WHEN v.error IS NULL THEN outbox_messages.attempt_count
-                    ELSE outbox_messages.attempt_count + 1
-                 END
-             FROM (VALUES {tuples}) AS v(id, processed_on_utc, error)
-             WHERE outbox_messages.id = v.id::uuid
-             """;
-
-        var parameters = new DynamicParameters();
-        foreach (var (i, update) in updates.Index())
-        {
-            parameters.Add($"Id{i}", update.Id);
-            parameters.Add($"ProcessedOnUtc{i}", update.ProcessedOnUtc);
-            parameters.Add($"Error{i}", update.Error);
-        }
-
-        await connection.ExecuteAsync(
-            sql: updateSql,
-            param: parameters,
+        return await connection.ExecuteAsync(
+            sql:
+            """
+            WITH
+                data AS (
+                    SELECT
+                        id,
+                        processed_on_utc,
+                        error
+                    FROM
+                        json_to_recordset(@updatesJson::json) AS x (id UUID, processed_on_utc timestamptz, error text)
+                )
+            UPDATE outbox_messages AS m
+            SET
+                processed_on_utc = data.processed_on_utc,
+                error = data.error,
+                attempt_count = CASE
+                    WHEN data.error IS NULL THEN m.attempt_count
+                    ELSE m.attempt_count + 1
+                END
+            FROM data
+            WHERE m.id = data.id;
+            """,
+            param: new { updatesJson },
             transaction: transaction
         );
     }
@@ -161,13 +169,13 @@ internal sealed class OutboxProcessor(
                 },
                 Fail: error =>
                 {
-                    // Do not retry. Log the error and mark the message as failed.
+                    // Keep for retry until MaxAttempts; record the error.
                     OutboxMessagesProcessorLoggers.LogError(logger, error);
 
                     updateQueue.Enqueue(new OutboxUpdate
                     {
                         Id = message.Id,
-                        ProcessedOnUtc = clock.UtcNow,
+                        ProcessedOnUtc = null,
                         Error = error.ToString()
                     });
 
@@ -209,9 +217,16 @@ internal static partial class OutboxMessagesProcessorLoggers
 
     [LoggerMessage(Level = LogLevel.Information,
         Message =
-            "Outbox processing completed. Total time: {TotalTime}ms, Query time: {QueryTime}ms, Publish time: {PublishTime}ms, Update time: {UpdateTime}ms, Messages processed: {MessageCount}")]
-    internal static partial void LogProcessingPerformance(ILogger logger, long totalTime, long queryTime,
-        long publishTime, long updateTime, int messageCount);
+            "Outbox processing completed. Total time: {TotalTime}ms, Query time: {QueryTime}ms," +
+            " Publish time: {PublishTime}ms, Update time: {UpdateTime}ms, Messages processed: {MessageCount}," +
+            " Rows affected: {RowsAffected}")]
+    internal static partial void LogProcessingPerformance(ILogger logger,
+        long totalTime,
+        long queryTime,
+        long publishTime,
+        long updateTime,
+        int messageCount,
+        int rowsAffected);
 
     [LoggerMessage(Level = LogLevel.Information,
         Message = "No outbox messages to process.")]
