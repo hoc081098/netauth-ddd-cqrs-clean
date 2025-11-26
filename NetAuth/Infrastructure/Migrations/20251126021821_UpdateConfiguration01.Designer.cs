@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetAuth.Infrastructure;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NetAuth.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251126021821_UpdateConfiguration01")]
+    partial class UpdateConfiguration01
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -93,12 +96,12 @@ namespace NetAuth.Infrastructure.Migrations
                         .HasColumnName("role_id");
 
                     b.HasKey("PermissionId", "RoleId")
-                        .HasName("pk_role_permission");
+                        .HasName("pk_role_permissions");
 
                     b.HasIndex("RoleId")
-                        .HasDatabaseName("ix_role_permission_role_id");
+                        .HasDatabaseName("ix_role_permissions_role_id");
 
-                    b.ToTable("role_permission", (string)null);
+                    b.ToTable("role_permissions", (string)null);
                 });
 
             modelBuilder.Entity("NetAuth.Domain.Users.RoleUser", b =>
@@ -112,12 +115,12 @@ namespace NetAuth.Infrastructure.Migrations
                         .HasColumnName("user_id");
 
                     b.HasKey("RoleId", "UserId")
-                        .HasName("pk_role_user");
+                        .HasName("pk_role_users");
 
                     b.HasIndex("UserId")
-                        .HasDatabaseName("ix_role_user_user_id");
+                        .HasDatabaseName("ix_role_users_user_id");
 
-                    b.ToTable("role_user", (string)null);
+                    b.ToTable("role_users", (string)null);
                 });
 
             modelBuilder.Entity("NetAuth.Domain.Users.User", b =>
@@ -205,14 +208,14 @@ namespace NetAuth.Infrastructure.Migrations
                         .HasForeignKey("PermissionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_permission_permissions_permission_id");
+                        .HasConstraintName("fk_role_permissions_permissions_permission_id");
 
                     b.HasOne("NetAuth.Domain.Users.Role", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_permission_roles_role_id");
+                        .HasConstraintName("fk_role_permissions_roles_role_id");
                 });
 
             modelBuilder.Entity("NetAuth.Domain.Users.RoleUser", b =>
@@ -222,14 +225,14 @@ namespace NetAuth.Infrastructure.Migrations
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_user_roles_role_id");
+                        .HasConstraintName("fk_role_users_roles_role_id");
 
                     b.HasOne("NetAuth.Domain.Users.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
-                        .HasConstraintName("fk_role_user_users_user_id");
+                        .HasConstraintName("fk_role_users_users_user_id");
                 });
 
             modelBuilder.Entity("NetAuth.Domain.Users.User", b =>

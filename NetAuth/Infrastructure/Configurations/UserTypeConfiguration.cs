@@ -66,10 +66,6 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
                         .HasForeignKey(roleUser => roleUser.UserId),
                 configureJoinEntityType: roleUserBuilder =>
                 {
-                    roleUserBuilder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(RoleUser).Pluralize()));
-
-                    roleUserBuilder.HasKey(roleUser => new { roleUser.UserId, roleUser.RoleId });
-
                     roleUserBuilder.Property(roleUser => roleUser.UserId);
 
                     roleUserBuilder.Property(roleUser => roleUser.RoleId)

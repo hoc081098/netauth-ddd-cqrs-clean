@@ -40,15 +40,6 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
                         .HasForeignKey(rolePermission => rolePermission.RoleId),
                 configureJoinEntityType: rolePermissionBuilder =>
                 {
-                    rolePermissionBuilder.ToTable(
-                        snakeCaseNameRewriter.RewriteName(nameof(RolePermission).Pluralize()));
-
-                    rolePermissionBuilder.HasKey(rolePermission => new
-                    {
-                        rolePermission.RoleId,
-                        rolePermission.PermissionId
-                    });
-
                     rolePermissionBuilder.Property(rolePermission => rolePermission.RoleId)
                         .HasConversion(
                             id => id.Value,
