@@ -39,7 +39,7 @@ internal sealed class OutboxMessageTypeConfiguration : IEntityTypeConfiguration<
 
         var processedOnUtcColumnName = snakeCaseNameRewriter.RewriteName(nameof(OutboxMessage.ProcessedOnUtc));
         builder
-            .HasIndex(o => new { o.ProcessedOnUtc, o.AttemptCount, o.OccurredOnUtc })
+            .HasIndex(o => new { o.OccurredOnUtc })
             .HasDatabaseName("idx_outbox_messages_unprocessed")
             .HasFilter($"\"{processedOnUtcColumnName}\" IS NULL");
     }
