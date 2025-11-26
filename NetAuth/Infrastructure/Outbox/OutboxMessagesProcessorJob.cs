@@ -10,14 +10,20 @@ internal sealed class OutboxMessagesProcessorJob(
 {
     public async Task Execute(IJobExecutionContext context)
     {
+        var cancellationToken = context.CancellationToken;
+        OutboxMessagesProcessorLoggers.LogStarting(logger);
+
+        using var scope = scopeFactory.CreateScope();
+        var outboxProcessor = scope.ServiceProvider.GetRequiredService<OutboxProcessor>();
+
         try
         {
-            OutboxMessagesProcessorLoggers.LogStarting(logger);
-
-            using var scope = scopeFactory.CreateScope();
-            var outboxProcessor = scope.ServiceProvider.GetRequiredService<OutboxProcessor>();
-
-            await outboxProcessor.Execute();
+            await outboxProcessor.Execute(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            OutboxMessagesProcessorLoggers.LogCancelled(logger);
+            throw;
         }
         catch (Exception ex)
         {

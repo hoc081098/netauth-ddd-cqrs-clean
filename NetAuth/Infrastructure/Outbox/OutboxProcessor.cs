@@ -25,13 +25,13 @@ internal sealed class OutboxProcessor(
 
     private const int MaxParallelism = 5;
 
-    public async Task Execute()
+    public async Task Execute(CancellationToken cancellationToken = default)
     {
         var totalStopwatch = Stopwatch.StartNew();
         var stepStopwatch = new Stopwatch();
 
-        await using var connection = await dataSource.OpenConnectionAsync();
-        await using var transaction = await connection.BeginTransactionAsync();
+        await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
 
         var outboxSettings = outboxSettingsOptions.Value;
 
@@ -51,6 +51,7 @@ internal sealed class OutboxProcessor(
             param: new { outboxSettings.BatchSize, outboxSettings.MaxAttempts },
             transaction: transaction
         )).AsList();
+        cancellationToken.ThrowIfCancellationRequested();
         var queryTime = stepStopwatch.ElapsedMilliseconds;
 
         if (messages.Count == 0)
@@ -64,9 +65,20 @@ internal sealed class OutboxProcessor(
         var updateQueue = new ConcurrentQueue<OutboxUpdate>();
         await Parallel.ForEachAsync(
             messages,
-            new ParallelOptions { MaxDegreeOfParallelism = MaxParallelism },
-            (message, _) =>
-                PublishMessage(message, updateQueue, publisher, clock, outboxMessageResolver, logger)
+            new ParallelOptions
+            {
+                MaxDegreeOfParallelism = MaxParallelism,
+                CancellationToken = cancellationToken
+            },
+            (message, token) =>
+                PublishMessage(message,
+                    updateQueue,
+                    publisher,
+                    clock,
+                    outboxMessageResolver,
+                    logger,
+                    token
+                )
         );
         var publishTime = stepStopwatch.ElapsedMilliseconds;
 
@@ -77,10 +89,11 @@ internal sealed class OutboxProcessor(
             { IsEmpty: false } => await MarkMessagesAsProcessed(connection, transaction, updateQueue),
             _ => 0
         };
+        cancellationToken.ThrowIfCancellationRequested();
         var updateTime = stepStopwatch.ElapsedMilliseconds;
 
         // 4. Commit transaction
-        await transaction.CommitAsync();
+        await transaction.CommitAsync(cancellationToken);
 
         totalStopwatch.Stop();
         OutboxMessagesProcessorLoggers.LogProcessingPerformance(
@@ -94,7 +107,7 @@ internal sealed class OutboxProcessor(
         );
     }
 
-    private static async Task<int> MarkMessagesAsProcessed(
+    private static async ValueTask<int> MarkMessagesAsProcessed(
         NpgsqlConnection connection,
         NpgsqlTransaction transaction,
         IReadOnlyCollection<OutboxUpdate> updates)
@@ -137,14 +150,16 @@ internal sealed class OutboxProcessor(
         IPublisher publisher,
         IClock clock,
         IOutboxMessageResolver outboxMessageResolver,
-        ILogger<OutboxProcessor> logger) =>
+        ILogger<OutboxProcessor> logger,
+        CancellationToken cancellationToken = default
+    ) =>
         outboxMessageResolver.DeserializeEvent(type: message.Type, content: message.Content)
             .Match<ValueTask>(
                 Succ: async deserialized =>
                 {
                     try
                     {
-                        await publisher.Publish(deserialized);
+                        await publisher.Publish(deserialized, cancellationToken);
 
                         updateQueue.Enqueue(new OutboxUpdate
                         {
@@ -192,26 +207,20 @@ internal sealed class OutboxProcessor(
 internal static partial class OutboxMessagesProcessorLoggers
 {
     [LoggerMessage(Level = LogLevel.Information,
-        Message = "OutboxMessagesProcessorJob starting...")]
+        Message = "OutboxProcessor starting...")]
     internal static partial void LogStarting(ILogger logger);
-
-    [LoggerMessage(Level = LogLevel.Information,
-        Message = "Starting iteration {IterationCount}")]
-    internal static partial void LogStartingIteration(ILogger logger, int iterationCount);
-
-    [LoggerMessage(Level = LogLevel.Information,
-        Message =
-            "Iteration {IterationCount} completed. Processed {ProcessedMessages} messages. Total processed: {TotalProcessedMessages}")]
-    internal static partial void LogIterationCompleted(ILogger logger, int iterationCount, int processedMessages,
-        int totalProcessedMessages);
 
     [LoggerMessage(Level = LogLevel.Error,
         Message = "An error occurred in OutboxProcessor")]
     internal static partial void LogError(ILogger logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Information,
-        Message = "OutboxMessagesProcessorJob finished")]
+        Message = "OutboxProcessor finished")]
     internal static partial void LogFinished(ILogger logger);
+
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "OutboxProcessor cancelled")]
+    internal static partial void LogCancelled(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Information,
         Message =
