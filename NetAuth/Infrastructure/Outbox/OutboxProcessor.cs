@@ -37,20 +37,25 @@ internal sealed class OutboxProcessor(
 
         // 1. Query unprocessed outbox messages
         stepStopwatch.Restart();
-        var messages = (await connection.QueryAsync<OutboxMessage>(
-            sql:
-            """
-            SELECT id AS "Id", type AS "Type", content AS "Content"
-            FROM outbox_messages
-            WHERE processed_on_utc IS NULL
-                AND attempt_count < @MaxAttempts
-            ORDER BY occurred_on_utc
-            LIMIT @BatchSize
-            FOR UPDATE SKIP LOCKED
-            """,
-            param: new { outboxSettings.BatchSize, outboxSettings.MaxAttempts },
-            transaction: transaction
-        )).AsList();
+        var messages = (
+            await connection.QueryAsync<OutboxMessage>(
+                new CommandDefinition(
+                    commandText:
+                    """
+                    SELECT id AS "Id", type AS "Type", content AS "Content"
+                    FROM outbox_messages
+                    WHERE processed_on_utc IS NULL
+                        AND attempt_count < @MaxAttempts
+                    ORDER BY occurred_on_utc
+                    LIMIT @BatchSize
+                    FOR UPDATE SKIP LOCKED
+                    """,
+                    parameters: new { outboxSettings.BatchSize, outboxSettings.MaxAttempts },
+                    transaction: transaction,
+                    cancellationToken: cancellationToken
+                )
+            )
+        ).AsList();
         cancellationToken.ThrowIfCancellationRequested();
         var queryTime = stepStopwatch.ElapsedMilliseconds;
 
@@ -86,7 +91,11 @@ internal sealed class OutboxProcessor(
         stepStopwatch.Restart();
         var rowsAffected = updateQueue switch
         {
-            { IsEmpty: false } => await MarkMessagesAsProcessed(connection, transaction, updateQueue),
+            { IsEmpty: false } =>
+                await MarkMessagesAsProcessed(connection,
+                    transaction,
+                    updateQueue,
+                    cancellationToken),
             _ => 0
         };
         cancellationToken.ThrowIfCancellationRequested();
@@ -110,38 +119,41 @@ internal sealed class OutboxProcessor(
     private static async ValueTask<int> MarkMessagesAsProcessed(
         NpgsqlConnection connection,
         NpgsqlTransaction transaction,
-        IReadOnlyCollection<OutboxUpdate> updates)
+        IReadOnlyCollection<OutboxUpdate> updates,
+        CancellationToken cancellationToken = default)
     {
         // Serialize all updates to JSON array once
         var updatesJson = JsonSerializer.Serialize(updates, SnakeCaseNamingJsonSerializerOptions);
 
-        // Create a single UPDATE statement using a VALUES list for efficiency
-
+        // Create a single UPDATE statement using json_to_recordset for efficient bulk update
         return await connection.ExecuteAsync(
-            sql:
-            """
-            WITH
-                data AS (
-                    SELECT
-                        id,
-                        processed_on_utc,
-                        error
-                    FROM
-                        json_to_recordset(@updatesJson::json) AS x (id UUID, processed_on_utc timestamptz, error text)
-                )
-            UPDATE outbox_messages AS m
-            SET
-                processed_on_utc = data.processed_on_utc,
-                error = data.error,
-                attempt_count = CASE
-                    WHEN data.error IS NULL THEN m.attempt_count
-                    ELSE m.attempt_count + 1
-                END
-            FROM data
-            WHERE m.id = data.id;
-            """,
-            param: new { updatesJson },
-            transaction: transaction
+            new CommandDefinition(
+                commandText:
+                """
+                WITH
+                    data AS (
+                        SELECT
+                            id,
+                            processed_on_utc,
+                            error
+                        FROM
+                            json_to_recordset(@updatesJson::json) AS x (id UUID, processed_on_utc timestamptz, error text)
+                    )
+                UPDATE outbox_messages AS m
+                SET
+                    processed_on_utc = data.processed_on_utc,
+                    error = data.error,
+                    attempt_count = CASE
+                        WHEN data.error IS NULL THEN m.attempt_count
+                        ELSE m.attempt_count + 1
+                    END
+                FROM data
+                WHERE m.id = data.id;
+                """,
+                parameters: new { updatesJson },
+                transaction: transaction,
+                cancellationToken: cancellationToken
+            )
         );
     }
 
