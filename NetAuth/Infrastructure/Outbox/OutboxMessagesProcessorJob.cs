@@ -11,7 +11,6 @@ internal sealed class OutboxMessagesProcessorJob(
     public async Task Execute(IJobExecutionContext context)
     {
         var cancellationToken = context.CancellationToken;
-        OutboxMessagesProcessorLoggers.LogStarting(logger);
 
         using var scope = scopeFactory.CreateScope();
         var outboxProcessor = scope.ServiceProvider.GetRequiredService<OutboxProcessor>();
@@ -28,11 +27,7 @@ internal sealed class OutboxMessagesProcessorJob(
         catch (Exception ex)
         {
             OutboxMessagesProcessorLoggers.LogError(logger, ex);
-            throw new JobExecutionException(ex, true);
-        }
-        finally
-        {
-            OutboxMessagesProcessorLoggers.LogFinished(logger);
+            throw new JobExecutionException(cause: ex, refireImmediately: true);
         }
     }
 }

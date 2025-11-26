@@ -206,17 +206,9 @@ internal sealed class OutboxProcessor(
 
 internal static partial class OutboxMessagesProcessorLoggers
 {
-    [LoggerMessage(Level = LogLevel.Information,
-        Message = "OutboxProcessor starting...")]
-    internal static partial void LogStarting(ILogger logger);
-
     [LoggerMessage(Level = LogLevel.Error,
         Message = "An error occurred in OutboxProcessor")]
     internal static partial void LogError(ILogger logger, Exception exception);
-
-    [LoggerMessage(Level = LogLevel.Information,
-        Message = "OutboxProcessor finished")]
-    internal static partial void LogFinished(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Information,
         Message = "OutboxProcessor cancelled")]
