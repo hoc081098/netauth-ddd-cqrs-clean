@@ -182,12 +182,11 @@ internal sealed class OutboxProcessor(
                 }
             );
 
-    private class OutboxUpdate
-    {
-        public required Guid Id { get; init; }
-        public required DateTimeOffset? ProcessedOnUtc { get; init; }
-        public required string? Error { get; init; }
-    }
+    private readonly record struct OutboxUpdate(
+        Guid Id,
+        DateTimeOffset? ProcessedOnUtc,
+        string? Error
+    );
 }
 
 internal static partial class OutboxMessagesProcessorLoggers
