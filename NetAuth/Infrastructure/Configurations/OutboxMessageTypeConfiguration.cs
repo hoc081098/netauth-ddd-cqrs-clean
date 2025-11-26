@@ -33,10 +33,14 @@ internal sealed class OutboxMessageTypeConfiguration : IEntityTypeConfiguration<
 
         builder.Property(o => o.Error);
 
+        builder.Property(o => o.AttemptCount)
+            .IsRequired()
+            .HasDefaultValue(0);
+
         var processedOnUtcColumnName = snakeCaseNameRewriter.RewriteName(nameof(OutboxMessage.ProcessedOnUtc));
 
         builder
-            .HasIndex(outboxMessage => new { outboxMessage.OccurredOnUtc, outboxMessage.ProcessedOnUtc })
+            .HasIndex(outboxMessage => new { outboxMessage.AttemptCount, outboxMessage.OccurredOnUtc })
             .HasDatabaseName("idx_outbox_messages_unprocessed")
             .IncludeProperties(outboxMessage => new { outboxMessage.Id, outboxMessage.Type, outboxMessage.Content })
             .HasFilter($"\"{processedOnUtcColumnName}\" IS NULL");

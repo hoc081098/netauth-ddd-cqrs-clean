@@ -13,4 +13,9 @@ internal sealed record OutboxSettings
     /// The number of outbox messages that we are processing in one run of the background job
     /// </summary>
     public required int BatchSize { get; init; }
+
+    /// <summary>
+    /// Maximum number of attempts before parking a message.
+    /// </summary>
+    public required int MaxAttempts { get; init; }
 }

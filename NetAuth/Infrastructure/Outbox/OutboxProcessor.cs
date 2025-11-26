@@ -28,19 +28,22 @@ internal sealed class OutboxProcessor(
         await using var connection = await dataSource.OpenConnectionAsync();
         await using var transaction = await connection.BeginTransactionAsync();
 
+        var outboxSettings = outboxSettingsOptions.Value;
+
         // 1. Query unprocessed outbox messages
         stepStopwatch.Restart();
         var messages = (await connection.QueryAsync<OutboxMessage>(
             sql:
             """
-            SELECT id AS "Id", type AS "Type", content AS "Content"
+            SELECT id AS "Id", type AS "Type", content AS "Content", attempt_count AS "AttemptCount"
             FROM outbox_messages
             WHERE processed_on_utc IS NULL
+              AND attempt_count < @MaxAttempts
             ORDER BY occurred_on_utc
             LIMIT @BatchSize
             FOR UPDATE SKIP LOCKED
             """,
-            param: new { outboxSettingsOptions.Value.BatchSize },
+            param: new { outboxSettings.BatchSize, outboxSettings.MaxAttempts },
             transaction: transaction
         )).AsList();
         var queryTime = stepStopwatch.ElapsedMilliseconds;
@@ -96,7 +99,9 @@ internal sealed class OutboxProcessor(
         var updateSql =
             $"""
              UPDATE outbox_messages
-             SET processed_on_utc = v.processed_on_utc, error = v.error
+             SET processed_on_utc = v.processed_on_utc,
+                 error = v.error,
+                 attempt_count = outbox_messages.attempt_count + 1
              FROM (VALUES {tuples}) AS v(id, processed_on_utc, error)
              WHERE outbox_messages.id = v.id::uuid
              """;
@@ -139,7 +144,7 @@ internal sealed class OutboxProcessor(
             updateQueue.Enqueue(new OutboxUpdate
             {
                 Id = message.Id,
-                ProcessedOnUtc = clock.UtcNow,
+                ProcessedOnUtc = null,
                 Error = ex.ToString()
             });
         }
@@ -155,7 +160,7 @@ internal sealed class OutboxProcessor(
     private class OutboxUpdate
     {
         public required Guid Id { get; init; }
-        public required DateTimeOffset ProcessedOnUtc { get; init; }
+        public required DateTimeOffset? ProcessedOnUtc { get; init; }
         public required string? Error { get; init; }
     }
 }

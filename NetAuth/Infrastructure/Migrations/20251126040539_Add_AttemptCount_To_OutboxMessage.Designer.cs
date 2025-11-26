@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetAuth.Infrastructure;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NetAuth.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251126040539_Add_AttemptCount_To_OutboxMessage")]
+    partial class Add_AttemptCount_To_OutboxMessage
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -217,11 +220,11 @@ namespace NetAuth.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_outbox_messages");
 
-                    b.HasIndex("AttemptCount", "OccurredOnUtc")
+                    b.HasIndex("OccurredOnUtc", "ProcessedOnUtc")
                         .HasDatabaseName("idx_outbox_messages_unprocessed")
                         .HasFilter("\"processed_on_utc\" IS NULL");
 
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("AttemptCount", "OccurredOnUtc"), new[] { "Id", "Type", "Content" });
+                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("OccurredOnUtc", "ProcessedOnUtc"), new[] { "Id", "Type", "Content" });
 
                     b.ToTable("outbox_messages", (string)null);
                 });

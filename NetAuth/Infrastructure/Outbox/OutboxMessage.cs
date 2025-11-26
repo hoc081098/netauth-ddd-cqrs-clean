@@ -23,11 +23,16 @@ internal sealed class OutboxMessage
     /// The UTC date and time when the outbox message was processed.
     /// If null, the message has not been processed yet.
     /// </summary>
-    public DateTimeOffset? ProcessedOnUtc { get; set; }
+    public DateTimeOffset? ProcessedOnUtc { get; init; }
 
     /// <summary>
     /// The error message if processing the outbox message failed.
     /// If null, the message was processed successfully.
     /// </summary>
-    public string? Error { get; set; }
+    public string? Error { get; init; }
+
+    /// <summary>
+    /// The number of attempts made to process the outbox message.
+    /// </summary>
+    public int AttemptCount { get; init; }
 }
