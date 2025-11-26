@@ -17,6 +17,8 @@ internal sealed class OutboxProcessor(
     IOutboxMessageResolver outboxMessageResolver
 )
 {
+    private const int MaxParallelism = 5;
+
     public async Task Execute()
     {
         var totalStopwatch = Stopwatch.StartNew();
@@ -54,17 +56,19 @@ internal sealed class OutboxProcessor(
         // 2. Publish messages concurrently
         stepStopwatch.Restart();
         var updateQueue = new ConcurrentQueue<OutboxUpdate>();
-        var publishTasks = messages
-            .Select(message => PublishMessage(message, updateQueue, publisher, clock, outboxMessageResolver, logger))
-            .ToList();
-        await Task.WhenAll(publishTasks);
+        await Parallel.ForEachAsync(
+            messages,
+            new ParallelOptions { MaxDegreeOfParallelism = MaxParallelism },
+            (message, _) =>
+                PublishMessage(message, updateQueue, publisher, clock, outboxMessageResolver, logger)
+        );
         var publishTime = stepStopwatch.ElapsedMilliseconds;
 
         // 3. Mark messages as processed
         stepStopwatch.Restart();
         if (!updateQueue.IsEmpty)
         {
-            await MarkMessagesAsProcessed(connection, transaction, updateQueue.ToList());
+            await MarkMessagesAsProcessed(connection, transaction, updateQueue);
         }
 
         var updateTime = stepStopwatch.ElapsedMilliseconds;
@@ -85,7 +89,7 @@ internal sealed class OutboxProcessor(
 
     private static async Task MarkMessagesAsProcessed(NpgsqlConnection connection,
         NpgsqlTransaction transaction,
-        List<OutboxUpdate> updates)
+        IReadOnlyCollection<OutboxUpdate> updates)
     {
         // Create a single UPDATE statement using a VALUES list for efficiency
 
@@ -98,15 +102,17 @@ internal sealed class OutboxProcessor(
              UPDATE outbox_messages
              SET processed_on_utc = v.processed_on_utc,
                  error = v.error,
-                 attempt_count = outbox_messages.attempt_count + 1
+                 attempt_count = CASE
+                    WHEN v.error IS NULL THEN outbox_messages.attempt_count
+                    ELSE outbox_messages.attempt_count + 1
+                 END
              FROM (VALUES {tuples}) AS v(id, processed_on_utc, error)
              WHERE outbox_messages.id = v.id::uuid
              """;
 
         var parameters = new DynamicParameters();
-        for (var i = 0; i < updates.Count; i++)
+        foreach (var (i, update) in updates.Index())
         {
-            var update = updates[i];
             parameters.Add($"Id{i}", update.Id);
             parameters.Add($"ProcessedOnUtc{i}", update.ProcessedOnUtc);
             parameters.Add($"Error{i}", update.Error);
@@ -119,14 +125,14 @@ internal sealed class OutboxProcessor(
         );
     }
 
-    private static Task PublishMessage(OutboxMessage message,
+    private static ValueTask PublishMessage(OutboxMessage message,
         ConcurrentQueue<OutboxUpdate> updateQueue,
         IPublisher publisher,
         IClock clock,
         IOutboxMessageResolver outboxMessageResolver,
         ILogger<OutboxProcessor> logger) =>
         outboxMessageResolver.DeserializeEvent(type: message.Type, content: message.Content)
-            .Match(
+            .Match<ValueTask>(
                 Succ: async deserialized =>
                 {
                     try
@@ -165,7 +171,7 @@ internal sealed class OutboxProcessor(
                         Error = error.ToString()
                     });
 
-                    return Task.CompletedTask;
+                    return ValueTask.CompletedTask;
                 }
             );
 
