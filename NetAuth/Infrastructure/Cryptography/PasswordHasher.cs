@@ -64,14 +64,14 @@ internal sealed class Pbkdf2PasswordHasher(ILogger<Pbkdf2PasswordHasher> logger)
         {
             // unsupported version
             // TODO: handle other versions (v2 = Argon2, etc.)
-            logger.LogWarning("Password hash version {Version} is not supported.", parts[0]);
+            logger.LogWarning("Password hash version {PasswordHashVersion} is not supported.", parts[0]);
             return false;
         }
 
         if (!int.TryParse(parts[1], out var iterations))
         {
             // iterations value is invalid
-            logger.LogWarning("Invalid iterations value in password hash: {Value}", parts[1]);
+            logger.LogWarning("Invalid iterations value in password hash: {PasswordIterationsValue}", parts[1]);
             return false;
         }
 

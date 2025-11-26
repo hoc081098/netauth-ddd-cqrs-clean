@@ -36,7 +36,7 @@ public static class EndpointExtensions
             endpoint.MapEndpoint(builder);
         }
 
-        app.Logger.LogInformation("Mapped {Count} endpoints.", endpoints.Length);
+        app.Logger.LogInformation("Mapped {EndPointsCount} endpoints.", endpoints.Length);
         return app;
     }
 }
