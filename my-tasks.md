@@ -1,7 +1,7 @@
 # Những phần còn thiếu/hở
 
 ### 1. RBAC/Permission chưa có
-- Không thấy aggregate/bảng **Role/Permission/UserRole**.
+- Không thấy aggregate/bảng **Role/Permission/UserRole** ✅
 - JWT không nhúng claim quyền/role (NetAuth/Infrastructure/Authentication/JwtProvider.cs).
 - DI chỉ `AddAuthorization()` mặc định (NetAuth/Infrastructure/InfrastructureDiModule.cs).
 - Endpoint không gắn policy/requirement.
