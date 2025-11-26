@@ -35,7 +35,7 @@ internal sealed class OutboxProcessor(
         var messages = (await connection.QueryAsync<OutboxMessage>(
             sql:
             """
-            SELECT id AS "Id", type AS "Type", content AS "Content", attempt_count AS "AttemptCount"
+            SELECT id AS "Id", type AS "Type", content AS "Content"
             FROM outbox_messages
             WHERE processed_on_utc IS NULL
               AND attempt_count < @MaxAttempts
