@@ -70,6 +70,7 @@ public static class InfrastructureDiModule
         // Add Quartz.NET services
         // Bind section "OutboxSettings" → OutboxSettings
         services.Configure<OutboxSettings>(configuration.GetSection(OutboxSettings.SectionKey));
+        services.AddTransient<IOutboxMessageResolver, OutboxMessageResolver>();
         services.AddQuartz(options =>
         {
             // base Quartz scheduler, job and trigger configuration

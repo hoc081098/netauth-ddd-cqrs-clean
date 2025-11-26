@@ -1,7 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Text.Json;
-using Ardalis.GuardClauses;
 using Dapper;
 using MediatR;
 using Microsoft.Extensions.Options;
@@ -15,11 +13,10 @@ internal sealed class OutboxProcessor(
     IOptions<OutboxSettings> outboxSettingsOptions,
     NpgsqlDataSource dataSource,
     IPublisher publisher,
-    IClock clock
+    IClock clock,
+    IOutboxMessageResolver outboxMessageResolver
 )
 {
-    private static readonly ConcurrentDictionary<string, Type> TypeCache = new();
-
     public async Task Execute()
     {
         var totalStopwatch = Stopwatch.StartNew();
@@ -58,7 +55,7 @@ internal sealed class OutboxProcessor(
         stepStopwatch.Restart();
         var updateQueue = new ConcurrentQueue<OutboxUpdate>();
         var publishTasks = messages
-            .Select(message => PublishMessage(message, updateQueue, publisher, clock))
+            .Select(message => PublishMessage(message, updateQueue, publisher, clock, outboxMessageResolver, logger))
             .ToList();
         await Task.WhenAll(publishTasks);
         var publishTime = stepStopwatch.ElapsedMilliseconds;
@@ -122,40 +119,55 @@ internal sealed class OutboxProcessor(
         );
     }
 
-    private static async Task PublishMessage(OutboxMessage message,
+    private static Task PublishMessage(OutboxMessage message,
         ConcurrentQueue<OutboxUpdate> updateQueue,
         IPublisher publisher,
-        IClock clock
-    )
-    {
-        try
-        {
-            var messageType = GetOrAddMessageType(message.Type);
-            var deserialized = JsonSerializer.Deserialize(message.Content, messageType);
-            Guard.Against.Null(deserialized,
-                exceptionCreator: () => new InvalidOperationException("Failed to deserialize outbox message content."));
+        IClock clock,
+        IOutboxMessageResolver outboxMessageResolver,
+        ILogger<OutboxProcessor> logger) =>
+        outboxMessageResolver.DeserializeEvent(type: message.Type, content: message.Content)
+            .Match(
+                Succ: async deserialized =>
+                {
+                    try
+                    {
+                        await publisher.Publish(deserialized);
 
-            await publisher.Publish(deserialized);
+                        updateQueue.Enqueue(new OutboxUpdate
+                        {
+                            Id = message.Id,
+                            ProcessedOnUtc = clock.UtcNow,
+                            Error = null
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        // Publishing failed. Log the error and do not mark the message as processed to allow for retries.
+                        OutboxMessagesProcessorLoggers.LogError(logger, ex);
 
-            updateQueue.Enqueue(new OutboxUpdate { Id = message.Id, ProcessedOnUtc = clock.UtcNow, Error = null });
-        }
-        catch (Exception ex)
-        {
-            updateQueue.Enqueue(new OutboxUpdate
-            {
-                Id = message.Id,
-                ProcessedOnUtc = null,
-                Error = ex.ToString()
-            });
-        }
-    }
+                        updateQueue.Enqueue(new OutboxUpdate
+                        {
+                            Id = message.Id,
+                            ProcessedOnUtc = null,
+                            Error = ex.ToString()
+                        });
+                    }
+                },
+                Fail: error =>
+                {
+                    // Do not retry. Log the error and mark the message as failed.
+                    OutboxMessagesProcessorLoggers.LogError(logger, error);
 
-    private static Type GetOrAddMessageType(string typename) =>
-        TypeCache.GetOrAdd(typename, k =>
-        {
-            var type = Domain.AssemblyReference.Assembly.GetType(k);
-            return Guard.Against.Null(type);
-        });
+                    updateQueue.Enqueue(new OutboxUpdate
+                    {
+                        Id = message.Id,
+                        ProcessedOnUtc = clock.UtcNow,
+                        Error = error.ToString()
+                    });
+
+                    return Task.CompletedTask;
+                }
+            );
 
     private class OutboxUpdate
     {
@@ -182,7 +194,7 @@ internal static partial class OutboxMessagesProcessorLoggers
         int totalProcessedMessages);
 
     [LoggerMessage(Level = LogLevel.Error,
-        Message = "An error occurred in OutboxMessagesProcessorJob")]
+        Message = "An error occurred in OutboxProcessor")]
     internal static partial void LogError(ILogger logger, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Information,
