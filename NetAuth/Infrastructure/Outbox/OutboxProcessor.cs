@@ -35,7 +35,7 @@ internal sealed class OutboxProcessor(
             SELECT id AS "Id", type AS "Type", content AS "Content"
             FROM outbox_messages
             WHERE processed_on_utc IS NULL
-              AND attempt_count < @MaxAttempts
+                AND attempt_count < @MaxAttempts
             ORDER BY occurred_on_utc
             LIMIT @BatchSize
             FOR UPDATE SKIP LOCKED
