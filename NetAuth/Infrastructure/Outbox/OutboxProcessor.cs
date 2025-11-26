@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Dapper;
 using MediatR;
@@ -125,7 +126,7 @@ internal sealed class OutboxProcessor(
         // Serialize all updates to JSON array once
         var updatesJson = JsonSerializer.Serialize(updates, SnakeCaseNamingJsonSerializerOptions);
 
-        // Create a single UPDATE statement using json_to_recordset for efficient bulk update
+        // Create a single UPDATE statement using `json_to_recordset` for efficient bulk update
         return await connection.ExecuteAsync(
             new CommandDefinition(
                 commandText:
@@ -180,7 +181,7 @@ internal sealed class OutboxProcessor(
                     catch (Exception ex)
                     {
                         // Publishing failed.
-                        OutboxMessagesProcessorLoggers.LogFailedToPublish(logger, ex);
+                        OutboxMessagesProcessorLoggers.LogFailedToPublish(logger, ex, message.Id);
                         // Do not mark the message as processed to allow for retries.
                         updateQueue.Enqueue(
                             new OutboxUpdate(Id: message.Id,
@@ -191,7 +192,7 @@ internal sealed class OutboxProcessor(
                 Fail: error =>
                 {
                     // Deserialization failed.
-                    OutboxMessagesProcessorLoggers.LogFailedToDeserialize(logger, error);
+                    OutboxMessagesProcessorLoggers.LogFailedToDeserialize(logger, error, message.Id);
                     // Mark the message as processed with the error and do not retry.
                     updateQueue.Enqueue(
                         new OutboxUpdate(Id: message.Id,
@@ -202,6 +203,7 @@ internal sealed class OutboxProcessor(
                 }
             );
 
+    [SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Local")]
     private readonly record struct OutboxUpdate(
         Guid Id,
         DateTimeOffset? ProcessedOnUtc,
@@ -212,12 +214,12 @@ internal sealed class OutboxProcessor(
 internal static partial class OutboxMessagesProcessorLoggers
 {
     [LoggerMessage(Level = LogLevel.Error,
-        Message = "Failed to publish outbox message")]
-    internal static partial void LogFailedToPublish(ILogger logger, Exception exception);
+        Message = "Failed to publish outbox message {OutboxMessageId}")]
+    internal static partial void LogFailedToPublish(ILogger logger, Exception exception, Guid outboxMessageId);
 
     [LoggerMessage(Level = LogLevel.Error,
-        Message = "Failed to deserialize outbox message")]
-    internal static partial void LogFailedToDeserialize(ILogger logger, Exception exception);
+        Message = "Failed to deserialize outbox message {OutboxMessageId}")]
+    internal static partial void LogFailedToDeserialize(ILogger logger, Exception exception, Guid outboxMessageId);
 
     [LoggerMessage(Level = LogLevel.Error,
         Message = "An error occurred in OutboxProcessor")]
