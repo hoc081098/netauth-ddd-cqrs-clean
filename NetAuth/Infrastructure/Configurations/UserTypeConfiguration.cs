@@ -4,6 +4,7 @@ using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NetAuth.Domain.Users;
+using NetAuth.Infrastructure.Models;
 
 namespace NetAuth.Infrastructure.Configurations;
 

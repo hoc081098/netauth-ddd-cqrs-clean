@@ -4,6 +4,7 @@ using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NetAuth.Domain.Users;
+using NetAuth.Infrastructure.Models;
 
 namespace NetAuth.Infrastructure.Configurations;
 
@@ -49,10 +50,23 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
                         .HasConversion(
                             id => id.Value,
                             value => new PermissionId(value));
+
+                    rolePermissionBuilder.HasData(
+                        // Member role permissions
+                        CreateRolePermission(Role.Member, Permission.GetUsers),
+                        CreateRolePermission(Role.Member, Permission.ModifyUser),
+
+                        // Administrator role permissions
+                        CreateRolePermission(Role.Administrator, Permission.GetUsers),
+                        CreateRolePermission(Role.Administrator, Permission.ModifyUser)
+                    );
                 }
             );
 
         // Add predefined roles
         builder.HasData(Role.Administrator, Role.Member);
     }
+
+    private static RolePermission CreateRolePermission(Role role, Permission permission) =>
+        new() { RoleId = role.Id, PermissionId = permission.Id };
 }

@@ -1,4 +1,6 @@
-namespace NetAuth.Domain.Users;
+using NetAuth.Domain.Users;
+
+namespace NetAuth.Infrastructure.Models;
 
 public sealed class RolePermission
 {
