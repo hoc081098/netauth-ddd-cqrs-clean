@@ -10,7 +10,7 @@ internal interface IOutboxMessageResolver
     internal Fin<object> DeserializeEvent(string type, string content);
 }
 
-internal sealed class OutboxMessageResolver() : IOutboxMessageResolver
+internal sealed class OutboxMessageResolver : IOutboxMessageResolver
 {
     private static readonly ConcurrentDictionary<string, Type> TypeCache = new();
 
