@@ -172,38 +172,31 @@ internal sealed class OutboxProcessor(
                     try
                     {
                         await publisher.Publish(deserialized, cancellationToken);
-
-                        updateQueue.Enqueue(new OutboxUpdate
-                        {
-                            Id = message.Id,
-                            ProcessedOnUtc = clock.UtcNow,
-                            Error = null
-                        });
+                        updateQueue.Enqueue(
+                            new OutboxUpdate(Id: message.Id,
+                                ProcessedOnUtc: clock.UtcNow,
+                                Error: null));
                     }
                     catch (Exception ex)
                     {
-                        // Publishing failed. Log the error and do not mark the message as processed to allow for retries.
-                        OutboxMessagesProcessorLoggers.LogError(logger, ex);
-
-                        updateQueue.Enqueue(new OutboxUpdate
-                        {
-                            Id = message.Id,
-                            ProcessedOnUtc = null,
-                            Error = ex.ToString()
-                        });
+                        // Publishing failed.
+                        OutboxMessagesProcessorLoggers.LogFailedToPublish(logger, ex);
+                        // Do not mark the message as processed to allow for retries.
+                        updateQueue.Enqueue(
+                            new OutboxUpdate(Id: message.Id,
+                                ProcessedOnUtc: null,
+                                Error: ex.ToString()));
                     }
                 },
                 Fail: error =>
                 {
-                    // Keep for retry until MaxAttempts; record the error.
-                    OutboxMessagesProcessorLoggers.LogError(logger, error);
-
-                    updateQueue.Enqueue(new OutboxUpdate
-                    {
-                        Id = message.Id,
-                        ProcessedOnUtc = null,
-                        Error = error.ToString()
-                    });
+                    // Deserialization failed.
+                    OutboxMessagesProcessorLoggers.LogFailedToDeserialize(logger, error);
+                    // Mark the message as processed with the error and do not retry.
+                    updateQueue.Enqueue(
+                        new OutboxUpdate(Id: message.Id,
+                            ProcessedOnUtc: clock.UtcNow,
+                            Error: error.ToString()));
 
                     return ValueTask.CompletedTask;
                 }
@@ -218,6 +211,14 @@ internal sealed class OutboxProcessor(
 
 internal static partial class OutboxMessagesProcessorLoggers
 {
+    [LoggerMessage(Level = LogLevel.Error,
+        Message = "Failed to publish outbox message")]
+    internal static partial void LogFailedToPublish(ILogger logger, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Error,
+        Message = "Failed to deserialize outbox message")]
+    internal static partial void LogFailedToDeserialize(ILogger logger, Exception exception);
+
     [LoggerMessage(Level = LogLevel.Error,
         Message = "An error occurred in OutboxProcessor")]
     internal static partial void LogError(ILogger logger, Exception exception);
