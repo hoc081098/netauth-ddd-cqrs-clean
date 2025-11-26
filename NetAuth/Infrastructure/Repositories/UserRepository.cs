@@ -16,4 +16,14 @@ internal sealed class UserRepository(AppDbContext dbContext) :
         !await EntitySet
             .AsNoTracking()
             .AnyAsync(u => u.Email.Value == email, cancellationToken);
+
+    public new void Insert(User user)
+    {
+        foreach (var role in user.Roles)
+        {
+            DbContext.Attach(role);
+        }
+
+        base.Insert(user);
+    }
 }
