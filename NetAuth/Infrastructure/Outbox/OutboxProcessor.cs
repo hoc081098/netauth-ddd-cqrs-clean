@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Dapper;
 using MediatR;
 using Microsoft.Extensions.Options;
