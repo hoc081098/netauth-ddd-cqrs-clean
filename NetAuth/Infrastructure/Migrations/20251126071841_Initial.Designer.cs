@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace NetAuth.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251126040539_Add_AttemptCount_To_OutboxMessage")]
-    partial class Add_AttemptCount_To_OutboxMessage
+    [Migration("20251126071841_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -220,11 +220,9 @@ namespace NetAuth.Infrastructure.Migrations
                     b.HasKey("Id")
                         .HasName("pk_outbox_messages");
 
-                    b.HasIndex("OccurredOnUtc", "ProcessedOnUtc")
+                    b.HasIndex("OccurredOnUtc")
                         .HasDatabaseName("idx_outbox_messages_unprocessed")
                         .HasFilter("\"processed_on_utc\" IS NULL");
-
-                    NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("OccurredOnUtc", "ProcessedOnUtc"), new[] { "Id", "Type", "Content" });
 
                     b.ToTable("outbox_messages", (string)null);
                 });
