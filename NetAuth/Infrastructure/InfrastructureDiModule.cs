@@ -55,9 +55,11 @@ public static class InfrastructureDiModule
             .AddJwtBearer();
         services.AddAuthorization();
         services.AddScoped<IPermissionService, PermissionService>();
+        // IClaimsTransformation should be registered as transient
         services.AddTransient<IClaimsTransformation, PermissionClaimsTransformation>();
-        services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
-        services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+        // IAuthorizationHandler and IAuthorizationPolicyProvider can be registered as singletons
+        services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 
         // Add HttpContextAccessor
         services.AddHttpContextAccessor();
