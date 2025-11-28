@@ -1,7 +1,7 @@
 # Những phần còn thiếu/hở
 
 ### 1. RBAC/Permission chưa có
-- Không thấy aggregate/bảng **Role/Permission/UserRole** ✅
+- Không thấy aggregate/bảng **Role/Permission/UserRole**.
 - JWT không nhúng claim quyền/role (NetAuth/Infrastructure/Authentication/JwtProvider.cs).
 - DI chỉ `AddAuthorization()` mặc định (NetAuth/Infrastructure/InfrastructureDiModule.cs).
 - Endpoint không gắn policy/requirement.
@@ -35,9 +35,9 @@
 # Gợi ý tiếp theo
 
 ### 1. Thiết kế đầy đủ hệ thống RBAC
-- Aggregate Role/Permission.
-- Bảng Role/Permission/UserRole.
-- Seeding dữ liệu.
+- Aggregate Role/Permission. ✅
+- Bảng Role/Permission/UserRole. ✅
+- Seeding dữ liệu. ✅
 - Policy + attribute để enforce.
 
 ### 2. Bổ sung query side chuẩn CQRS
