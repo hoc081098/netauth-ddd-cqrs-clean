@@ -16,7 +16,7 @@ internal sealed class PermissionAuthorizationPolicyProvider(IOptions<Authorizati
             return policy;
         }
 
-        if (policyName.StartsWith(PermissionPolicyPrefix, StringComparison.OrdinalIgnoreCase))
+        if (policyName.StartsWith(PermissionPolicyPrefix, StringComparison.Ordinal))
         {
             var permission = policyName[PermissionPolicyPrefix.Length..];
 
