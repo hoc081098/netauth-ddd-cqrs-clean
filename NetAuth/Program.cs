@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -101,5 +102,11 @@ app.MapGet("/me", (IUserIdentifierProvider userIdentifierProvider) => new { user
     .WithSummary("Get current authenticated user.")
     .WithDescription("Returns the details of the currently authenticated user.")
     .Produces(StatusCodes.Status401Unauthorized);
+
+app.MapGet("/me-unchecked", (ClaimsPrincipal user) => new { user.Identity });
+app.MapGet("/me-check-empty", (ClaimsPrincipal user) => new { user.Identity })
+    .RequireAuthorization();
+app.MapGet("/me-check-non-empty", (ClaimsPrincipal user) => new { user.Identity })
+    .RequireAuthorization("permission:users:read");
 
 app.Run();
