@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using NetAuth.Application.Abstractions.Authentication;
@@ -7,13 +9,14 @@ using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Domain.Users;
 using NetAuth.Infrastructure.Authentication;
-using NetAuth.Infrastructure.Common;
+using NetAuth.Infrastructure.Authorization;
 using NetAuth.Infrastructure.Cryptography;
 using NetAuth.Infrastructure.Interceptors;
 using NetAuth.Infrastructure.Outbox;
 using NetAuth.Infrastructure.Repositories;
 using Npgsql;
 using Quartz;
+using SystemClock = NetAuth.Infrastructure.Common.SystemClock;
 
 namespace NetAuth.Infrastructure;
 
@@ -51,6 +54,10 @@ public static class InfrastructureDiModule
             .AddAuthentication(defaultScheme: JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer();
         services.AddAuthorization();
+        services.AddScoped<IPermissionService, PermissionService>();
+        services.AddTransient<IClaimsTransformation, PermissionClaimsTransformation>();
+        services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
+        services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 
         // Add HttpContextAccessor
         services.AddHttpContextAccessor();

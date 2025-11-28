@@ -96,7 +96,7 @@ app.UseExceptionHandler();
 app.MapEndpoints();
 
 app.MapGet("/me", (IUserIdentifierProvider userIdentifierProvider) => new { userIdentifierProvider.UserId })
-    .RequireAuthorization()
+    .RequireAuthorization("permission:users:read")
     .WithName("GetCurrentUser")
     .WithSummary("Get current authenticated user.")
     .WithDescription("Returns the details of the currently authenticated user.")
