@@ -29,8 +29,11 @@ internal sealed class PermissionService(
             {
                 logger.LogWarning("Cached permissions for user {UserId} could not be deserialized", userId);
             }
+
             return cachedList?.ToHashSet(StringComparer.Ordinal) ?? [];
         }
+
+        logger.LogDebug("Cache MISS for user {UserId}", userId);
 
         // 2. Query DB
         var permissions = await dbContext.RoleUsers
@@ -39,7 +42,7 @@ internal sealed class PermissionService(
             .SelectMany(ru => ru.Role.Permissions)
             .Select(p => p.Code)
             .Distinct()
-            .ToListAsync(cancellationToken);
+            .ToHashSetAsync(StringComparer.Ordinal, cancellationToken);
 
         // 3. Save to cache
         var data = JsonSerializer.SerializeToUtf8Bytes(permissions);
@@ -49,6 +52,12 @@ internal sealed class PermissionService(
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheTtl },
             cancellationToken);
 
-        return permissions.ToHashSet(StringComparer.Ordinal);
+        return permissions;
+    }
+
+    public Task InvalidatePermissionsCacheAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = BuildCacheKey(userId);
+        return distributedCache.RemoveAsync(cacheKey, cancellationToken);
     }
 }
