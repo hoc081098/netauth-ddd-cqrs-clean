@@ -18,4 +18,14 @@ internal sealed record OutboxSettings
     /// Maximum number of attempts before parking a message.
     /// </summary>
     public required int MaxAttempts { get; init; }
+
+    /// <summary>
+    /// How many days to keep successfully processed outbox messages.
+    /// </summary>
+    public int CleanupRetentionDays { get; init; } = 30;
+
+    /// <summary>
+    /// Maximum rows to delete per cleanup batch.
+    /// </summary>
+    public int CleanupBatchSize { get; init; } = 5_000;
 }
