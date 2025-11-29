@@ -69,7 +69,7 @@ public static class InfrastructureDiModule
             Guard.Against.NullOrEmpty(redisConnectionString);
 
             options.Configuration = redisConnectionString;
-            options.InstanceName = "NetAuthCache";
+            options.InstanceName = "netauth:cache:";
         });
 
         // Add HttpContextAccessor
