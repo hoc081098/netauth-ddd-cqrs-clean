@@ -65,7 +65,7 @@ internal sealed class OutboxCleanupJob(
                 """,
                 parameters: new
                 {
-                    Retention = TimeSpan.FromDays(settings.CleanupRetentionDays),
+                    Retention = settings.CleanupRetention,
                     BatchSize = settings.CleanupBatchSize
                 },
                 cancellationToken: cancellationToken

@@ -6,10 +6,10 @@ namespace NetAuth.Infrastructure.Outbox;
 internal sealed class OutboxMessagesProcessorJobSetup(
     IOptions<OutboxSettings> outboxSettingsOptions) : IConfigureOptions<QuartzOptions>
 {
-    private const string CleanupJobTriggerIdentity = "Outbox-Cleanup-Trigger";
+    private const string CleanupJobTriggerIdentity = "Outbox.Cleanup.Trigger";
     private static readonly JobKey CleanupJobKey = new(nameof(OutboxCleanupJob));
 
-    private const string ProcessJobTriggerIdentity = "Outbox-Process-Trigger";
+    private const string ProcessJobTriggerIdentity = "Outbox.Process.Trigger";
     private static readonly JobKey ProcessJobKey = new(nameof(OutboxMessagesProcessorJob));
 
     public void Configure(QuartzOptions options)
@@ -32,7 +32,7 @@ internal sealed class OutboxMessagesProcessorJobSetup(
                 trigger
                     .WithIdentity(CleanupJobTriggerIdentity)
                     .ForJob(CleanupJobKey)
-                    .WithCronSchedule("0 0 3 * * ?"));
+                    .StartNow());
 
         // 0 0 3 * * ? (Quartz cron) triggers at 03:00:00 every day. Breakdown of the fields:
         // Seconds: 0

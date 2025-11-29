@@ -22,7 +22,7 @@ internal sealed record OutboxSettings
     /// <summary>
     /// How many days to keep successfully processed outbox messages.
     /// </summary>
-    public int CleanupRetentionDays { get; init; } = 30;
+    public TimeSpan CleanupRetention { get; init; } = TimeSpan.FromMinutes(30);
 
     /// <summary>
     /// Maximum rows to delete per cleanup batch.
