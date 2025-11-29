@@ -32,7 +32,7 @@ internal sealed class OutboxMessagesProcessorJobSetup(
                 trigger
                     .WithIdentity(CleanupJobTriggerIdentity)
                     .ForJob(CleanupJobKey)
-                    .StartNow());
+                    .WithCronSchedule("0 0 3 * * ?"));
 
         // 0 0 3 * * ? (Quartz cron) triggers at 03:00:00 every day. Breakdown of the fields:
         // Seconds: 0
