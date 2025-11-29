@@ -6,7 +6,7 @@ namespace NetAuth.Infrastructure.Outbox;
 internal sealed record OutboxSettings
 {
     public const string SectionKey = "Outbox";
-    
+
     public required TimeSpan Interval { get; init; }
 
     /// <summary>
@@ -20,12 +20,12 @@ internal sealed record OutboxSettings
     public required int MaxAttempts { get; init; }
 
     /// <summary>
-    /// How many days to keep successfully processed outbox messages.
+    /// How long to keep successfully processed outbox messages.
     /// </summary>
-    public TimeSpan CleanupRetention { get; init; } = TimeSpan.FromMinutes(30);
+    public TimeSpan CleanupRetention { get; init; }
 
     /// <summary>
     /// Maximum rows to delete per cleanup batch.
     /// </summary>
-    public int CleanupBatchSize { get; init; } = 5_000;
+    public int CleanupBatchSize { get; init; }
 }
