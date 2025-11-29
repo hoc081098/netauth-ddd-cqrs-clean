@@ -38,7 +38,7 @@
 - Aggregate Role/Permission. ✅
 - Bảng Role/Permission/UserRole. ✅
 - Seeding dữ liệu. ✅
-- Policy + attribute để enforce.
+- Policy + attribute để enforce. ✅
 
 ### 2. Bổ sung query side chuẩn CQRS
 - IQuery/IQueryHandler.
@@ -47,7 +47,7 @@
 
 ### 3. Transactional pipeline
 - Viết MediatR pipeline đảm bảo mọi Command chạy trong transaction.
-- Transaction + Outbox atomic.
+- Transaction + Outbox atomic. ✅
 - Có thể kết hợp EF Execution Strategy.
 
 ### 4. Outbox hoàn chỉnh
