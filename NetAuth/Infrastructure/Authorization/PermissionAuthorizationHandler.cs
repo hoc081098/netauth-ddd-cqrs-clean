@@ -10,7 +10,7 @@ internal sealed class PermissionAuthorizationHandler : AuthorizationHandler<Perm
         PermissionRequirement requirement)
     {
         var hasRequirementPermission = context.User
-            .HasClaim(claim => claim.Type == CustomClaims.Permission && claim.Value == requirement.Permission);
+            .HasClaim(type: CustomClaimTypes.Permission, value: requirement.Permission);
         if (hasRequirementPermission)
         {
             context.Succeed(requirement);
