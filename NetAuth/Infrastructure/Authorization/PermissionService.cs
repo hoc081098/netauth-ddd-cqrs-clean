@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Ardalis.GuardClauses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 
@@ -10,7 +9,7 @@ internal sealed class PermissionService(
     IDistributedCache distributedCache
 ) : IPermissionService
 {
-    private const string CacheKeyPrefix = "user_permissions:";
+    private const string CacheKeyPrefix = "auth:permissions:user:";
     private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(30);
 
     private static string BuildCacheKey(Guid userId) => $"{CacheKeyPrefix}{userId:N}";
@@ -25,10 +24,7 @@ internal sealed class PermissionService(
         if (cachedBytes is not null)
         {
             var cachedList = JsonSerializer.Deserialize<List<string>>(cachedBytes);
-            Guard.Against.Null(cachedList,
-                exceptionCreator: () => new InvalidOperationException("Cached permissions deserialized to null"));
-
-            return cachedList.ToHashSet(StringComparer.Ordinal);
+            return cachedList?.ToHashSet(StringComparer.Ordinal) ?? [];
         }
 
         // 2. Query DB
