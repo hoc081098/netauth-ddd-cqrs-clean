@@ -6,7 +6,8 @@ namespace NetAuth.Infrastructure.Authorization;
 
 internal sealed class PermissionService(
     AppDbContext dbContext,
-    IDistributedCache distributedCache
+    IDistributedCache distributedCache,
+    ILogger<PermissionService> logger
 ) : IPermissionService
 {
     private const string CacheKeyPrefix = "auth:permissions:user:";
@@ -24,6 +25,10 @@ internal sealed class PermissionService(
         if (cachedBytes is not null)
         {
             var cachedList = JsonSerializer.Deserialize<List<string>>(cachedBytes);
+            if (cachedList is null)
+            {
+                logger.LogWarning("Cached permissions for user {UserId} could not be deserialized", userId);
+            }
             return cachedList?.ToHashSet(StringComparer.Ordinal) ?? [];
         }
 
