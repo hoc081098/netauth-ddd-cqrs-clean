@@ -58,7 +58,7 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
             .WithMany()
             .UsingEntity<RoleUser>(
                 configureRight: roleUserBuilder =>
-                    roleUserBuilder.HasOne<Role>()
+                    roleUserBuilder.HasOne<Role>(roleUser => roleUser.Role)
                         .WithMany()
                         .HasForeignKey(roleUser => roleUser.RoleId),
                 configureLeft: roleUserBuilder =>

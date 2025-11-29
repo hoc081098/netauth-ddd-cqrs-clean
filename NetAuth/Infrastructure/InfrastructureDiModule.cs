@@ -1,3 +1,4 @@
+using Ardalis.GuardClauses;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -33,6 +34,7 @@ public static class InfrastructureDiModule
         services.AddSingleton(_ =>
         {
             var connectionString = configuration.GetConnectionString("Database");
+            Guard.Against.NullOrEmpty(connectionString);
             return new NpgsqlDataSourceBuilder(connectionString).Build();
         });
         // https://www.npgsql.org/efcore/release-notes/7.0.html#support-for-dbdatasource
@@ -60,6 +62,15 @@ public static class InfrastructureDiModule
         // IAuthorizationHandler and IAuthorizationPolicyProvider can be registered as singletons
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+
+        services.AddStackExchangeRedisCache(options =>
+        {
+            var redisConnectionString = configuration.GetConnectionString("Redis");
+            Guard.Against.NullOrEmpty(redisConnectionString);
+
+            options.Configuration = redisConnectionString;
+            options.InstanceName = "NetAuthCache";
+        });
 
         // Add HttpContextAccessor
         services.AddHttpContextAccessor();

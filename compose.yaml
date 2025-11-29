@@ -1,0 +1,9 @@
+﻿version: '3.9'
+
+services:
+  netauth.redis:
+    image: redis:8.4.0-alpine
+    container_name: NetAuth.Redis
+    restart: always
+    ports:
+      - "6379:6379"

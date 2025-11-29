@@ -4,16 +4,20 @@ using Microsoft.EntityFrameworkCore.Storage;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Domain.Core.Primitives;
+using NetAuth.Infrastructure.Models;
 using NetAuth.Infrastructure.Outbox;
 
 namespace NetAuth.Infrastructure;
 
-public sealed class AppDbContext(
+internal sealed class AppDbContext(
     DbContextOptions<AppDbContext> options,
     IClock clock
 ) : DbContext(options),
     IUnitOfWork
 {
+    internal DbSet<RoleUser> RoleUsers => Set<RoleUser>();
+    internal DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
