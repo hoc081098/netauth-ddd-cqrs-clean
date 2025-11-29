@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Ardalis.GuardClauses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 
@@ -24,10 +25,13 @@ internal sealed class PermissionService(
         if (cachedBytes is not null)
         {
             var cachedList = JsonSerializer.Deserialize<List<string>>(cachedBytes);
-            return new HashSet<string>(cachedList ?? []);
+            Guard.Against.Null(cachedList,
+                exceptionCreator: () => new InvalidOperationException("Cached permissions deserialized to null"));
+
+            return cachedList.ToHashSet(StringComparer.Ordinal);
         }
 
-        // 1. Try cache
+        // 2. Query DB
         var permissions = await dbContext.RoleUsers
             .AsNoTracking()
             .Where(ru => ru.UserId == userId)
@@ -44,6 +48,6 @@ internal sealed class PermissionService(
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheTtl },
             cancellationToken);
 
-        return new HashSet<string>(permissions);
+        return permissions.ToHashSet(StringComparer.Ordinal);
     }
 }
