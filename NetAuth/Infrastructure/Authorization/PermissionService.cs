@@ -36,8 +36,6 @@ internal sealed class PermissionService(
             .Distinct()
             .ToListAsync(cancellationToken);
 
-        var result = new HashSet<string>(permissions);
-
         // 3. Save to cache
         var data = JsonSerializer.SerializeToUtf8Bytes(permissions);
         await distributedCache.SetAsync(
@@ -46,6 +44,6 @@ internal sealed class PermissionService(
             new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheTtl },
             cancellationToken);
 
-        return result;
+        return new HashSet<string>(permissions);
     }
 }
