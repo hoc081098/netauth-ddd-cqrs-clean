@@ -26,12 +26,12 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         var utcNow = clock.UtcNow;
         await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
 
-        // 1. Find the refresh tokenHash
+        // 1. Find the refresh token
         var refreshToken = await refreshTokenRepository.GetByTokenHashAsync(
             refreshTokenGenerator.ComputeTokenHash(command.RefreshToken),
             cancellationToken);
 
-        // 2. Check if tokenHash exists
+        // 2. Check if token exists
         if (refreshToken is null)
         {
             return UsersDomainErrors.RefreshToken.Invalid;
@@ -83,7 +83,8 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
 
         var newRefreshToken = refreshToken.Rotate(
             newTokenHash: refreshTokenResult.TokenHash,
-            newExpiresOnUtc: utcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration));
+            newExpiresOnUtc: utcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration),
+            revokedAt: utcNow);
         refreshTokenRepository.Insert(newRefreshToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -101,7 +102,9 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         CancellationToken cancellationToken = default)
     {
         // đơn giản: revoke tất cả token active của user
-        var refreshTokens = await refreshTokenRepository.GetActiveTokensByUserIdAsync(userId, cancellationToken);
+        var refreshTokens = await refreshTokenRepository.GetValidTokensByUserIdAsync(userId,
+            utcNow,
+            cancellationToken);
 
         foreach (var token in refreshTokens)
         {

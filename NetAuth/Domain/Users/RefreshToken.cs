@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Ardalis.GuardClauses;
 using JetBrains.Annotations;
 using LanguageExt;
@@ -108,6 +109,12 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
     public bool IsExpired(DateTimeOffset currentUtc) => ExpiresOnUtc <= currentUtc;
 
     /// <summary>
+    /// Gets a value indicating whether the refresh token is valid (active and not expired).
+    /// </summary>
+    [Pure]
+    public bool IsValid(DateTimeOffset currentUtc) => Status == RefreshTokenStatus.Active && !IsExpired(currentUtc);
+
+    /// <summary>
     /// Creates a new refresh token.
     /// </summary>
     /// <param name="tokenHash">The unique token hash value.</param>
@@ -136,17 +143,27 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
 
     public void MarkAsRevoked(DateTimeOffset revokedAt)
     {
+        if (Status == RefreshTokenStatus.Revoked)
+        {
+            return;
+        }
+
         Status = RefreshTokenStatus.Revoked;
         RevokedAt = revokedAt;
     }
 
     public void MarkAsCompromised(DateTimeOffset revokedAt)
     {
+        if (Status == RefreshTokenStatus.Compromised)
+        {
+            return;
+        }
+
         Status = RefreshTokenStatus.Compromised;
         RevokedAt = revokedAt;
     }
-    
-    public RefreshToken Rotate(string newTokenHash, DateTimeOffset newExpiresOnUtc)
+
+    public RefreshToken Rotate(string newTokenHash, DateTimeOffset newExpiresOnUtc, DateTimeOffset revokedAt)
     {
         var newRefreshToken = Create(
             tokenHash: newTokenHash,
@@ -155,8 +172,17 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
             deviceId: DeviceId);
 
         ReplacedById = newRefreshToken.Id;
-        MarkAsRevoked(DateTimeOffset.UtcNow);
+        MarkAsRevoked(revokedAt);
 
         return newRefreshToken;
     }
+}
+
+public static class RefreshTokenExpressions
+{
+    public static Expression<Func<RefreshToken, bool>> IsExpired(Guid userId, DateTimeOffset currentUtc)
+        => rt => rt.UserId == userId && rt.ExpiresOnUtc <= currentUtc;
+
+    public static Expression<Func<RefreshToken, bool>> IsValid(Guid userId, DateTimeOffset currentUtc)
+        => rt => rt.UserId == userId && rt.Status == RefreshTokenStatus.Active && currentUtc < rt.ExpiresOnUtc;
 }

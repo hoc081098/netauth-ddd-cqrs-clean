@@ -29,11 +29,13 @@ public interface IRefreshTokenRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets all active refresh tokens for a specific user.
+    /// Gets all valid refresh tokens for a specific user.
     /// </summary>
     /// <param name="userId">The user ID.</param>
+    /// <param name="currentUtc">The current UTC time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    public Task<IReadOnlyList<RefreshToken>> GetActiveTokensByUserIdAsync(
+    public Task<IReadOnlyList<RefreshToken>> GetValidTokensByUserIdAsync(
         Guid userId,
+        DateTimeOffset currentUtc,
         CancellationToken cancellationToken = default);
 }
