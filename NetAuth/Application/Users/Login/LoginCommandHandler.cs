@@ -53,6 +53,6 @@ internal sealed class LoginCommandHandler(
 
         return new LoginResult(
             AccessToken: accessToken,
-            RefreshToken: refreshTokenGenerator.GenerateToken());
+            RefreshToken: refreshToken.Token);
     }
 }
