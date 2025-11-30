@@ -1,14 +1,14 @@
 using JetBrains.Annotations;
 using MediatR;
-using NetAuth.Application.Users.Login;
+using NetAuth.Application.Users.LoginWithRefreshToken;
 using NetAuth.Web.Api.Contracts;
 
 namespace NetAuth.Web.Api.Endpoints.Users;
 
 [UsedImplicitly]
-internal sealed class LoginEndpoint : IEndpoint
+internal sealed class RefreshTokenEndpoint : IEndpoint
 {
-    public sealed record Request(string Email, string Password);
+    public sealed record Request(string RefreshToken);
 
     public sealed record Response(
         string AccessToken,
@@ -16,14 +16,13 @@ internal sealed class LoginEndpoint : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/auth/login", async (
+        app.MapPost("/auth/refresh", async (
                 Request request,
                 ISender sender,
                 CancellationToken cancellationToken) =>
             {
-                var command = new LoginCommand(
-                    Email: request.Email,
-                    Password: request.Password);
+                var command = new LoginWithRefreshTokenCommand(
+                    RefreshToken: request.RefreshToken);
 
                 var either = await sender.Send(command, cancellationToken);
 
@@ -33,9 +32,9 @@ internal sealed class LoginEndpoint : IEndpoint
                         RefreshToken: result.RefreshToken))
                     .Match(Right: Results.Ok, Left: CustomResults.Err);
             })
-            .WithName("Login")
-            .WithSummary("Authenticate user with email & password.")
-            .WithDescription("Returns JWT access token and refresh token when credentials are valid.")
+            .WithName("RefreshToken")
+            .WithSummary("Refresh JWT access token using refresh token.")
+            .WithDescription("Returns new JWT access token and refresh token when the provided refresh token is valid.")
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest);

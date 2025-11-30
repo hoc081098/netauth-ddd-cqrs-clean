@@ -1,9 +1,11 @@
+using JetBrains.Annotations;
 using MediatR;
 using NetAuth.Application.Users.Register;
 using NetAuth.Web.Api.Contracts;
 
 namespace NetAuth.Web.Api.Endpoints.Users;
 
+[UsedImplicitly]
 internal sealed class RegisterEndpoint : IEndpoint
 {
     public sealed record Request(
