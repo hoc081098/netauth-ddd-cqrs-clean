@@ -12,7 +12,7 @@ public interface IRefreshTokenRepository
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The refresh token if found; otherwise, null.</returns>
     Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default);
-    
+
     /// <summary>
     /// Adds a new refresh token.
     /// </summary>
@@ -25,10 +25,15 @@ public interface IRefreshTokenRepository
     /// <param name="userId">The user ID.</param>
     /// <param name="currentUtc">The current UTC time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    Task<int> DeleteExpiredByUserIdAsync(Guid userId, DateTimeOffset currentUtc, CancellationToken cancellationToken = default);
+    Task<int> DeleteExpiredByUserIdAsync(Guid userId, DateTimeOffset currentUtc,
+        CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Gets all active refresh tokens for a specific user.
+    /// </summary>
+    /// <param name="userId">The user ID.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
     public Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 }
-
