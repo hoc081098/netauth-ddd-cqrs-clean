@@ -8,7 +8,9 @@ internal sealed class RefreshTokenRepository(AppDbContext dbContext) :
     IRefreshTokenRepository
 {
     public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default) =>
-        EntitySet.FirstOrDefaultAsync(rt => rt.Token == token, cancellationToken);
+        EntitySet
+            .Include(rt => rt.User)
+            .FirstOrDefaultAsync(rt => rt.Token == token, cancellationToken);
 
     public async Task<IReadOnlyList<RefreshToken>> GetByUserIdAsync(
         Guid userId,
