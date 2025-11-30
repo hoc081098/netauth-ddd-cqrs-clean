@@ -9,8 +9,16 @@ internal sealed class RefreshTokenRepository(AppDbContext dbContext) :
 {
     public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default) =>
         EntitySet
+            .FromSql(
+                // NOTE: This is a FormattableString to prevent SQL injection.
+                $"""
+                 SELECT * FROM refresh_tokens
+                 WHERE token_hash = {tokenHash}
+                 FOR UPDATE
+                 """
+            )
             .Include(rt => rt.User)
-            .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash, cancellationToken);
+            .FirstOrDefaultAsync(cancellationToken);
 
     public Task<int> DeleteExpiredByUserIdAsync(
         Guid userId,
