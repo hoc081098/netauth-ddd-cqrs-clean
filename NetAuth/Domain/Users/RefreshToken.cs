@@ -111,10 +111,9 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
     /// Gets a value indicating whether the refresh token is valid (active and not expired).
     /// </summary>
     [Pure]
-    public bool IsValid(DateTimeOffset currentUtc, string deviceId) =>
+    public bool IsValid(DateTimeOffset currentUtc) =>
         Status == RefreshTokenStatus.Active &&
-        !IsExpired(currentUtc) &&
-        string.Equals(DeviceId, deviceId, StringComparison.Ordinal);
+        !IsExpired(currentUtc);
 
     /// <summary>
     /// Creates a new refresh token.

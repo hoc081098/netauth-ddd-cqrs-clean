@@ -77,13 +77,6 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
             return UsersDomainErrors.RefreshToken.InvalidDevice;
         }
 
-        // 6. Final validation
-        if (!refreshToken.IsValid(utcNow, command.DeviceId))
-        {
-            // Double check, should not reach here
-            return UsersDomainErrors.RefreshToken.Invalid;
-        }
-
         // 6. Rotate the refresh token and generate a new access token
         var accessToken = jwtProvider.Create(refreshToken.User);
         var refreshTokenResult = refreshTokenGenerator.GenerateRefreshToken();
@@ -109,7 +102,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         CancellationToken cancellationToken = default)
     {
         // Simple approach: revoke all active tokens for the user
-        var refreshTokens = await refreshTokenRepository.GetValidTokensByUserIdAsync(userId,
+        var refreshTokens = await refreshTokenRepository.GetNonExpiredActiveTokensByUserIdAsync(userId,
             currentUtc,
             cancellationToken);
 
