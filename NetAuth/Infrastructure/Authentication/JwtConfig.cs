@@ -19,6 +19,7 @@ public record JwtConfig
     public required string Issuer { get; init; }
     public required string Audience { get; init; }
     public required TimeSpan Expiration { get; init; }
+    public required TimeSpan RefreshTokenExpiration { get; init; }
 
     [JsonIgnore] private SecurityKey? _issuerSigningKey;
 
