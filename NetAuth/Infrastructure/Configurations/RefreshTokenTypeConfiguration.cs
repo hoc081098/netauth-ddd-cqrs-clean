@@ -16,9 +16,9 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
 
         builder.HasKey(rt => rt.Id);
 
-        builder.Property(rt => rt.Token)
+        builder.Property(rt => rt.TokenHash)
             .IsRequired()
-            .HasMaxLength(500);
+            .HasMaxLength(512);
 
         builder.Property(rt => rt.ExpiresOnUtc)
             .IsRequired();
@@ -26,11 +26,24 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
         builder.Property(rt => rt.UserId)
             .IsRequired();
 
+        builder.Property(rt => rt.DeviceId)
+            .HasMaxLength(256)
+            .IsRequired();
+
+        builder.Property(rt => rt.RevokedAt);
+
+        builder.Property(rt => rt.Status)
+            .IsRequired();
+
+        builder.Property(rt => rt.ReplacedById);
+
         builder.Property(rt => rt.CreatedOnUtc).IsRequired();
 
         builder.Property(rt => rt.ModifiedOnUtc);
 
-        builder.HasIndex(rt => rt.Token)
+        // -- Indexes & Relationships
+
+        builder.HasIndex(rt => rt.TokenHash)
             .IsUnique()
             .HasDatabaseName("ux_refresh_token_token");
 
@@ -40,5 +53,11 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
         builder.HasOne<User>(rt => rt.User)
             .WithMany()
             .HasForeignKey(rt => rt.UserId);
+
+        // Each refresh token can be replaced by another refresh token (one-to-one relationship)
+        builder.HasOne<RefreshToken>(rt => rt.ReplacedBy)
+            .WithOne()
+            .HasForeignKey<RefreshToken>(rt => rt.ReplacedById)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

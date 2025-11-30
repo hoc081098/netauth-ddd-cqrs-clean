@@ -4,7 +4,8 @@ namespace NetAuth.Application.Users.Login;
 
 public sealed record LoginCommand(
     string Email,
-    string Password
+    string Password,
+    string DeviceId
 ) : ICommand<LoginResult>;
 
 public sealed record LoginResult(

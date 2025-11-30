@@ -32,7 +32,8 @@ public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         _passwordHash = passwordHash;
     }
 
-    public IReadOnlyCollection<Role> Roles => [.._roles];
+    // Navigation property
+    public IReadOnlyList<Role> Roles => [.._roles];
 
     /// <inheritdoc />
     public DateTimeOffset CreatedOnUtc { get; }

@@ -40,12 +40,14 @@ internal sealed class LoginCommandHandler(
         // Generate access token
         var accessToken = jwtProvider.Create(user);
 
-        // Generate refresh token, clean up old expired tokens, and save new one
+        // Generate refresh token and save it.
+        var refreshTokenResult = refreshTokenGenerator.GenerateRefreshToken();
         var refreshToken = RefreshToken.Create(
-            token: refreshTokenGenerator.GenerateToken(),
+            tokenHash: refreshTokenResult.TokenHash,
             expiresOnUtc: clock.UtcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration),
-            userId: user.Id);
-        await refreshTokenRepository.DeleteExpiredByUserIdAsync(user.Id, clock.UtcNow, cancellationToken);
+            userId: user.Id,
+            deviceId: command.DeviceId
+        );
         refreshTokenRepository.Insert(refreshToken);
 
         // Save changes
@@ -53,6 +55,6 @@ internal sealed class LoginCommandHandler(
 
         return new LoginResult(
             AccessToken: accessToken,
-            RefreshToken: refreshToken.Token);
+            RefreshToken: refreshTokenResult.RawToken);
     }
 }

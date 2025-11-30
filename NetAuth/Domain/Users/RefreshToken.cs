@@ -1,19 +1,28 @@
-using System.Diagnostics.Contracts;
 using Ardalis.GuardClauses;
+using JetBrains.Annotations;
 using NetAuth.Domain.Core.Abstractions;
 using NetAuth.Domain.Core.Primitives;
+using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Domain.Users;
+
+public enum RefreshTokenStatus
+{
+    Active = 0,
+    Revoked = 1,
+    Reused = 2, // bị dùng lại sau khi đã rotate
+    Compromised = 3 // cả chain bị coi là compromised
+}
 
 /// <summary>
 /// Represents a refresh token used for JWT token renewal.
 /// </summary>
-public sealed class RefreshToken : Entity<Guid>, IAuditableEntity
+public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
 {
     /// <summary>
-    /// Gets the unique token value.
+    /// Gets the unique token hash value.
     /// </summary>
-    public string Token { get; private set; } = string.Empty;
+    public string TokenHash { get; private set; } = null!;
 
     /// <summary>
     /// Gets the expiration date and time in UTC.
@@ -25,67 +34,103 @@ public sealed class RefreshToken : Entity<Guid>, IAuditableEntity
     /// </summary>
     public Guid UserId { get; }
 
+    /// <summary>
+    /// Gets the device identifier associated with this refresh token.
+    /// </summary>
+    public string DeviceId { get; } = null!;
+
+    /// <summary>
+    /// The date and time when the refresh token was revoked, if applicable.
+    /// </summary>
+    public DateTimeOffset? RevokedAt { get; private set; }
+
+    /// <summary>
+    /// The status of the refresh token.
+    /// </summary>
+    public RefreshTokenStatus Status { get; private set; }
+
+    /// <summary>
+    /// The ID of the refresh token that replaced this one, if applicable.
+    /// </summary>
+    public Guid? ReplacedById { get; private set; }
+
     /// <inheritdoc />
     public DateTimeOffset CreatedOnUtc { get; }
 
     /// <inheritdoc />
     public DateTimeOffset? ModifiedOnUtc { get; }
 
+    /// <summary>
+    /// Gets the user who owns this refresh token.
+    /// </summary>
     public User User { get; } = null!;
-    
+
+    /// <summary>
+    /// Gets the refresh token that replaced this one.
+    /// </summary>
+    public RefreshToken? ReplacedBy { get; } = null!;
+
     /// <remarks>Required by EF Core.</remarks>
+    [UsedImplicitly]
     private RefreshToken()
     {
     }
 
-    private RefreshToken(Guid id, string token, DateTimeOffset expiresOnUtc, Guid userId)
+    private RefreshToken(Guid id,
+        string tokenHash,
+        DateTimeOffset expiresOnUtc,
+        Guid userId,
+        string deviceId,
+        DateTimeOffset? revokedAt,
+        RefreshTokenStatus status,
+        Guid? replacedById
+    )
         : base(id)
     {
-        Guard.Against.NullOrWhiteSpace(token);
+        Guard.Against.NullOrWhiteSpace(tokenHash);
+        Guard.Against.Default(expiresOnUtc);
         Guard.Against.Default(userId);
+        Guard.Against.NullOrWhiteSpace(deviceId);
 
-        Token = token;
+        TokenHash = tokenHash;
         ExpiresOnUtc = expiresOnUtc;
         UserId = userId;
+        DeviceId = deviceId;
+        RevokedAt = revokedAt;
+        Status = status;
+        ReplacedById = replacedById;
     }
 
     /// <summary>
     /// Gets a value indicating whether the refresh token is expired.
     /// </summary>
     [Pure]
-    public bool IsExpired(DateTimeOffset currentUtc) => currentUtc >= ExpiresOnUtc;
+    public bool IsExpired(DateTimeOffset currentUtc) => ExpiresOnUtc <= currentUtc;
 
     /// <summary>
     /// Creates a new refresh token.
     /// </summary>
-    /// <param name="token">The unique token value.</param>
+    /// <param name="tokenHash">The unique token hash value.</param>
     /// <param name="expiresOnUtc">The expiration date and time in UTC.</param>
     /// <param name="userId">The ID of the user who owns this token.</param>
+    /// <param name="deviceId">The device identifier associated with this token.</param>
     /// <returns>A new <see cref="RefreshToken"/> instance.</returns>
     [Pure]
-    public static RefreshToken Create(string token, DateTimeOffset expiresOnUtc, Guid userId)
+    public static RefreshToken Create(string tokenHash, DateTimeOffset expiresOnUtc, Guid userId, string deviceId)
     {
-        return new RefreshToken(
+        var created = new RefreshToken(
             id: Guid.CreateVersion7(),
-            token: token,
+            tokenHash: tokenHash,
             expiresOnUtc: expiresOnUtc,
-            userId: userId);
-    }
+            userId: userId,
+            deviceId: deviceId,
+            revokedAt: null,
+            status: RefreshTokenStatus.Active,
+            replacedById: null
+        );
 
-    /// <summary>
-    /// Revokes the refresh token by setting its expiration to the current time.
-    /// </summary>
-    /// <param name="currentUtc">The current UTC time.</param>
-    public void Revoke(DateTimeOffset currentUtc)
-    {
-        ExpiresOnUtc = currentUtc;
-    }
+        created.AddDomainEvent(new RefreshTokenCreatedDomainEvent(RefreshTokenId: created.Id, UserId: created.UserId));
 
-    public void UpdateToken(string token, DateTimeOffset expiresOnUtc)
-    {
-        Guard.Against.NullOrWhiteSpace(token);
-
-        Token = token;
-        ExpiresOnUtc = expiresOnUtc;
+        return created;
     }
 }

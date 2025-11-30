@@ -8,7 +8,11 @@ namespace NetAuth.Web.Api.Endpoints.Users;
 [UsedImplicitly]
 internal sealed class LoginEndpoint : IEndpoint
 {
-    public sealed record Request(string Email, string Password);
+    public sealed record Request(
+        string Email,
+        string Password,
+        string DeviceId
+    );
 
     public sealed record Response(
         string AccessToken,
@@ -23,7 +27,8 @@ internal sealed class LoginEndpoint : IEndpoint
             {
                 var command = new LoginCommand(
                     Email: request.Email,
-                    Password: request.Password);
+                    Password: request.Password,
+                    DeviceId: request.DeviceId);
 
                 var either = await sender.Send(command, cancellationToken);
 

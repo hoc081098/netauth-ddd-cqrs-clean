@@ -10,7 +10,7 @@ internal sealed class RefreshTokenRepository(AppDbContext dbContext) :
     public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default) =>
         EntitySet
             .Include(rt => rt.User)
-            .FirstOrDefaultAsync(rt => rt.Token == token, cancellationToken);
+            .FirstOrDefaultAsync(rt => rt.TokenHash == token, cancellationToken);
 
     public async Task<IReadOnlyList<RefreshToken>> GetByUserIdAsync(
         Guid userId,
@@ -20,7 +20,7 @@ internal sealed class RefreshTokenRepository(AppDbContext dbContext) :
             .Where(rt => rt.UserId == userId)
             .ToListAsync(cancellationToken);
 
-    public Task DeleteExpiredByUserIdAsync(
+    public Task<int> DeleteExpiredByUserIdAsync(
         Guid userId,
         DateTimeOffset currentUtc,
         CancellationToken cancellationToken = default) =>

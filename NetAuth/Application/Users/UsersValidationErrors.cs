@@ -38,5 +38,11 @@ public static class UsersValidationErrors
                 code: "Login.PasswordIsRequired",
                 message: "Password is required.",
                 type: DomainError.ErrorType.Validation);
+        
+        public static DomainError DeviceIdIsRequired =>
+            new(
+                code: "Login.DeviceIdIsRequired",
+                message: "Device id is required.",
+                type: DomainError.ErrorType.Validation);
     }
 }

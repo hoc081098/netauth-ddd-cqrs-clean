@@ -25,6 +25,6 @@ public interface IRefreshTokenRepository
     /// <param name="userId">The user ID.</param>
     /// <param name="currentUtc">The current UTC time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    Task DeleteExpiredByUserIdAsync(Guid userId, DateTimeOffset currentUtc, CancellationToken cancellationToken = default);
+    Task<int> DeleteExpiredByUserIdAsync(Guid userId, DateTimeOffset currentUtc, CancellationToken cancellationToken = default);
 }
 
