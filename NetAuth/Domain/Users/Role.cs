@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Domain.Users;
@@ -13,8 +14,8 @@ public sealed class Role : Entity<RoleId>
     public static readonly Role Administrator = new(RoleId.AdministratorId, "Administrator");
     public static readonly Role Member = new(RoleId.MemberId, "Member");
 
-    // ReSharper disable once UnusedMember.Local
     /// <remarks>Required by EF Core.</remarks>
+    [UsedImplicitly]
     private Role()
     {
     }

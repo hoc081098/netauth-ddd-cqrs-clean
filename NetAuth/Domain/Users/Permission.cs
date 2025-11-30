@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Domain.Users;
@@ -13,8 +14,8 @@ public sealed class Permission : Entity<PermissionId>
     public static readonly Permission GetUsers = new(PermissionId.GetUsersId, "users:read");
     public static readonly Permission ModifyUser = new(PermissionId.ModifyUserId, "users:update");
 
-    // ReSharper disable once UnusedMember.Local
     /// <remarks>Required by EF Core.</remarks>
+    [UsedImplicitly]
     private Permission()
     {
     }

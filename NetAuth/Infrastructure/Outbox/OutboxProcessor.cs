@@ -1,8 +1,8 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Dapper;
+using JetBrains.Annotations;
 using MediatR;
 using Microsoft.Extensions.Options;
 using NetAuth.Application.Abstractions.Common;
@@ -203,7 +203,7 @@ internal sealed class OutboxProcessor(
                 }
             );
 
-    [SuppressMessage("ReSharper", "NotAccessedPositionalProperty.Local")]
+    [UsedImplicitly]
     private readonly record struct OutboxUpdate(
         Guid Id,
         DateTimeOffset? ProcessedOnUtc,

@@ -1,9 +1,10 @@
 using FluentValidation;
+using JetBrains.Annotations;
 using NetAuth.Application.Core.Extensions;
 
 namespace NetAuth.Application.Users.Login;
 
-// ReSharper disable once UnusedType.Global
+[UsedImplicitly]
 internal sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
 {
     public LoginCommandValidator()

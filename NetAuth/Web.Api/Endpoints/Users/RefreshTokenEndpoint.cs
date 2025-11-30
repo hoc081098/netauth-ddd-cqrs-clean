@@ -16,7 +16,7 @@ internal sealed class RefreshTokenEndpoint : IEndpoint
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
-        app.MapPost("/auth/refresh", async (
+        app.MapPost("/auth/refresh-token", async (
                 Request request,
                 ISender sender,
                 CancellationToken cancellationToken) =>

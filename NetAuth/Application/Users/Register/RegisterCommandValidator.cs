@@ -1,9 +1,10 @@
 using FluentValidation;
+using JetBrains.Annotations;
 using NetAuth.Application.Core.Extensions;
 
 namespace NetAuth.Application.Users.Register;
 
-// ReSharper disable once UnusedType.Global
+[UsedImplicitly]
 internal sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand>
 {
     public RegisterCommandValidator()
