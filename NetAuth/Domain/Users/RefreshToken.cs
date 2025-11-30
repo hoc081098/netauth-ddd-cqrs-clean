@@ -31,6 +31,8 @@ public sealed class RefreshToken : Entity<Guid>, IAuditableEntity
     /// <inheritdoc />
     public DateTimeOffset? ModifiedOnUtc { get; }
 
+    public User User { get; } = null!;
+    
     /// <remarks>Required by EF Core.</remarks>
     private RefreshToken()
     {

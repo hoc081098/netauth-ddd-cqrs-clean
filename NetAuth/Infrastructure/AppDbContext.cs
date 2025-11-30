@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Domain.Core.Primitives;
+using NetAuth.Domain.Users;
 using NetAuth.Infrastructure.Models;
 using NetAuth.Infrastructure.Outbox;
 
@@ -15,6 +16,7 @@ internal sealed class AppDbContext(
 ) : DbContext(options),
     IUnitOfWork
 {
+    internal DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     internal DbSet<RoleUser> RoleUsers => Set<RoleUser>();
     internal DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     internal DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
