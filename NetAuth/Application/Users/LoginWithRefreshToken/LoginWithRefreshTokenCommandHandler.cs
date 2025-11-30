@@ -41,7 +41,11 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         {
             // token đã bị rotate / revoked mà còn dùng lại → considered reused
             refreshToken.MarkAsCompromised(clock.UtcNow);
-            await MarkRefreshTokenChainCompromised(refreshToken.UserId, cancellationToken);
+            await MarkRefreshTokenChainCompromised(
+                refreshTokenRepository,
+                refreshToken.UserId,
+                clock,
+                cancellationToken);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -89,11 +93,15 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
             RefreshToken: refreshTokenResult.RawToken);
     }
 
-    private async Task MarkRefreshTokenChainCompromised(Guid userId, CancellationToken ct)
+    private static async Task MarkRefreshTokenChainCompromised(
+        IRefreshTokenRepository refreshTokenRepository,
+        Guid userId,
+        IClock clock,
+        CancellationToken cancellationToken = default)
     {
         // đơn giản: revoke tất cả token active của user
-        var refreshTokens = await refreshTokenRepository.GetActiveByUserIdAsync(userId, ct);
-        var now = DateTimeOffset.UtcNow;
+        var refreshTokens = await refreshTokenRepository.GetActiveByUserIdAsync(userId, cancellationToken);
+        var now = clock.UtcNow;
 
         foreach (var token in refreshTokens)
         {
