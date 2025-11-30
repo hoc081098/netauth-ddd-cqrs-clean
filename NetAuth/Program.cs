@@ -103,10 +103,10 @@ app.MapGet("/me", (IUserIdentifierProvider userIdentifierProvider) => new { user
     .WithDescription("Returns the details of the currently authenticated user.")
     .Produces(StatusCodes.Status401Unauthorized);
 
-app.MapGet("/me-unchecked", (ClaimsPrincipal user) => new { user.Identity });
-app.MapGet("/me-check-empty", (ClaimsPrincipal user) => new { user.Identity })
+app.MapGet("/me-public", (ClaimsPrincipal user) => new { user.Identity });
+app.MapGet("/me-required-auth", (ClaimsPrincipal user) => new { user.Identity })
     .RequireAuthorization();
-app.MapGet("/me-check-non-empty", (ClaimsPrincipal user) => new { user.Identity })
+app.MapGet("/me-required-permission", (ClaimsPrincipal user) => new { user.Identity })
     .RequireAuthorization("permission:users:read");
 
 app.Run();
