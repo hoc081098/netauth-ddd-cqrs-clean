@@ -68,7 +68,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         // 5. Check device ID
         if (!string.Equals(refreshToken.DeviceId, command.DeviceId, StringComparison.Ordinal))
         {
-            // device ID không khớp → nghi ngờ bị đánh cắp token -> chặn luôn
+            // Device ID mismatch - suspicious token theft detected, block immediately
             refreshToken.MarkAsCompromised(utcNow);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
