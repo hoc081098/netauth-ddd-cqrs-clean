@@ -33,7 +33,7 @@ public interface IRefreshTokenRepository
     /// </summary>
     /// <param name="userId">The user ID.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
-    public Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(
+    public Task<IReadOnlyList<RefreshToken>> GetActiveTokensByUserIdAsync(
         Guid userId,
         CancellationToken cancellationToken = default);
 }

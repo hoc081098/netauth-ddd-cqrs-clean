@@ -101,7 +101,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         CancellationToken cancellationToken = default)
     {
         // đơn giản: revoke tất cả token active của user
-        var refreshTokens = await refreshTokenRepository.GetActiveByUserIdAsync(userId, cancellationToken);
+        var refreshTokens = await refreshTokenRepository.GetActiveTokensByUserIdAsync(userId, cancellationToken);
 
         foreach (var token in refreshTokens)
         {
