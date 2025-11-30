@@ -23,7 +23,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         LoginWithRefreshTokenCommand command,
         CancellationToken cancellationToken)
     {
-        var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+        await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         // 1. Find the refresh tokenHash
         var refreshToken = await refreshTokenRepository.GetByTokenHashAsync(
