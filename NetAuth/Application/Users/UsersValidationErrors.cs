@@ -45,4 +45,19 @@ public static class UsersValidationErrors
                 message: "Device id is required.",
                 type: DomainError.ErrorType.Validation);
     }
+    
+    public static class LoginWithRefreshToken
+    {
+        public static DomainError RefreshTokenIsRequired =>
+            new(
+                code: "Login.RefreshTokenIsRequired",
+                message: "Refresh token is required.",
+                type: DomainError.ErrorType.Validation);
+
+        public static DomainError DeviceIdIsRequired =>
+            new(
+                code: "Login.DeviceIdIsRequired",
+                message: "Device id is required.",
+                type: DomainError.ErrorType.Validation);
+    }
 }

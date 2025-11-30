@@ -1,5 +1,6 @@
 using FluentValidation;
 using JetBrains.Annotations;
+using NetAuth.Application.Core.Extensions;
 
 namespace NetAuth.Application.Users.LoginWithRefreshToken;
 
@@ -10,6 +11,10 @@ internal sealed class LoginWithRefreshTokenCommandValidator : AbstractValidator<
     {
         RuleFor(x => x.RefreshToken)
             .NotEmpty()
-            .WithMessage("Refresh token is required.");
+            .WithDomainError(UsersValidationErrors.LoginWithRefreshToken.RefreshTokenIsRequired);
+
+        RuleFor(x => x.DeviceId)
+            .NotEmpty()
+            .WithDomainError(UsersValidationErrors.LoginWithRefreshToken.DeviceIdIsRequired);
     }
 }
