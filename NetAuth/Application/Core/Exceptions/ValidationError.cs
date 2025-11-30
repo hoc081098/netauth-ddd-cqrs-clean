@@ -16,7 +16,7 @@ public sealed class ValidationError(
             .Select(failure =>
                 new DomainError(code: failure.ErrorCode,
                     message: failure.ErrorMessage,
-                    type: DomainError.ErrorType.Validation))
+                    type: ErrorType.Validation))
             .Distinct()
             .ToArray();
 }
