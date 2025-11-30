@@ -23,6 +23,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         LoginWithRefreshTokenCommand command,
         CancellationToken cancellationToken)
     {
+        var utcNow = clock.UtcNow;
         await using var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
 
         // 1. Find the refresh tokenHash
@@ -40,11 +41,11 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         if (refreshToken.Status != RefreshTokenStatus.Active)
         {
             // token đã bị rotate / revoked mà còn dùng lại → considered reused
-            refreshToken.MarkAsCompromised(clock.UtcNow);
+            refreshToken.MarkAsCompromised(utcNow);
             await MarkRefreshTokenChainCompromised(
                 refreshTokenRepository,
                 refreshToken.UserId,
-                clock,
+                utcNow,
                 cancellationToken);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -54,9 +55,9 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         }
 
         // 4. Check if tokenHash is expired
-        if (refreshToken.IsExpired(clock.UtcNow))
+        if (refreshToken.IsExpired(utcNow))
         {
-            refreshToken.MarkAsRevoked(clock.UtcNow);
+            refreshToken.MarkAsRevoked(utcNow);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -68,7 +69,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         if (!string.Equals(refreshToken.DeviceId, command.DeviceId, StringComparison.Ordinal))
         {
             // device ID không khớp → nghi ngờ bị đánh cắp token -> chặn luôn
-            refreshToken.MarkAsCompromised(clock.UtcNow);
+            refreshToken.MarkAsCompromised(utcNow);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -82,7 +83,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
 
         var newRefreshToken = refreshToken.Rotate(
             newTokenHash: refreshTokenResult.TokenHash,
-            newExpiresOnUtc: clock.UtcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration));
+            newExpiresOnUtc: utcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration));
         refreshTokenRepository.Insert(newRefreshToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -96,16 +97,15 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
     private static async Task MarkRefreshTokenChainCompromised(
         IRefreshTokenRepository refreshTokenRepository,
         Guid userId,
-        IClock clock,
+        DateTimeOffset utcNow,
         CancellationToken cancellationToken = default)
     {
         // đơn giản: revoke tất cả token active của user
         var refreshTokens = await refreshTokenRepository.GetActiveByUserIdAsync(userId, cancellationToken);
-        var now = clock.UtcNow;
 
         foreach (var token in refreshTokens)
         {
-            token.MarkAsCompromised(now);
+            token.MarkAsCompromised(utcNow);
         }
     }
 }

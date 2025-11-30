@@ -56,8 +56,8 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
 
         // Each refresh token can be replaced by another refresh token (one-to-one relationship)
         builder.HasOne<RefreshToken>(rt => rt.ReplacedBy)
-            .WithOne()
-            .HasForeignKey<RefreshToken>(rt => rt.ReplacedById)
-            .OnDelete(DeleteBehavior.SetNull);
+            .WithOne() // ReplacedBy trỏ tới cái mới, nhưng cái mới không cần trỏ ngược lại cái cũ qua property
+            .HasForeignKey<RefreshToken>(rt => rt.ReplacedById) // FK nằm ở bản ghi CŨ
+            .OnDelete(DeleteBehavior.SetNull); // Quan trọng
     }
 }
