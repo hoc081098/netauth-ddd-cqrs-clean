@@ -105,17 +105,17 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
     private static async Task MarkRefreshTokenChainCompromised(
         IRefreshTokenRepository refreshTokenRepository,
         Guid userId,
-        DateTimeOffset utcNow,
+        DateTimeOffset currentUtc,
         CancellationToken cancellationToken = default)
     {
         // Simple approach: revoke all active tokens for the user
         var refreshTokens = await refreshTokenRepository.GetValidTokensByUserIdAsync(userId,
-            utcNow,
+            currentUtc,
             cancellationToken);
 
         foreach (var token in refreshTokens)
         {
-            token.MarkAsCompromised(utcNow);
+            token.MarkAsCompromised(currentUtc);
         }
     }
 }
