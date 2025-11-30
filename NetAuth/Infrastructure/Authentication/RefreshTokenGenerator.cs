@@ -25,7 +25,7 @@ internal sealed class RefreshTokenGenerator : IRefreshTokenGenerator
 
     public string ComputeTokenHash(string rawToken)
     {
-        // Có thể dùng SHA256/HMACSHA256 + secret
+        // Can use SHA256/HMACSHA256 with a secret key for additional security
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
         return Convert.ToBase64String(bytes);
     }

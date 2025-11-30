@@ -1,7 +1,6 @@
 using System.Linq.Expressions;
 using Ardalis.GuardClauses;
 using JetBrains.Annotations;
-using LanguageExt;
 using NetAuth.Domain.Core.Abstractions;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users.DomainEvents;
@@ -12,7 +11,7 @@ public enum RefreshTokenStatus
 {
     Active = 0,
     Revoked = 1,
-    Compromised = 2 // cả chain bị coi là compromised
+    Compromised = 2 // Consider entire token chain is compromised
 }
 
 /// <summary>
