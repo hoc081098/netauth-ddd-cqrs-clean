@@ -12,7 +12,6 @@ namespace NetAuth.Application.Users.LoginWithRefreshToken;
 
 internal sealed class LoginWithRefreshTokenCommandHandler(
     IRefreshTokenRepository refreshTokenRepository,
-    IUserRepository userRepository,
     IJwtProvider jwtProvider,
     IRefreshTokenGenerator refreshTokenGenerator,
     IOptions<JwtConfig> jwtConfigOptions,
@@ -46,7 +45,8 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         storedRefreshToken.UpdateToken(
             token: refreshTokenGenerator.GenerateToken(),
             expiresOnUtc: clock.UtcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration));
-        await refreshTokenRepository.DeleteExpiredByUserIdAsync(storedRefreshToken.UserId, clock.UtcNow, cancellationToken);
+        await refreshTokenRepository.DeleteExpiredByUserIdAsync(storedRefreshToken.UserId, clock.UtcNow,
+            cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return new LoginWithRefreshTokenResult(
