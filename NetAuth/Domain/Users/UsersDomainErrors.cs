@@ -18,6 +18,30 @@ public static class UsersDomainErrors
                 message: "The specified email or password is incorrect.",
                 type: DomainError.ErrorType.Unauthorized
             );
+
+        public static DomainError NotFound =>
+            new(
+                code: "User.NotFound",
+                message: "The user was not found.",
+                type: DomainError.ErrorType.NotFound
+            );
+    }
+
+    public static class RefreshToken
+    {
+        public static DomainError Invalid =>
+            new(
+                code: "RefreshToken.Invalid",
+                message: "The refresh token is invalid.",
+                type: DomainError.ErrorType.Unauthorized
+            );
+
+        public static DomainError Expired =>
+            new(
+                code: "RefreshToken.Expired",
+                message: "The refresh token has expired.",
+                type: DomainError.ErrorType.Unauthorized
+            );
     }
 
     public static class Email
