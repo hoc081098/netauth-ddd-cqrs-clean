@@ -8,7 +8,9 @@ namespace NetAuth.Web.Api.Endpoints.Users;
 [UsedImplicitly]
 internal sealed class RefreshTokenEndpoint : IEndpoint
 {
-    public sealed record Request(string RefreshToken);
+    public sealed record Request(
+        string RefreshToken,
+        string DeviceId);
 
     public sealed record Response(
         string AccessToken,
@@ -22,7 +24,9 @@ internal sealed class RefreshTokenEndpoint : IEndpoint
                 CancellationToken cancellationToken) =>
             {
                 var command = new LoginWithRefreshTokenCommand(
-                    RefreshToken: request.RefreshToken);
+                    RefreshToken: request.RefreshToken,
+                    DeviceId: request.DeviceId
+                );
 
                 var either = await sender.Send(command, cancellationToken);
 

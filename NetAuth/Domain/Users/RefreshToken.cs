@@ -1,5 +1,6 @@
 using Ardalis.GuardClauses;
 using JetBrains.Annotations;
+using LanguageExt;
 using NetAuth.Domain.Core.Abstractions;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users.DomainEvents;
@@ -10,8 +11,7 @@ public enum RefreshTokenStatus
 {
     Active = 0,
     Revoked = 1,
-    Reused = 2, // bị dùng lại sau khi đã rotate
-    Compromised = 3 // cả chain bị coi là compromised
+    Compromised = 2 // cả chain bị coi là compromised
 }
 
 /// <summary>
@@ -132,5 +132,31 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
         created.AddDomainEvent(new RefreshTokenCreatedDomainEvent(RefreshTokenId: created.Id, UserId: created.UserId));
 
         return created;
+    }
+
+    public void MarkAsRevoked(DateTimeOffset revokedAt)
+    {
+        Status = RefreshTokenStatus.Revoked;
+        RevokedAt = revokedAt;
+    }
+
+    public void MarkAsCompromised(DateTimeOffset revokedAt)
+    {
+        Status = RefreshTokenStatus.Compromised;
+        RevokedAt = revokedAt;
+    }
+    
+    public RefreshToken Rotate(string newTokenHash, DateTimeOffset newExpiresOnUtc)
+    {
+        var newRefreshToken = Create(
+            tokenHash: newTokenHash,
+            expiresOnUtc: newExpiresOnUtc,
+            userId: UserId,
+            deviceId: DeviceId);
+
+        ReplacedById = newRefreshToken.Id;
+        MarkAsRevoked(DateTimeOffset.UtcNow);
+
+        return newRefreshToken;
     }
 }

@@ -7,17 +7,16 @@ internal sealed class RefreshTokenRepository(AppDbContext dbContext) :
     GenericRepository<Guid, RefreshToken>(dbContext),
     IRefreshTokenRepository
 {
-    public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default) =>
+    public Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default) =>
         EntitySet
             .Include(rt => rt.User)
-            .FirstOrDefaultAsync(rt => rt.TokenHash == token, cancellationToken);
+            .FirstOrDefaultAsync(rt => rt.TokenHash == tokenHash, cancellationToken);
 
-    public async Task<IReadOnlyList<RefreshToken>> GetByUserIdAsync(
+    public async Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(
         Guid userId,
         CancellationToken cancellationToken = default) =>
         await EntitySet
-            .AsNoTracking()
-            .Where(rt => rt.UserId == userId)
+            .Where(rt => rt.UserId == userId && rt.Status == RefreshTokenStatus.Active)
             .ToListAsync(cancellationToken);
 
     public Task<int> DeleteExpiredByUserIdAsync(

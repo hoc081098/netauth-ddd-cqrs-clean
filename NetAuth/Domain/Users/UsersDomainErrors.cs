@@ -42,6 +42,20 @@ public static class UsersDomainErrors
                 message: "The refresh token has expired.",
                 type: DomainError.ErrorType.Unauthorized
             );
+
+        public static DomainError Revoked =>
+            new(
+                code: "RefreshToken.Revoked",
+                message: "The refresh token has been revoked.",
+                type: DomainError.ErrorType.Unauthorized
+            );
+        
+        public static DomainError InvalidDevice =>
+            new(
+                code: "RefreshToken.InvalidDevice",
+                message: "The refresh token was used from an invalid device.",
+                type: DomainError.ErrorType.Unauthorized
+            );
     }
 
     public static class Email

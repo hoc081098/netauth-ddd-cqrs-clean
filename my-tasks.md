@@ -520,3 +520,349 @@ Nếu mày muốn tao:
 
 Chỉ cần nói:  
 👉 **“Quất ERD + SQL schema luôn”**
+
+---
+
+
+// Infrastructure/Auth/AuthService.cs
+using Microsoft.EntityFrameworkCore;
+using NetAuth.Domain;
+using NetAuth.Infrastructure.Email;
+
+namespace NetAuth.Infrastructure.Auth;
+
+public sealed record AuthResult(
+string AccessToken,
+string RefreshToken
+);
+
+public interface IAuthService
+{
+Task<AuthResult> RegisterAsync(string email, string password, CancellationToken ct = default);
+Task<AuthResult> LoginAsync(string email, string password, string deviceId, string ip, string userAgent, CancellationToken ct = default);
+Task<AuthResult> RefreshAsync(string refreshToken, string deviceId, string ip, string userAgent, CancellationToken ct = default);
+Task RevokeRefreshTokenAsync(Guid userId, string? deviceId = null, CancellationToken ct = default);
+Task RequestPasswordResetAsync(string email, CancellationToken ct = default);
+Task ResetPasswordAsync(string token, string newPassword, CancellationToken ct = default);
+Task ConfirmEmailAsync(string token, CancellationToken ct = default);
+}
+
+public sealed class AuthService(
+AppDbContext db,
+IPasswordHasher passwordHasher,
+ITokenService tokenService,
+IEmailSender emailSender,
+JwtOptions jwtOptions
+) : IAuthService
+{
+private readonly AppDbContext _db = db;
+private readonly IPasswordHasher _passwordHasher = passwordHasher;
+private readonly ITokenService _tokenService = tokenService;
+private readonly IEmailSender _emailSender = emailSender;
+private readonly JwtOptions _jwt = jwtOptions;
+
+    // lockout config
+    private const int MaxFailedAttempts = 5;
+    private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
+
+    public async Task<AuthResult> RegisterAsync(string email, string password, CancellationToken ct = default)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+
+        if (await _db.Users.AnyAsync(u => u.Email == normalizedEmail, ct))
+        {
+            throw new InvalidOperationException("Email already registered.");
+        }
+
+        var user = new AppUser
+        {
+            Email = normalizedEmail,
+            UserName = normalizedEmail,
+            PasswordHash = _passwordHasher.Hash(password),
+            EmailConfirmed = false,
+            Status = UserStatus.Inactive
+        };
+
+        _db.Users.Add(user);
+
+        // tạo email confirmation token
+        var (rawToken, tokenEntity) = CreateUserToken(user, UserTokenType.EmailConfirmation, TimeSpan.FromDays(2));
+        _db.UserTokens.Add(tokenEntity);
+
+        await _db.SaveChangesAsync(ct);
+
+        await _emailSender.SendEmailAsync(
+            user.Email,
+            "Confirm your email",
+            $"Your confirmation token: {rawToken}",
+            ct
+        );
+
+        // sau confirm email user mới login, nên không trả token ở đây
+        var emptyToken = new AuthResult("", "");
+        return emptyToken;
+    }
+
+    public async Task<AuthResult> LoginAsync(string email, string password, string deviceId, string ip, string userAgent, CancellationToken ct = default)
+    {
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var user = await _db.Users
+            .Include(u => u.RefreshTokens)
+            .SingleOrDefaultAsync(u => u.Email == normalizedEmail, ct);
+
+        var now = DateTimeOffset.UtcNow;
+
+        if (user is null)
+        {
+            await LogLoginAudit(null, false, ip, userAgent, deviceId, "UserNotFound", ct);
+            throw new UnauthorizedAccessException("Invalid credentials.");
+        }
+
+        // check lockout
+        if (user.LockoutEnd is not null && user.LockoutEnd > now)
+        {
+            await LogLoginAudit(user.Id, false, ip, userAgent, deviceId, "LockedOut", ct);
+            throw new UnauthorizedAccessException("Account is locked. Try again later.");
+        }
+
+        if (!user.EmailConfirmed)
+        {
+            await LogLoginAudit(user.Id, false, ip, userAgent, deviceId, "EmailNotConfirmed", ct);
+            throw new UnauthorizedAccessException("Email is not confirmed.");
+        }
+
+        if (!_passwordHasher.Verify(user.PasswordHash, password))
+        {
+            user.AccessFailedCount++;
+            if (user.AccessFailedCount >= MaxFailedAttempts)
+            {
+                user.LockoutEnd = now.Add(LockoutDuration);
+                user.Status = UserStatus.Locked;
+            }
+
+            await LogLoginAudit(user.Id, false, ip, userAgent, deviceId, "InvalidPassword", ct);
+            await _db.SaveChangesAsync(ct);
+            throw new UnauthorizedAccessException("Invalid credentials.");
+        }
+
+        // password OK
+        user.AccessFailedCount = 0;
+        user.LockoutEnd = null;
+        user.Status = UserStatus.Active;
+        user.LastLoginAt = now;
+
+        var accessToken = _tokenService.GenerateAccessToken(user, deviceId);
+        var (rawRefresh, refreshEntity) = _tokenService.GenerateRefreshToken(user, deviceId);
+
+        _db.RefreshTokens.Add(refreshEntity);
+
+        await LogLoginAudit(user.Id, true, ip, userAgent, deviceId, null, ct);
+        await _db.SaveChangesAsync(ct);
+
+        return new AuthResult(accessToken, rawRefresh);
+    }
+
+    public async Task<AuthResult> RefreshAsync(string refreshToken, string deviceId, string ip, string userAgent, CancellationToken ct = default)
+    {
+        var tokenHash = _tokenService.ComputeTokenHash(refreshToken);
+
+        var token = await _db.RefreshTokens
+            .Include(rt => rt.User)
+            .SingleOrDefaultAsync(rt => rt.TokenHash == tokenHash, ct);
+
+        if (token is null)
+        {
+            throw new UnauthorizedAccessException("Invalid refresh token.");
+        }
+
+        var user = token.User;
+
+        // refresh token reuse detection
+        if (token.Status != RefreshTokenStatus.Active)
+        {
+            // token đã bị rotate / revoked mà còn dùng lại → considered reused
+            await MarkRefreshTokenChainCompromised(user.Id, token.Id, ct);
+
+            await LogLoginAudit(user.Id, false, ip, userAgent, deviceId, "RefreshTokenReuseDetected", ct);
+            throw new UnauthorizedAccessException("Refresh token has been reused. All sessions revoked.");
+        }
+
+        if (token.IsExpired)
+        {
+            token.Status = RefreshTokenStatus.Revoked;
+            token.RevokedAt = DateTimeOffset.UtcNow;
+            await _db.SaveChangesAsync(ct);
+            throw new UnauthorizedAccessException("Refresh token expired.");
+        }
+
+        if (!string.Equals(token.DeviceId, deviceId, StringComparison.Ordinal))
+        {
+            // tuỳ strategy, có thể cho phép hoặc chặn
+            // tao chặn cho chặt
+            await LogLoginAudit(user.Id, false, ip, userAgent, deviceId, "DeviceMismatch", ct);
+            throw new UnauthorizedAccessException("Device mismatch.");
+        }
+
+        // rotation
+        token.Status = RefreshTokenStatus.Revoked;
+        token.RevokedAt = DateTimeOffset.UtcNow;
+
+        var accessToken = _tokenService.GenerateAccessToken(user, deviceId);
+        var (newRawRefresh, newRefreshEntity) = _tokenService.GenerateRefreshToken(user, deviceId);
+
+        token.ReplacedBy = newRefreshEntity;
+
+        _db.RefreshTokens.Add(newRefreshEntity);
+        await _db.SaveChangesAsync(ct);
+
+        await LogLoginAudit(user.Id, true, ip, userAgent, deviceId, "RefreshSuccess", ct);
+
+        return new AuthResult(accessToken, newRawRefresh);
+    }
+
+    public async Task RevokeRefreshTokenAsync(Guid userId, string? deviceId = null, CancellationToken ct = default)
+    {
+        var query = _db.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.Status == RefreshTokenStatus.Active);
+
+        if (!string.IsNullOrWhiteSpace(deviceId))
+        {
+            query = query.Where(rt => rt.DeviceId == deviceId);
+        }
+
+        var tokens = await query.ToListAsync(ct);
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var rt in tokens)
+        {
+            rt.Status = RefreshTokenStatus.Revoked;
+            rt.RevokedAt = now;
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task RequestPasswordResetAsync(string email, CancellationToken ct = default)
+    {
+        var normalized = email.Trim().ToLowerInvariant();
+
+        var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == normalized, ct);
+        if (user is null)
+        {
+            // không leak info: coi như luôn thành công
+            return;
+        }
+
+        var (rawToken, tokenEntity) = CreateUserToken(user, UserTokenType.PasswordReset, TimeSpan.FromHours(1));
+        _db.UserTokens.Add(tokenEntity);
+
+        await _db.SaveChangesAsync(ct);
+
+        await _emailSender.SendEmailAsync(
+            user.Email,
+            "Reset your password",
+            $"Your reset token: {rawToken}",
+            ct
+        );
+    }
+
+    public async Task ResetPasswordAsync(string token, string newPassword, CancellationToken ct = default)
+    {
+        var tokenHash = _tokenService.ComputeTokenHash(token);
+
+        var userToken = await _db.UserTokens
+            .Include(ut => ut.User)
+            .SingleOrDefaultAsync(ut =>
+                ut.TokenHash == tokenHash &&
+                ut.Type == UserTokenType.PasswordReset, ct);
+
+        if (userToken is null || !userToken.IsValid)
+        {
+            throw new UnauthorizedAccessException("Invalid or expired reset token.");
+        }
+
+        var user = userToken.User;
+        user.PasswordHash = _passwordHasher.Hash(newPassword);
+        userToken.Used = true;
+        userToken.UsedAt = DateTimeOffset.UtcNow;
+
+        user.AccessFailedCount = 0;
+        user.LockoutEnd = null;
+        user.Status = UserStatus.Active;
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    public async Task ConfirmEmailAsync(string token, CancellationToken ct = default)
+    {
+        var tokenHash = _tokenService.ComputeTokenHash(token);
+
+        var userToken = await _db.UserTokens
+            .Include(ut => ut.User)
+            .SingleOrDefaultAsync(ut =>
+                ut.TokenHash == tokenHash &&
+                ut.Type == UserTokenType.EmailConfirmation, ct);
+
+        if (userToken is null || !userToken.IsValid)
+        {
+            throw new UnauthorizedAccessException("Invalid or expired confirmation token.");
+        }
+
+        var user = userToken.User;
+        user.EmailConfirmed = true;
+        user.Status = UserStatus.Active;
+
+        userToken.Used = true;
+        userToken.UsedAt = DateTimeOffset.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    private (string rawToken, UserToken entity) CreateUserToken(AppUser user, UserTokenType type, TimeSpan lifetime)
+    {
+        var raw = Convert.ToBase64String(RandomNumberGenerator.GetBytes(32));
+        var hash = _tokenService.ComputeTokenHash(raw);
+
+        var entity = new UserToken
+        {
+            UserId = user.Id,
+            Type = type,
+            TokenHash = hash,
+            ExpiresAt = DateTimeOffset.UtcNow.Add(lifetime)
+        };
+
+        return (raw, entity);
+    }
+
+    private async Task LogLoginAudit(Guid? userId, bool success, string ip, string userAgent, string deviceId, string? reason, CancellationToken ct)
+    {
+        _db.LoginAudits.Add(new LoginAudit
+        {
+            UserId = userId,
+            Success = success,
+            IpAddress = ip,
+            UserAgent = userAgent,
+            DeviceId = deviceId,
+            FailureReason = reason
+        });
+
+        await _db.SaveChangesAsync(ct);
+    }
+
+    private async Task MarkRefreshTokenChainCompromised(Guid userId, Guid startingTokenId, CancellationToken ct)
+    {
+        // đơn giản: revoke tất cả token active của user
+        var tokens = await _db.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.Status == RefreshTokenStatus.Active)
+            .ToListAsync(ct);
+
+        var now = DateTimeOffset.UtcNow;
+        foreach (var rt in tokens)
+        {
+            rt.Status = RefreshTokenStatus.Compromised;
+            rt.RevokedAt = now;
+        }
+
+        await _db.SaveChangesAsync(ct);
+    }
+}

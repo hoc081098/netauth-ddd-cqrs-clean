@@ -23,29 +23,81 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         LoginWithRefreshTokenCommand command,
         CancellationToken cancellationToken)
     {
+        var transaction = await unitOfWork.BeginTransactionAsync(cancellationToken);
+
         // 1. Find the refresh tokenHash
-        var storedRefreshToken = await refreshTokenRepository.GetByTokenAsync(
-            command.RefreshToken,
+        var refreshToken = await refreshTokenRepository.GetByTokenHashAsync(
+            refreshTokenGenerator.ComputeTokenHash(command.RefreshToken),
             cancellationToken);
 
         // 2. Check if tokenHash exists
-        if (storedRefreshToken is null)
+        if (refreshToken is null)
         {
             return UsersDomainErrors.RefreshToken.Invalid;
         }
 
-        // 3. Check if tokenHash is expired
-        if (storedRefreshToken.IsExpired(clock.UtcNow))
+        // 3. Check status: refresh token reuse detection
+        if (refreshToken.Status != RefreshTokenStatus.Active)
         {
+            // token đã bị rotate / revoked mà còn dùng lại → considered reused
+            refreshToken.MarkAsCompromised(clock.UtcNow);
+            await MarkRefreshTokenChainCompromised(refreshToken.UserId, cancellationToken);
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return UsersDomainErrors.RefreshToken.Revoked;
+        }
+
+        // 4. Check if tokenHash is expired
+        if (refreshToken.IsExpired(clock.UtcNow))
+        {
+            refreshToken.MarkAsRevoked(clock.UtcNow);
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
             return UsersDomainErrors.RefreshToken.Expired;
         }
 
-        // 4. Generate new access token and new refresh tokenHash
-        var accessToken = jwtProvider.Create(storedRefreshToken.User);
+        // 5. Check device ID
+        if (!string.Equals(refreshToken.DeviceId, command.DeviceId, StringComparison.Ordinal))
+        {
+            // device ID không khớp → nghi ngờ bị đánh cắp token -> chặn luôn
+            refreshToken.MarkAsCompromised(clock.UtcNow);
+
+            await unitOfWork.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return UsersDomainErrors.RefreshToken.InvalidDevice;
+        }
+
+        // 5. Rotate the refresh token and generate a new access token
+        var accessToken = jwtProvider.Create(refreshToken.User);
+        var refreshTokenResult = refreshTokenGenerator.GenerateRefreshToken();
+
+        var newRefreshToken = refreshToken.Rotate(
+            newTokenHash: refreshTokenResult.TokenHash,
+            newExpiresOnUtc: clock.UtcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration));
+        refreshTokenRepository.Insert(newRefreshToken);
+
         await unitOfWork.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return new LoginWithRefreshTokenResult(
             AccessToken: accessToken,
-            RefreshToken: storedRefreshToken.TokenHash);
+            RefreshToken: refreshTokenResult.RawToken);
+    }
+
+    private async Task MarkRefreshTokenChainCompromised(Guid userId, CancellationToken ct)
+    {
+        // đơn giản: revoke tất cả token active của user
+        var refreshTokens = await refreshTokenRepository.GetActiveByUserIdAsync(userId, ct);
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var token in refreshTokens)
+        {
+            token.MarkAsCompromised(now);
+        }
     }
 }

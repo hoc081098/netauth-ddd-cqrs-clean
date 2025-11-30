@@ -14,4 +14,6 @@ public interface IRefreshTokenGenerator
     /// </summary>
     /// <returns>A Base64-encoded refresh token string.</returns>
     RefreshTokenResult GenerateRefreshToken();
+    
+    string ComputeTokenHash(string rawToken);
 }

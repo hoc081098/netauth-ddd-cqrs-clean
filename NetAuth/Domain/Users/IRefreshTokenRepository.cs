@@ -6,13 +6,13 @@ namespace NetAuth.Domain.Users;
 public interface IRefreshTokenRepository
 {
     /// <summary>
-    /// Gets a refresh token by its token value.
+    /// Gets a refresh token by its token hash value.
     /// </summary>
-    /// <param name="token">The token value.</param>
+    /// <param name="tokenHash">The token hash value.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     /// <returns>The refresh token if found; otherwise, null.</returns>
-    Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken = default);
-
+    Task<RefreshToken?> GetByTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default);
+    
     /// <summary>
     /// Adds a new refresh token.
     /// </summary>
@@ -26,5 +26,9 @@ public interface IRefreshTokenRepository
     /// <param name="currentUtc">The current UTC time.</param>
     /// <param name="cancellationToken">The cancellation token.</param>
     Task<int> DeleteExpiredByUserIdAsync(Guid userId, DateTimeOffset currentUtc, CancellationToken cancellationToken = default);
+
+    public Task<IReadOnlyList<RefreshToken>> GetActiveByUserIdAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default);
 }
 
