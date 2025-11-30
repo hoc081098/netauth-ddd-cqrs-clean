@@ -77,7 +77,14 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
             return UsersDomainErrors.RefreshToken.InvalidDevice;
         }
 
-        // 5. Rotate the refresh token and generate a new access token
+        // 6. Final validation
+        if (!refreshToken.IsValid(utcNow, command.DeviceId))
+        {
+            // Double check, should not reach here
+            return UsersDomainErrors.RefreshToken.Invalid;
+        }
+
+        // 6. Rotate the refresh token and generate a new access token
         var accessToken = jwtProvider.Create(refreshToken.User);
         var refreshTokenResult = refreshTokenGenerator.GenerateRefreshToken();
 
