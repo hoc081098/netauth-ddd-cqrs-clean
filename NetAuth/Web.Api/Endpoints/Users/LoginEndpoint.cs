@@ -8,7 +8,9 @@ internal sealed class LoginEndpoint : IEndpoint
 {
     public sealed record Request(string Email, string Password);
 
-    public sealed record Response(string AccessToken);
+    public sealed record Response(
+        string AccessToken,
+        string RefreshToken);
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -24,12 +26,14 @@ internal sealed class LoginEndpoint : IEndpoint
                 var either = await sender.Send(command, cancellationToken);
 
                 return either
-                    .Select(result => new Response(AccessToken: result.AccessToken))
+                    .Select(result => new Response(
+                        AccessToken: result.AccessToken,
+                        RefreshToken: result.RefreshToken))
                     .Match(Right: Results.Ok, Left: CustomResults.Err);
             })
             .WithName("Login")
             .WithSummary("Authenticate user with email & password.")
-            .WithDescription("Returns JWT access token when credentials are valid.")
+            .WithDescription("Returns JWT access token and refresh token when credentials are valid.")
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest);
