@@ -23,7 +23,7 @@ public sealed class RefreshToken : Entity<Guid>, IAuditableEntity
     /// <summary>
     /// Gets the ID of the user who owns this refresh token.
     /// </summary>
-    public Guid UserId { get; private set; }
+    public Guid UserId { get; }
 
     /// <inheritdoc />
     public DateTimeOffset CreatedOnUtc { get; }
@@ -79,5 +79,13 @@ public sealed class RefreshToken : Entity<Guid>, IAuditableEntity
     public void Revoke(DateTimeOffset currentUtc)
     {
         ExpiresOnUtc = currentUtc;
+    }
+
+    public void UpdateToken(string token, DateTimeOffset expiresOnUtc)
+    {
+        Guard.Against.NullOrWhiteSpace(token);
+
+        Token = token;
+        ExpiresOnUtc = expiresOnUtc;
     }
 }
