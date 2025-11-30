@@ -1,10 +1,10 @@
-using MediatR;
+using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Application.Users.Register;
 
 internal sealed class UserCreatedDomainEventHandler(
-    ILogger<UserCreatedDomainEventHandler> logger) : INotificationHandler<UserCreatedDomainEvent>
+    ILogger<UserCreatedDomainEventHandler> logger) : IDomainEventHandler<UserCreatedDomainEvent>
 {
     public Task Handle(UserCreatedDomainEvent notification,
         CancellationToken cancellationToken)
