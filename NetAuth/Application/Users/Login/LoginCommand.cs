@@ -7,6 +7,6 @@ namespace NetAuth.Application.Users.Login;
 public sealed record LoginCommand(
     string Email,
     string Password
-) : ICommand<Either<DomainError, LoginResult>>;
+) : ICommand<LoginResult>;
 
 public sealed record LoginResult(string AccessToken);

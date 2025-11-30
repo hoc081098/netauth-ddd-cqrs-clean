@@ -13,7 +13,7 @@ internal sealed class RegisterCommandHandler(
     IUnitOfWork unitOfWork,
     IPasswordHasher passwordHasher,
     IJwtProvider jwtProvider
-) : ICommandHandler<RegisterCommand, Either<DomainError, RegisterResult>>
+) : ICommandHandler<RegisterCommand, RegisterResult>
 {
     public Task<Either<DomainError, RegisterResult>> Handle(RegisterCommand command,
         CancellationToken cancellationToken)

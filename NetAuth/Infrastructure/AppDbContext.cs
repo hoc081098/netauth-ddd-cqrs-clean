@@ -17,6 +17,7 @@ internal sealed class AppDbContext(
 {
     internal DbSet<RoleUser> RoleUsers => Set<RoleUser>();
     internal DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    internal DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -59,6 +60,6 @@ internal sealed class AppDbContext(
             })
             .ToArray();
 
-        Set<OutboxMessage>().AddRange(outboxMessages);
+        OutboxMessages.AddRange(outboxMessages);
     }
 }

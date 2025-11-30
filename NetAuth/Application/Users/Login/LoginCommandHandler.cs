@@ -10,7 +10,7 @@ internal sealed class LoginCommandHandler(
     IUserRepository userRepository,
     IPasswordHashChecker passwordHashChecker,
     IJwtProvider jwtProvider) :
-    ICommandHandler<LoginCommand, Either<DomainError, LoginResult>>
+    ICommandHandler<LoginCommand, LoginResult>
 {
     public Task<Either<DomainError, LoginResult>> Handle(LoginCommand command,
         CancellationToken cancellationToken) =>

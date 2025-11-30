@@ -14,7 +14,8 @@ public static class ApplicationDiModule
         services.AddMediatR(config =>
         {
             config.RegisterServicesFromAssembly(typeof(ApplicationDiModule).Assembly);
-            config.AddOpenBehavior(typeof(ValidationBehavior<,>));
+            config.AddOpenBehavior(typeof(RequestLoggingPipelineBehavior<,>));
+            config.AddOpenBehavior(typeof(ValidationPipelineBehavior<,>));
         });
 
         return services;

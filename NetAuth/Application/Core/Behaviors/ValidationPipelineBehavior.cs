@@ -37,10 +37,10 @@ internal static class EitherLeftMethodCache
     internal static MethodInfo GetOrAdd(Type rightType) => LeftMethodInfosCache.GetOrAdd(rightType, GetMethod);
 }
 
-internal sealed class ValidationBehavior<TRequest, TResponse>(
+internal sealed class ValidationPipelineBehavior<TRequest, TResponse>(
     IEnumerable<IValidator<TRequest>> validators
 ) : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>
+    where TRequest : notnull
 {
     public async Task<TResponse> Handle(TRequest request,
         RequestHandlerDelegate<TResponse> next,
@@ -50,7 +50,8 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
         return failures switch
         {
             { Count: 0 } => await next(cancellationToken),
-            _ when IsDomainErrorEither(out var rightType) => CreateValidationErrorLeft(failures, rightType),
+            _ when DomainErrorEitherTypeChecker.IsDomainErrorEither<TResponse>(out var rightType) =>
+                CreateValidationErrorLeft(failures, rightType),
             _ => throw new ValidationException(failures)
         };
     }
@@ -70,28 +71,6 @@ internal sealed class ValidationBehavior<TRequest, TResponse>(
                 .ToArray();
     }
 
-    private static bool IsDomainErrorEither(out Type rightType)
-    {
-        if (!typeof(TResponse).IsGenericType)
-        {
-            rightType = typeof(void);
-            return false;
-        }
-
-        if (typeof(TResponse).GetGenericTypeDefinition() == typeof(Either<,>))
-        {
-            var genericArguments = typeof(TResponse).GetGenericArguments();
-            // Only accept Either<DomainError, R>
-            if (genericArguments[0] == typeof(DomainError))
-            {
-                rightType = genericArguments[1];
-                return true;
-            }
-        }
-
-        rightType = typeof(void);
-        return false;
-    }
 
     private static TResponse CreateValidationErrorLeft(IReadOnlyList<ValidationFailure> failures, Type rightType)
     {
