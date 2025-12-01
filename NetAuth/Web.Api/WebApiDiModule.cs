@@ -11,6 +11,7 @@ public static class WebApiDiModule
         this IServiceCollection services
     )
     {
+        // Register all endpoints from this assembly
         services.AddEndpoints(typeof(WebApiDiModule).Assembly);
 
         // Chain multiple exception handlers together, and they'll run in the order we register them.
@@ -19,6 +20,7 @@ public static class WebApiDiModule
         services.AddExceptionHandler<GlobalExceptionHandler>();
         services.AddProblemDetails(); // Provide IProblemDetailsService
 
+        // Configure API versioning
         services.AddApiVersioning(options =>
         {
             options.DefaultApiVersion = new ApiVersion(1);
@@ -55,7 +57,11 @@ public static class WebApiDiModule
             // will be exposed in the API explorer/docs as `/v1/users` (for version 1) instead of keeping the `{version:apiVersion}` placeholder.
             options.SubstituteApiVersionInUrl = true; // Replace the version in route templates
         });
+
+        // Add Swagger UI
+        services.AddEndpointsApiExplorer(); // required for Swashbuckle to discover Minimal API endpoints
         services.ConfigureOptions<ConfigureSwaggerGenOptions>();
+        services.AddSwaggerGen();
 
         return services;
     }
