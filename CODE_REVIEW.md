@@ -107,6 +107,8 @@ public async Task<User?> GetByEmailAsync(Email email, CancellationToken cancella
 
 ### 3. Missing API Versioning
 
+DONE ✅
+
 **Location:** `Program.cs`, `Web.Api/Endpoints/`
 
 **Recommendation:** Implement API versioning to support backward compatibility:
