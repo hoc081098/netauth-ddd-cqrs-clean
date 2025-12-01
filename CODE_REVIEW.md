@@ -43,6 +43,8 @@ The NetAuth project demonstrates excellent architectural decisions with a well-s
 
 ### 1. Infrastructure Layer Leaking into Application Layer
 
+DONE ✅
+
 **Location:** `Application/Users/Login/LoginCommandHandler.cs`, `Application/Users/LoginWithRefreshToken/LoginWithRefreshTokenCommandHandler.cs`
 
 **Issue:** The Application layer has a direct reference to `NetAuth.Infrastructure.Authentication`:

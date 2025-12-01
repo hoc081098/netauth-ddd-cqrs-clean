@@ -16,7 +16,6 @@ internal sealed class LoginCommandHandler(
     IPasswordHashChecker passwordHashChecker,
     IJwtProvider jwtProvider,
     IRefreshTokenGenerator refreshTokenGenerator,
-    IOptions<JwtConfig> jwtConfigOptions,
     IClock clock,
     IUnitOfWork unitOfWork) :
     ICommandHandler<LoginCommand, LoginResult>
@@ -44,7 +43,7 @@ internal sealed class LoginCommandHandler(
         var refreshTokenResult = refreshTokenGenerator.GenerateRefreshToken();
         var refreshToken = RefreshToken.Create(
             tokenHash: refreshTokenResult.TokenHash,
-            expiresOnUtc: clock.UtcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration),
+            expiresOnUtc: clock.UtcNow.Add(refreshTokenGenerator.RefreshTokenExpiration),
             userId: user.Id,
             deviceId: command.DeviceId
         );

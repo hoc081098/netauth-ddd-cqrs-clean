@@ -1,12 +1,10 @@
 using LanguageExt;
-using Microsoft.Extensions.Options;
 using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
-using NetAuth.Infrastructure.Authentication;
 
 namespace NetAuth.Application.Users.LoginWithRefreshToken;
 
@@ -14,7 +12,6 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
     IRefreshTokenRepository refreshTokenRepository,
     IJwtProvider jwtProvider,
     IRefreshTokenGenerator refreshTokenGenerator,
-    IOptions<JwtConfig> jwtConfigOptions,
     IClock clock,
     IUnitOfWork unitOfWork) :
     ICommandHandler<LoginWithRefreshTokenCommand, LoginWithRefreshTokenResult>
@@ -85,7 +82,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
 
         var newRefreshToken = refreshToken.Rotate(
             newTokenHash: refreshTokenResult.TokenHash,
-            newExpiresOnUtc: utcNow.Add(jwtConfigOptions.Value.RefreshTokenExpiration),
+            newExpiresOnUtc: utcNow.Add(refreshTokenGenerator.RefreshTokenExpiration),
             revokedAt: utcNow);
         refreshTokenRepository.Insert(newRefreshToken);
 

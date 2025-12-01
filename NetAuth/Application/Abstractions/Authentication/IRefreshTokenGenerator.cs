@@ -16,4 +16,6 @@ public interface IRefreshTokenGenerator
     RefreshTokenResult GenerateRefreshToken();
     
     string ComputeTokenHash(string rawToken);
+    
+    TimeSpan RefreshTokenExpiration { get; }
 }
