@@ -54,6 +54,8 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
             .WithMany()
             .HasForeignKey(rt => rt.UserId);
 
+        builder.HasQueryFilter(rt => !rt.User.IsDeleted);
+
         // Each refresh token can be replaced by another refresh token (one-to-one relationship)
         builder.HasOne<RefreshToken>(rt => rt.ReplacedBy)
             .WithOne() // ReplacedBy points to the new token, but the new token doesn't need a back-reference to the old one
