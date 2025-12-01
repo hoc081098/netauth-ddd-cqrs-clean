@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
@@ -93,8 +94,17 @@ app.UseAuthorization();
 // Adds exception handling middleware to the request pipeline
 app.UseExceptionHandler();
 
-// Map endpoints
-app.MapEndpoints();
+// Map endpoints with API versioning
+var apiVersionSet = app.NewApiVersionSet()
+    .HasApiVersion(new ApiVersion(1))
+    .ReportApiVersions()
+    .Build();
+
+var versionedGroupBuilder = app
+    .MapGroup("v{apiVersion:apiVersion}")
+    .WithApiVersionSet(apiVersionSet);
+
+app.MapEndpoints(routeGroupBuilder: versionedGroupBuilder);
 
 app.MapGet("/me", (IUserIdentifierProvider userIdentifierProvider) => new { userIdentifierProvider.UserId })
     .RequireAuthorization("permission:users:read")
