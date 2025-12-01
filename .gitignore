@@ -404,3 +404,7 @@ FodyWeavers.xsd
 *.sln.iml
 
 .containers/
+
+
+# .DS_Store
+.DS_Store
