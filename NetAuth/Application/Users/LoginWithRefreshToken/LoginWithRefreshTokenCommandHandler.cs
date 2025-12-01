@@ -31,13 +31,13 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
             refreshTokenGenerator.ComputeTokenHash(command.RefreshToken),
             cancellationToken);
 
-        // 2. Check if token exists
+        // 2. Check existence
         if (refreshToken is null)
         {
             return UsersDomainErrors.RefreshToken.Invalid;
         }
 
-        // 3. Check status: refresh token reuse detection
+        // 3. Reuse Detection (Security Critical)
         if (refreshToken.Status != RefreshTokenStatus.Active)
         {
             // token đã bị rotate / revoked mà còn dùng lại → considered reused
@@ -54,7 +54,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
             return UsersDomainErrors.RefreshToken.Revoked;
         }
 
-        // 4. Check if tokenHash is expired
+        // 4. Check Expiration
         if (refreshToken.IsExpired(utcNow))
         {
             refreshToken.MarkAsRevoked(utcNow);
@@ -65,7 +65,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
             return UsersDomainErrors.RefreshToken.Expired;
         }
 
-        // 5. Check device ID
+        // 5. Check Device Binding
         if (!string.Equals(refreshToken.DeviceId, command.DeviceId, StringComparison.Ordinal))
         {
             // Device ID mismatch - suspicious token theft detected, block immediately
@@ -76,6 +76,8 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
 
             return UsersDomainErrors.RefreshToken.InvalidDevice;
         }
+        
+        // --- Happy Path ---
 
         // 6. Rotate the refresh token and generate a new access token
         var accessToken = jwtProvider.Create(refreshToken.User);
