@@ -82,7 +82,16 @@ if (app.Environment.IsDevelopment())
 
     app.MapOpenApi();
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        foreach (var description in app.DescribeApiVersions())
+        {
+            options.SwaggerEndpoint(
+                url: $"/swagger/{description.GroupName}/swagger.json",
+                name: description.GroupName.ToUpperInvariant()
+            );
+        }
+    });
 }
 
 app.UseHttpsRedirection();

@@ -1,6 +1,7 @@
 using Asp.Versioning;
 using NetAuth.Web.Api.ExceptionHandlers;
 using NetAuth.Web.Api.Extensions;
+using NetAuth.Web.Api.OpenApi;
 
 namespace NetAuth.Web.Api;
 
@@ -54,6 +55,7 @@ public static class WebApiDiModule
             // will be exposed in the API explorer/docs as `/v1/users` (for version 1) instead of keeping the `{version:apiVersion}` placeholder.
             options.SubstituteApiVersionInUrl = true; // Replace the version in route templates
         });
+        services.ConfigureOptions<ConfigureSwaggerGenOptions>();
 
         return services;
     }
