@@ -67,7 +67,7 @@ public static class WebApiDiModule
 
         services.AddRateLimiter(rateLimiterOptions =>
         {
-            rateLimiterOptions.AddSlidingWindowLimiter("auth-limiter", options =>
+            rateLimiterOptions.AddSlidingWindowLimiter(RateLimiterPolicyNames.AuthLimiter, options =>
             {
                 options.Window = TimeSpan.FromSeconds(10);
                 options.SegmentsPerWindow = 2;

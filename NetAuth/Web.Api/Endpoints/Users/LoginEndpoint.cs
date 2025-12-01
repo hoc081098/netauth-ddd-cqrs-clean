@@ -44,6 +44,6 @@ internal sealed class LoginEndpoint : IEndpoint
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .RequireRateLimiting("auth-limiter");
+            .RequireRateLimiting(RateLimiterPolicyNames.AuthLimiter);
     }
 }
