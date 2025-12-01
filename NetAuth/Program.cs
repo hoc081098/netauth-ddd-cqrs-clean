@@ -106,17 +106,21 @@ var versionedGroupBuilder = app
 
 app.MapEndpoints(routeGroupBuilder: versionedGroupBuilder);
 
-app.MapGet("/me", (IUserIdentifierProvider userIdentifierProvider) => new { userIdentifierProvider.UserId })
+versionedGroupBuilder.MapGet("/me",
+        (IUserIdentifierProvider userIdentifierProvider) => new { userIdentifierProvider.UserId })
     .RequireAuthorization("permission:users:read")
     .WithName("GetCurrentUser")
     .WithSummary("Get current authenticated user.")
     .WithDescription("Returns the details of the currently authenticated user.")
     .Produces(StatusCodes.Status401Unauthorized);
 
-app.MapGet("/me-public", (ClaimsPrincipal user) => new { user.Identity });
-app.MapGet("/me-required-auth", (ClaimsPrincipal user) => new { user.Identity })
+versionedGroupBuilder
+    .MapGet("/me-public", (ClaimsPrincipal user) => new { user.Identity });
+versionedGroupBuilder
+    .MapGet("/me-required-auth", (ClaimsPrincipal user) => new { user.Identity })
     .RequireAuthorization();
-app.MapGet("/me-required-permission", (ClaimsPrincipal user) => new { user.Identity })
+versionedGroupBuilder
+    .MapGet("/me-required-permission", (ClaimsPrincipal user) => new { user.Identity })
     .RequireAuthorization("permission:users:read");
 
 app.Run();
