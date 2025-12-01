@@ -41,6 +41,7 @@ internal sealed class RefreshTokenEndpoint : IEndpoint
             .WithDescription("Returns new JWT access token and refresh token when the provided refresh token is valid.")
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status400BadRequest);
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .RequireRateLimiting("auth-limiter");
     }
 }

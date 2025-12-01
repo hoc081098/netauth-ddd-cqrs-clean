@@ -39,6 +39,7 @@ internal sealed class RegisterEndpoint : IEndpoint
             .WithDescription("Creates a new user account and returns an access token.")
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem(StatusCodes.Status409Conflict);
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .RequireRateLimiting("auth-limiter");
     }
 }

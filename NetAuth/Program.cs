@@ -16,6 +16,10 @@ builder.Services
 
 var app = builder.Build();
 
+// Enables rate limiting for the application.
+// Should call before mapping endpoints.
+app.UseRateLimiter();
+
 // Map endpoints with API versioning
 var apiVersionSet = app.NewApiVersionSet()
     .HasApiVersion(new ApiVersion(1))

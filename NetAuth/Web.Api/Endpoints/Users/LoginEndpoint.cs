@@ -43,6 +43,7 @@ internal sealed class LoginEndpoint : IEndpoint
             .WithDescription("Returns JWT access token and refresh token when credentials are valid.")
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status400BadRequest);
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .RequireRateLimiting("auth-limiter");
     }
 }

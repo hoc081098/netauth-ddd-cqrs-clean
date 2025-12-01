@@ -1,4 +1,6 @@
+using System.Threading.RateLimiting;
 using Asp.Versioning;
+using Microsoft.AspNetCore.RateLimiting;
 using NetAuth.Web.Api.ExceptionHandlers;
 using NetAuth.Web.Api.Extensions;
 using NetAuth.Web.Api.OpenApi;
@@ -62,6 +64,17 @@ public static class WebApiDiModule
         services.AddEndpointsApiExplorer(); // required for Swashbuckle to discover Minimal API endpoints
         services.ConfigureOptions<ConfigureSwaggerGenOptions>();
         services.AddSwaggerGen();
+
+        services.AddRateLimiter(rateLimiterOptions =>
+        {
+            rateLimiterOptions.AddSlidingWindowLimiter("auth-limiter", options =>
+            {
+                options.Window = TimeSpan.FromSeconds(10);
+                options.SegmentsPerWindow = 2;
+                options.PermitLimit = 5;
+                options.QueueLimit = 0;
+            });
+        });
 
         return services;
     }

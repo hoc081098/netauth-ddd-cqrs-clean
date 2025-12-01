@@ -6,13 +6,16 @@ using NetAuth.Domain.Users.DomainEvents;
 namespace NetAuth.Application.Users.Login;
 
 internal sealed class RefreshTokenCreatedDomainEventHandler(
-    IRefreshTokenRepository refreshTokenRepository,
+    IServiceScopeFactory scopeFactory,
     IClock clock,
     ILogger<RefreshTokenCreatedDomainEventHandler> logger) : IDomainEventHandler<RefreshTokenCreatedDomainEvent>
 {
     public async Task Handle(RefreshTokenCreatedDomainEvent @event,
         CancellationToken cancellationToken)
     {
+        using var scope = scopeFactory.CreateScope();
+        var refreshTokenRepository = scope.ServiceProvider.GetRequiredService<IRefreshTokenRepository>();
+
         try
         {
             var rowsDelete = await refreshTokenRepository.DeleteExpiredByUserIdAsync(@event.UserId,
