@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.Extensions.Caching.Hybrid;
 using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Cryptography;
@@ -63,6 +64,20 @@ public static class InfrastructureDiModule
         services.AddSingleton<IAuthorizationHandler, PermissionAuthorizationHandler>();
         services.AddSingleton<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
 
+        // Add caching services
+        services.AddHybridCache(options =>
+        {
+            // Maximum size of cached items
+            options.MaximumPayloadBytes = 1024 * 1024 * 10; // 10MB
+            options.MaximumKeyLength = 512; // 512 characters
+
+            // Default timeouts
+            options.DefaultEntryOptions = new HybridCacheEntryOptions
+            {
+                Expiration = TimeSpan.FromMinutes(30),
+                LocalCacheExpiration = TimeSpan.FromMinutes(5)
+            };
+        });
         services.AddStackExchangeRedisCache(options =>
         {
             var redisConnectionString = configuration.GetConnectionString("Redis");
