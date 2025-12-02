@@ -23,6 +23,21 @@ public static class WebApiDiModule
         services.AddProblemDetails(); // Provide IProblemDetailsService
 
         // Configure API versioning
+        services.AddApiVersioningConfiguration();
+
+        // Add Swagger UI
+        services.AddEndpointsApiExplorer(); // required for Swashbuckle to discover Minimal API endpoints
+        services.ConfigureOptions<ConfigureSwaggerGenOptions>();
+        services.AddSwaggerGen();
+
+        // Configure Rate Limiting
+        services.AddRateLimitConfiguration();
+
+        return services;
+    }
+
+    private static void AddApiVersioningConfiguration(this IServiceCollection services)
+    {
         services.AddApiVersioning(options =>
         {
             options.DefaultApiVersion = new ApiVersion(1);
@@ -59,12 +74,10 @@ public static class WebApiDiModule
             // will be exposed in the API explorer/docs as `/v1/users` (for version 1) instead of keeping the `{version:apiVersion}` placeholder.
             options.SubstituteApiVersionInUrl = true; // Replace the version in route templates
         });
+    }
 
-        // Add Swagger UI
-        services.AddEndpointsApiExplorer(); // required for Swashbuckle to discover Minimal API endpoints
-        services.ConfigureOptions<ConfigureSwaggerGenOptions>();
-        services.AddSwaggerGen();
-
+    private static void AddRateLimitConfiguration(this IServiceCollection services)
+    {
         services.AddRateLimiter(rateLimiterOptions =>
         {
             rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -149,7 +162,5 @@ public static class WebApiDiModule
                     });
             });
         });
-
-        return services;
     }
 }
