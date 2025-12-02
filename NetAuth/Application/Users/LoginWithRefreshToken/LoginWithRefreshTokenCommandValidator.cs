@@ -15,9 +15,7 @@ internal sealed class LoginWithRefreshTokenCommandValidator : AbstractValidator<
 
         RuleFor(x => x.DeviceId)
             .NotEmpty()
-            .WithDomainError(UsersValidationErrors.LoginWithRefreshToken.DeviceIdIsRequired);
-
-        RuleFor(x => x.DeviceId)
+            .WithDomainError(UsersValidationErrors.LoginWithRefreshToken.DeviceIdIsRequired)
             .Must(FluentValidationExtensions.IsValidNonEmptyGuid)
             .WithDomainError(UsersValidationErrors.LoginWithRefreshToken.DeviceIdMustBeValidNonEmptyGuid);
     }

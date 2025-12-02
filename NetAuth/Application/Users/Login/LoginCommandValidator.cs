@@ -16,12 +16,10 @@ internal sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
         RuleFor(query => query.Password)
             .NotEmpty()
             .WithDomainError(UsersValidationErrors.Login.PasswordIsRequired);
-        
-        RuleFor(query => query.DeviceId)
-            .NotEmpty()
-            .WithDomainError(UsersValidationErrors.Login.DeviceIdIsRequired);
 
         RuleFor(query => query.DeviceId)
+            .NotEmpty()
+            .WithDomainError(UsersValidationErrors.Login.DeviceIdIsRequired)
             .Must(FluentValidationExtensions.IsValidNonEmptyGuid)
             .WithDomainError(UsersValidationErrors.Login.DeviceIdMustBeValidNonEmptyGuid);
     }
