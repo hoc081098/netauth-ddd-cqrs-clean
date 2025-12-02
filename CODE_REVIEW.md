@@ -163,6 +163,8 @@ var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
 
 ### 2. Missing Rate Limiting
 
+DONE ✅
+
 **Location:** `Web.Api/Endpoints/Users/`
 
 **Issue:** Authentication endpoints are vulnerable to brute force attacks.

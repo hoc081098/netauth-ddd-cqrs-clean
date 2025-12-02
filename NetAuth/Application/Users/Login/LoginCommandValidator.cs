@@ -1,4 +1,3 @@
-using System.Data;
 using FluentValidation;
 using JetBrains.Annotations;
 using NetAuth.Application.Core.Extensions;
@@ -21,5 +20,9 @@ internal sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
         RuleFor(query => query.DeviceId)
             .NotEmpty()
             .WithDomainError(UsersValidationErrors.Login.DeviceIdIsRequired);
+
+        RuleFor(query => query.DeviceId)
+            .Must(FluentValidationExtensions.IsValidNonEmptyGuid)
+            .WithDomainError(UsersValidationErrors.Login.DeviceIdMustBeValidNonEmptyGuid);
     }
 }

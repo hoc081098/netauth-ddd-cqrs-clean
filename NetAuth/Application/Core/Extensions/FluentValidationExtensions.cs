@@ -21,4 +21,9 @@ public static class FluentValidationExtensions
         DomainError error) =>
         rule.WithErrorCode(error.Code)
             .WithMessage(error.Message);
+
+    public static bool IsValidGuid(string value) => Guid.TryParse(value, out _);
+
+    public static bool IsValidNonEmptyGuid(string value) =>
+        Guid.TryParse(value, out var guid) && guid != Guid.Empty;
 }

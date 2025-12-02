@@ -44,6 +44,12 @@ public static class UsersValidationErrors
                 code: "Login.DeviceIdIsRequired",
                 message: "Device id is required.",
                 type: DomainError.ErrorType.Validation);
+        
+        public static DomainError DeviceIdMustBeValidNonEmptyGuid =>
+            new(
+                code: "Login.DeviceIdMustBeValidNonEmptyGuid",
+                message: "Device id must be a valid non-empty GUID.",
+                type: DomainError.ErrorType.Validation);
     }
     
     public static class LoginWithRefreshToken
@@ -58,6 +64,12 @@ public static class UsersValidationErrors
             new(
                 code: "Login.DeviceIdIsRequired",
                 message: "Device id is required.",
+                type: DomainError.ErrorType.Validation);
+        
+        public static DomainError DeviceIdMustBeValidNonEmptyGuid =>
+            new(
+                code: "Login.DeviceIdMustBeValidNonEmptyGuid",
+                message: "Device id must be a valid non-empty GUID.",
                 type: DomainError.ErrorType.Validation);
     }
 }
