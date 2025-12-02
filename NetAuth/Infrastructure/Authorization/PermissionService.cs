@@ -1,63 +1,46 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace NetAuth.Infrastructure.Authorization;
 
 internal sealed class PermissionService(
     AppDbContext dbContext,
-    IDistributedCache distributedCache,
+    HybridCache cache,
     ILogger<PermissionService> logger
 ) : IPermissionService
 {
     private const string CacheKeyPrefix = "auth:permissions:user:";
-    private static readonly TimeSpan CacheTtl = TimeSpan.FromMinutes(30);
+
+    private static readonly HybridCacheEntryOptions HybridCacheEntryOptions = new()
+    {
+        Expiration = TimeSpan.FromMinutes(30),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
 
     private static string BuildCacheKey(Guid userId) => $"{CacheKeyPrefix}{userId:N}";
 
-    public async Task<IReadOnlySet<string>> GetUserPermissionsAsync(Guid userId,
+    public async Task<IReadOnlySet<string>> GetUserPermissionsAsync(
+        Guid userId,
         CancellationToken cancellationToken = default)
-    {
-        var cacheKey = BuildCacheKey(userId);
+        =>
+            await cache.GetOrCreateAsync<(Guid userId, PermissionService obj), HashSet<string>>(
+                key: BuildCacheKey(userId),
+                state: (userId, obj: this),
+                factory: static async (state, token) =>
+                    await state.obj.QueryPermissionsAsync(state.userId, token),
+                options: HybridCacheEntryOptions,
+                cancellationToken: cancellationToken
+            );
 
-        // 1. Try cache
-        var cachedBytes = await distributedCache.GetAsync(cacheKey, cancellationToken);
-        if (cachedBytes is not null)
-        {
-            var cachedList = JsonSerializer.Deserialize<List<string>>(cachedBytes);
-            if (cachedList is null)
-            {
-                logger.LogWarning("Cached permissions for user {UserId} could not be deserialized", userId);
-            }
+    public async Task InvalidatePermissionsCacheAsync(Guid userId, CancellationToken cancellationToken = default) =>
+        await cache.RemoveAsync(BuildCacheKey(userId), cancellationToken);
 
-            return cachedList?.ToHashSet(StringComparer.Ordinal) ?? [];
-        }
-
-        logger.LogDebug("Cache MISS for user {UserId}", userId);
-
-        // 2. Query DB
-        var permissions = await dbContext.RoleUsers
+    private Task<HashSet<string>> QueryPermissionsAsync(Guid userId, CancellationToken cancellationToken) =>
+        dbContext.RoleUsers
             .AsNoTracking()
             .Where(ru => ru.UserId == userId)
             .SelectMany(ru => ru.Role.Permissions)
             .Select(p => p.Code)
             .Distinct()
             .ToHashSetAsync(StringComparer.Ordinal, cancellationToken);
-
-        // 3. Save to cache
-        var data = JsonSerializer.SerializeToUtf8Bytes(permissions);
-        await distributedCache.SetAsync(
-            cacheKey,
-            data,
-            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = CacheTtl },
-            cancellationToken);
-
-        return permissions;
-    }
-
-    public Task InvalidatePermissionsCacheAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        var cacheKey = BuildCacheKey(userId);
-        return distributedCache.RemoveAsync(cacheKey, cancellationToken);
-    }
 }
