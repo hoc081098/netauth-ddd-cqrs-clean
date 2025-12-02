@@ -1,3 +1,12 @@
+```shell
+docker exec -it 6f215cc5c000b8331ba02113eec7ed1961171939aaf419bb4f8f45c58f32fcdd  redis-cli
+# List all keys
+KEYS *
+
+# Delete a specific key
+DEL your_key_name_here
+```
+
 # NetAuth Code Review - Improvement Recommendations
 
 This document provides a comprehensive code review of the NetAuth ASP.NET Core authentication service, highlighting areas of excellence and suggesting improvements for code quality, security, performance, and maintainability.

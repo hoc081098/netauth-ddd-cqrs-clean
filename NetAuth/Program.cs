@@ -48,10 +48,14 @@ versionedGroupBuilder
     .MapGet("/me-public-v2", (ClaimsPrincipal user) => new { user.Identity })
     .MapToApiVersion(2);
 versionedGroupBuilder
-    .MapGet("/me-required-auth", (ClaimsPrincipal user) => new { user.Identity })
+    .MapGet("/me-required-auth",
+        (ClaimsPrincipal user, IUserIdentifierProvider identifierProvider) =>
+            new { user.Identity, identifierProvider.UserId })
     .RequireAuthorization();
 versionedGroupBuilder
-    .MapGet("/me-required-permission", (ClaimsPrincipal user) => new { user.Identity })
+    .MapGet("/me-required-permission",
+        (ClaimsPrincipal user, IUserIdentifierProvider identifierProvider) =>
+            new { user.Identity, identifierProvider.UserId })
     .RequireAuthorization("permission:users:read");
 
 // Configure the HTTP request pipeline.

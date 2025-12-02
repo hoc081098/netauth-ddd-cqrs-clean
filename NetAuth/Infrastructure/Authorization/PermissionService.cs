@@ -23,7 +23,9 @@ internal sealed class PermissionService(
         Guid userId,
         CancellationToken cancellationToken = default)
         =>
-            await cache.GetOrCreateAsync<IReadOnlySet<string>>(
+            // NOTE: Must use `HashSet<string>` type argument here to ensure correct deserialization from cache.
+            // Using interface type `IReadOnlySet<string>` will cause deserialization to fail.
+            await cache.GetOrCreateAsync<HashSet<string>>(
                 key: BuildCacheKey(userId),
                 factory: async token => await QueryPermissionsAsync(userId, token),
                 options: HybridCacheEntryOptions,
