@@ -48,7 +48,7 @@ public static class UsersValidationErrors
         public static DomainError DeviceIdMustBeValidNonEmptyGuid =>
             new(
                 code: "Login.DeviceIdMustBeValidNonEmptyGuid",
-                message: "Device id must be a valid non-empty GUID.",
+                message: "Device id must be a valid non-empty UUID.",
                 type: DomainError.ErrorType.Validation);
     }
     
@@ -69,7 +69,7 @@ public static class UsersValidationErrors
         public static DomainError DeviceIdMustBeValidNonEmptyGuid =>
             new(
                 code: "Login.DeviceIdMustBeValidNonEmptyGuid",
-                message: "Device id must be a valid non-empty GUID.",
+                message: "Device id must be a valid non-empty UUID.",
                 type: DomainError.ErrorType.Validation);
     }
 }
