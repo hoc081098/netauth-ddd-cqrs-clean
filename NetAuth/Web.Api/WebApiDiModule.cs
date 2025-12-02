@@ -67,6 +67,7 @@ public static class WebApiDiModule
 
         services.AddRateLimiter(rateLimiterOptions =>
         {
+            rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
             rateLimiterOptions.AddSlidingWindowLimiter(RateLimiterPolicyNames.AuthLimiter, options =>
             {
                 options.Window = TimeSpan.FromSeconds(10);
@@ -74,6 +75,23 @@ public static class WebApiDiModule
                 options.PermitLimit = 5;
                 options.QueueLimit = 0;
             });
+
+            // Sliding window rate limiter for login attempts
+            rateLimiterOptions.AddPolicy(
+                policyName: RateLimiterPolicyNames.LoginLimiter,
+                partitioner: httpContext =>
+                    RateLimitPartition.GetSlidingWindowLimiter(
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                        factory: _ => new SlidingWindowRateLimiterOptions
+                        {
+                            PermitLimit = 5, // 5 attempts
+                            Window = TimeSpan.FromSeconds(20), // per 20 minutes
+                            SegmentsPerWindow = 4, // 4 segments
+                            QueueLimit = 0, // No queueing
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        }
+                    )
+            );
         });
 
         return services;
