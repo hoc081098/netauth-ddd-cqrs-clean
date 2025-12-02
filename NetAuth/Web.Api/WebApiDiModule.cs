@@ -68,30 +68,86 @@ public static class WebApiDiModule
         services.AddRateLimiter(rateLimiterOptions =>
         {
             rateLimiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-            rateLimiterOptions.AddSlidingWindowLimiter(RateLimiterPolicyNames.AuthLimiter, options =>
-            {
-                options.Window = TimeSpan.FromSeconds(10);
-                options.SegmentsPerWindow = 2;
-                options.PermitLimit = 5;
-                options.QueueLimit = 0;
-            });
 
-            // Sliding window rate limiter for login attempts
+            // Add a rate limiter that limits login attempts per IP address
             rateLimiterOptions.AddPolicy(
                 policyName: RateLimiterPolicyNames.LoginLimiter,
                 partitioner: httpContext =>
-                    RateLimitPartition.GetSlidingWindowLimiter(
-                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                {
+                    var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
+
+                    return RateLimitPartition.GetSlidingWindowLimiter(
+                        partitionKey: $"{RateLimiterPolicyNames.LoginLimiter}-{ipAddress}",
                         factory: _ => new SlidingWindowRateLimiterOptions
                         {
-                            PermitLimit = 5, // 5 attempts
-                            Window = TimeSpan.FromSeconds(20), // per 20 minutes
-                            SegmentsPerWindow = 4, // 4 segments
+                            // 5 req / 20s
+                            PermitLimit = 5,
+                            Window = TimeSpan.FromSeconds(20),
+                            SegmentsPerWindow = 4,
                             QueueLimit = 0, // No queueing
                             QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                         }
-                    )
-            );
+                    );
+                });
+
+            // Add a rate limiter that limits registration attempts per IP address
+            rateLimiterOptions.AddPolicy(
+                policyName: RateLimiterPolicyNames.RegisterLimiter,
+                partitioner: httpContext =>
+                {
+                    var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
+
+                    return RateLimitPartition.GetSlidingWindowLimiter(
+                        partitionKey: $"{RateLimiterPolicyNames.RegisterLimiter}-{ipAddress}",
+                        factory: _ => new SlidingWindowRateLimiterOptions
+                        {
+                            //  3 req / 1 minute
+                            PermitLimit = 3,
+                            Window = TimeSpan.FromMinutes(1),
+                            SegmentsPerWindow = 3,
+                            QueueLimit = 0, // No queueing
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                        }
+                    );
+                });
+
+
+            // Add a rate limiter that limits refresh token attempts per IP address
+            rateLimiterOptions.AddPolicy(
+                policyName: RateLimiterPolicyNames.RefreshTokenLimiter,
+                partitioner: httpContext =>
+                {
+                    var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
+
+                    return RateLimitPartition.GetSlidingWindowLimiter(
+                        partitionKey: $"{RateLimiterPolicyNames.RefreshTokenLimiter}-{ipAddress}",
+                        factory: _ => new SlidingWindowRateLimiterOptions
+                        {
+                            //  20 req / 1 minute
+                            PermitLimit = 20, // allow auto-refresh
+                            Window = TimeSpan.FromMinutes(1),
+                            SegmentsPerWindow = 3,
+                            QueueLimit = 0, // No queueing
+                            QueueProcessingOrder = QueueProcessingOrder.OldestFirst
+                        }
+                    );
+                });
+
+            // Policy for all other endpoints: rate limited to 100 requests per minute
+            rateLimiterOptions.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+            {
+                var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
+
+                return RateLimitPartition.GetSlidingWindowLimiter(
+                    partitionKey: $"GlobalLimiter-{ipAddress}",
+                    factory: _ => new SlidingWindowRateLimiterOptions
+                    {
+                        AutoReplenishment = true,
+                        PermitLimit = 100,
+                        Window = TimeSpan.FromMinutes(1),
+                        SegmentsPerWindow = 4
+                    });
+            });
         });
 
         return services;

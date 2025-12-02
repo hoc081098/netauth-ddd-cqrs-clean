@@ -40,6 +40,6 @@ internal sealed class RegisterEndpoint : IEndpoint
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict)
-            .RequireRateLimiting(RateLimiterPolicyNames.AuthLimiter);
+            .RequireRateLimiting(RateLimiterPolicyNames.RegisterLimiter);
     }
 }
