@@ -5,6 +5,7 @@ using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
+using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Application.Users.LoginWithRefreshToken;
 
@@ -37,8 +38,9 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         // 3. Reuse Detection (Security Critical)
         if (refreshToken.Status != RefreshTokenStatus.Active)
         {
-            // token đã bị rotate / revoked mà còn dùng lại → considered reused
-            refreshToken.MarkAsCompromised(utcNow);
+            // Token already rotated/revoked but being reused → security breach detected
+            refreshToken.MarkAsCompromisedDueToReuse(utcNow, chainAffected: true);
+
             await MarkRefreshTokenChainCompromised(
                 refreshTokenRepository,
                 refreshToken.UserId,
@@ -54,7 +56,7 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         // 4. Check Expiration
         if (refreshToken.IsExpired(utcNow))
         {
-            refreshToken.MarkAsRevoked(utcNow);
+            refreshToken.MarkAsRevokedDueToExpiration(utcNow);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -66,14 +68,14 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         if (!string.Equals(refreshToken.DeviceId, command.DeviceId, StringComparison.Ordinal))
         {
             // Device ID mismatch - suspicious token theft detected, block immediately
-            refreshToken.MarkAsCompromised(utcNow);
+            refreshToken.MarkAsCompromisedDueToDeviceMismatch(utcNow, actualDeviceId: command.DeviceId);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return UsersDomainErrors.RefreshToken.InvalidDevice;
         }
-        
+
         // --- Happy Path ---
 
         // 6. Rotate the refresh token and generate a new access token
@@ -94,20 +96,24 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
             RefreshToken: refreshTokenResult.RawToken);
     }
 
+    /// <summary>
+    /// Marks all active refresh tokens for a user as compromised.
+    /// This is called when token reuse is detected.
+    /// </summary>
     private static async Task MarkRefreshTokenChainCompromised(
         IRefreshTokenRepository refreshTokenRepository,
         Guid userId,
         DateTimeOffset currentUtc,
         CancellationToken cancellationToken = default)
     {
-        // Simple approach: revoke all active tokens for the user
+        // Mark all active tokens for the user as compromised
         var refreshTokens = await refreshTokenRepository.GetNonExpiredActiveTokensByUserIdAsync(userId,
             currentUtc,
             cancellationToken);
 
         foreach (var token in refreshTokens)
         {
-            token.MarkAsCompromised(currentUtc);
+            token.MarkAsCompromisedDueToReuse(currentUtc, chainAffected: false);
         }
     }
 }

@@ -68,7 +68,7 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
     /// <summary>
     /// Gets the refresh token that replaced this one.
     /// </summary>
-    public RefreshToken? ReplacedBy { get; } = null!;
+    public RefreshToken? ReplacedBy { get; }
 
     /// <remarks>Required by EF Core.</remarks>
     [UsedImplicitly]
@@ -142,7 +142,81 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
         return created;
     }
 
-    public void MarkAsRevoked(DateTimeOffset revokedAt)
+    /// <summary>
+    /// Marks the refresh token as revoked due to expiration.
+    /// Raises a domain event for security audit logging.
+    /// </summary>
+    /// <param name="revokedAt">The date and time when the expired token was used.</param>
+    public void MarkAsRevokedDueToExpiration(DateTimeOffset revokedAt)
+    {
+        MarkAsRevokedInternal(revokedAt);
+
+        AddDomainEvent(new RefreshTokenExpiredUsageDomainEvent(
+            RefreshTokenId: Id,
+            UserId: UserId,
+            ExpiresOnUtc: ExpiresOnUtc,
+            AttemptedAt: revokedAt));
+    }
+
+    /// <summary>
+    /// Marks the refresh token as compromised due to device mismatch.
+    /// Raises domain events for security audit logging.
+    /// </summary>
+    /// <param name="revokedAt">The date and time when the device mismatch was detected.</param>
+    /// <param name="actualDeviceId">The device ID that was provided in the request.</param>
+    public void MarkAsCompromisedDueToDeviceMismatch(DateTimeOffset revokedAt, string actualDeviceId)
+    {
+        MarkAsCompromisedInternal(revokedAt, raiseChainEvent: false);
+
+        AddDomainEvent(new RefreshTokenDeviceMismatchDetectedDomainEvent(
+            RefreshTokenId: Id,
+            UserId: UserId,
+            ExpectedDeviceId: DeviceId,
+            ActualDeviceId: actualDeviceId));
+    }
+
+    /// <summary>
+    /// Marks the refresh token as compromised due to token reuse detection.
+    /// Raises domain events for security audit logging.
+    /// </summary>
+    /// <param name="detectedAt">The date and time when the reuse was detected.</param>
+    /// <param name="chainAffected">Indicates whether the entire token chain should be marked as compromised.</param>
+    public void MarkAsCompromisedDueToReuse(DateTimeOffset detectedAt, bool chainAffected) =>
+        MarkAsCompromisedInternal(detectedAt, raiseChainEvent: chainAffected);
+
+    /// <summary>
+    /// Rotates the refresh token by creating a new one and revoking the current one.
+    /// Raises a domain event for security audit logging.
+    /// </summary>
+    /// <param name="newTokenHash">The hash of the new token.</param>
+    /// <param name="newExpiresOnUtc">The expiration date of the new token.</param>
+    /// <param name="revokedAt">The date and time when the current token is revoked.</param>
+    /// <returns>The new <see cref="RefreshToken"/> instance.</returns>
+    public RefreshToken Rotate(string newTokenHash, DateTimeOffset newExpiresOnUtc, DateTimeOffset revokedAt)
+    {
+        var newRefreshToken = Create(
+            tokenHash: newTokenHash,
+            expiresOnUtc: newExpiresOnUtc,
+            userId: UserId,
+            deviceId: DeviceId);
+
+        ReplacedById = newRefreshToken.Id;
+        MarkAsRevokedInternal(revokedAt);
+
+        AddDomainEvent(new RefreshTokenRotatedDomainEvent(
+            OldRefreshTokenId: Id,
+            NewRefreshTokenId: newRefreshToken.Id,
+            UserId: UserId,
+            DeviceId: DeviceId));
+
+        return newRefreshToken;
+    }
+
+    /// <summary>
+    /// Marks the refresh token as revoked.
+    /// </summary>
+    /// <param name="revokedAt">The date and time when the token was revoked.</param>
+    private void MarkAsRevokedInternal(DateTimeOffset revokedAt)
     {
         if (Status == RefreshTokenStatus.Revoked)
         {
@@ -153,29 +227,33 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
         RevokedAt = revokedAt;
     }
 
-    public void MarkAsCompromised(DateTimeOffset revokedAt)
+    /// <summary>
+    /// Marks the refresh token as compromised (potential security breach).
+    /// Raises a domain event for security audit logging.
+    /// </summary>
+    /// <param name="revokedAt">The date and time when the compromise was detected.</param>
+    /// <param name="raiseChainEvent">Indicates whether to raise a chain compromised event.</param>
+    private void MarkAsCompromisedInternal(DateTimeOffset revokedAt, bool raiseChainEvent)
     {
         if (Status == RefreshTokenStatus.Compromised)
         {
             return;
         }
 
+        var previousStatus = Status;
         Status = RefreshTokenStatus.Compromised;
         RevokedAt = revokedAt;
-    }
 
-    public RefreshToken Rotate(string newTokenHash, DateTimeOffset newExpiresOnUtc, DateTimeOffset revokedAt)
-    {
-        var newRefreshToken = Create(
-            tokenHash: newTokenHash,
-            expiresOnUtc: newExpiresOnUtc,
-            userId: UserId,
-            deviceId: DeviceId);
+        AddDomainEvent(new RefreshTokenReuseDetectedDomainEvent(
+            RefreshTokenId: Id,
+            UserId: UserId,
+            DeviceId: DeviceId,
+            PreviousStatus: previousStatus));
 
-        ReplacedById = newRefreshToken.Id;
-        MarkAsRevoked(revokedAt);
-
-        return newRefreshToken;
+        if (raiseChainEvent)
+        {
+            AddDomainEvent(new RefreshTokenChainCompromisedDomainEvent(UserId: UserId));
+        }
     }
 }
 
