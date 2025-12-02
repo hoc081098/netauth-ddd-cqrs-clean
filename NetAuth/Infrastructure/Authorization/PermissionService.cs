@@ -5,8 +5,7 @@ namespace NetAuth.Infrastructure.Authorization;
 
 internal sealed class PermissionService(
     AppDbContext dbContext,
-    HybridCache cache,
-    ILogger<PermissionService> logger
+    HybridCache cache
 ) : IPermissionService
 {
     private const string CacheKeyPrefix = "auth:permissions:user:";
