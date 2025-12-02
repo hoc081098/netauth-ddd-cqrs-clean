@@ -23,11 +23,9 @@ internal sealed class PermissionService(
         Guid userId,
         CancellationToken cancellationToken = default)
         =>
-            await cache.GetOrCreateAsync<(Guid userId, PermissionService obj), HashSet<string>>(
+            await cache.GetOrCreateAsync(
                 key: BuildCacheKey(userId),
-                state: (userId, obj: this),
-                factory: static async (state, token) =>
-                    await state.obj.QueryPermissionsAsync(state.userId, token),
+                factory: async token => await QueryPermissionsAsync(userId, token),
                 options: HybridCacheEntryOptions,
                 cancellationToken: cancellationToken
             );
