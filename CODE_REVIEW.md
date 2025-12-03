@@ -672,6 +672,8 @@ app.MapPost("/auth/login", ...)
 
 ### 2. Add Health Checks
 
+DONE ✅
+
 **Location:** `Program.cs`
 
 **Recommendation:**
