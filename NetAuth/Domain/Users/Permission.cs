@@ -3,10 +3,17 @@ using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Domain.Users;
 
-public record struct PermissionId(int Value)
+public readonly record struct PermissionId(int Value) : IComparable<PermissionId>
 {
     internal static readonly PermissionId GetUsersId = new(1);
     internal static readonly PermissionId ModifyUserId = new(2);
+
+    public int CompareTo(PermissionId other) => Value.CompareTo(other.Value);
+
+    public static bool operator <(PermissionId left, PermissionId right) => left.CompareTo(right) < 0;
+    public static bool operator >(PermissionId left, PermissionId right) => left.CompareTo(right) > 0;
+    public static bool operator <=(PermissionId left, PermissionId right) => left.CompareTo(right) <= 0;
+    public static bool operator >=(PermissionId left, PermissionId right) => left.CompareTo(right) >= 0;
 }
 
 public sealed class Permission : Entity<PermissionId>

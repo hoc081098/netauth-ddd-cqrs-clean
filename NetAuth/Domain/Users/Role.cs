@@ -3,10 +3,17 @@ using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Domain.Users;
 
-public record struct RoleId(int Value)
+public readonly record struct RoleId(int Value) : IComparable<RoleId>
 {
     internal static readonly RoleId AdministratorId = new(1);
     internal static readonly RoleId MemberId = new(2);
+
+    public int CompareTo(RoleId other) => Value.CompareTo(other.Value);
+
+    public static bool operator >(RoleId left, RoleId right) => left.CompareTo(right) > 0;
+    public static bool operator <(RoleId left, RoleId right) => left.CompareTo(right) < 0;
+    public static bool operator >=(RoleId left, RoleId right) => left.CompareTo(right) >= 0;
+    public static bool operator <=(RoleId left, RoleId right) => left.CompareTo(right) <= 0;
 }
 
 public sealed class Role : Entity<RoleId>
