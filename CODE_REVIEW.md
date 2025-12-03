@@ -745,6 +745,8 @@ services.AddOptions<JwtConfig>()
 
 ### 6. Add Graceful Shutdown Handling
 
+DON'T NEED ✅
+
 **Location:** `Program.cs`
 
 **Recommendation:**
