@@ -65,7 +65,9 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         }
 
         // 5. Check Device Binding
-        if (!string.Equals(refreshToken.DeviceId, command.DeviceId, StringComparison.Ordinal))
+        var deviceId = Guid.Parse(refreshToken.DeviceId);
+        var actualDeviceId = Guid.Parse(command.DeviceId);
+        if (deviceId != actualDeviceId)
         {
             // Device ID mismatch - suspicious token theft detected, block immediately
             refreshToken.MarkAsCompromisedDueToDeviceMismatch(utcNow, actualDeviceId: command.DeviceId);
