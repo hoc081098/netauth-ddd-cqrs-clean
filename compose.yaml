@@ -7,3 +7,18 @@ services:
     restart: always
     ports:
       - "6379:6379"
+
+  netauth.database:
+    image: postgres:18-alpine
+    container_name: NetAuth.Database
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=NetAuth
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_netauth:/var/lib/postgresql
+
+volumes:
+  postgres_netauth:
