@@ -1,12 +1,11 @@
 using LanguageExt;
-using Microsoft.Extensions.Options;
+using static LanguageExt.Prelude;
 using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
-using NetAuth.Infrastructure.Authentication;
 
 namespace NetAuth.Application.Users.Login;
 
@@ -23,14 +22,15 @@ internal sealed class LoginCommandHandler(
     public Task<Either<DomainError, LoginResult>> Handle(LoginCommand command,
         CancellationToken cancellationToken) =>
         Email.Create(command.Email)
-            .MapAsync(email => userRepository.GetByEmailAsync(email, cancellationToken))
-            .BindAsync(user => AuthenticateUserAsync(command, user, cancellationToken));
+            .MapAsync(async email => Optional(await userRepository.GetByEmailAsync(email, cancellationToken)))
+            .BindAsync(userOption => AuthenticateUserAsync(command, userOption, cancellationToken));
 
     private async Task<Either<DomainError, LoginResult>> AuthenticateUserAsync(
         LoginCommand command,
-        User? user,
+        Option<User> userOption,
         CancellationToken cancellationToken)
     {
+        var user = userOption.IfNoneUnsafe(() => null);
         if (user is null || !user.VerifyPasswordHash(command.Password, passwordHashChecker))
         {
             return UsersDomainErrors.User.InvalidCredentials;
