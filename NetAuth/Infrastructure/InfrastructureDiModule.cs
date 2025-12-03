@@ -30,13 +30,14 @@ public static class InfrastructureDiModule
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         // Add DbContext
+        var dbConnectionString = configuration.GetConnectionString("Database");
+        Guard.Against.NullOrEmpty(dbConnectionString);
+        
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         services.AddScoped<ISaveChangesInterceptor, SoftDeletableEntityInterceptor>();
         services.AddSingleton(_ =>
         {
-            var connectionString = configuration.GetConnectionString("Database");
-            Guard.Against.NullOrEmpty(connectionString);
-            return new NpgsqlDataSourceBuilder(connectionString).Build();
+            return new NpgsqlDataSourceBuilder(dbConnectionString).Build();
         });
         // https://www.npgsql.org/efcore/release-notes/7.0.html#support-for-dbdatasource
         services.AddDbContext<AppDbContext>((serviceProvider, optionsBuilder) =>
@@ -78,11 +79,11 @@ public static class InfrastructureDiModule
                 LocalCacheExpiration = TimeSpan.FromMinutes(5)
             };
         });
+
+        var redisConnectionString = configuration.GetConnectionString("Redis");
+        Guard.Against.NullOrEmpty(redisConnectionString);
         services.AddStackExchangeRedisCache(options =>
         {
-            var redisConnectionString = configuration.GetConnectionString("Redis");
-            Guard.Against.NullOrEmpty(redisConnectionString);
-
             options.Configuration = redisConnectionString;
             options.InstanceName = "netauth:cache:";
         });
@@ -122,6 +123,13 @@ public static class InfrastructureDiModule
         });
         services.ConfigureOptions<OutboxMessagesProcessorJobSetup>();
         services.AddScoped<OutboxProcessor>();
+
+        // Add health checks
+        services
+            .AddHealthChecks()
+            .AddRedis(redisConnectionString)
+            .AddNpgSql(dbConnectionString)
+            .AddDbContextCheck<AppDbContext>();
 
         return services;
     }

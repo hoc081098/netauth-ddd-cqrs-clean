@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using Asp.Versioning;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.EntityFrameworkCore;
 using NetAuth.Application;
 using NetAuth.Application.Abstractions.Authentication;
@@ -88,5 +90,12 @@ app.UseAuthorization();
 
 // Adds exception handling middleware to the request pipeline
 app.UseExceptionHandler();
+
+// Map health check endpoints
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => true,
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.Run();
