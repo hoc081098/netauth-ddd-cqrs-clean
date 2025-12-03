@@ -118,9 +118,18 @@ public static class InfrastructureDiModule
         // Common
         services.AddSingleton<IClock, SystemClock>();
 
+        // Bind section "Outbox" → OutboxSettings
+        services.AddOptions<OutboxSettings>()
+            .Bind(configuration.GetSection(OutboxSettings.SectionKey))
+            .ValidateDataAnnotations()
+            .Validate(
+                validation: outboxSettings =>
+                    outboxSettings.Interval > TimeSpan.Zero &&
+                    outboxSettings.CleanupRetention > TimeSpan.Zero,
+                failureMessage: "Outbox Interval and CleanupRetention must be greater than zero.")
+            .ValidateOnStart();
+
         // Add Quartz.NET services
-        // Bind section "OutboxSettings" → OutboxSettings
-        services.Configure<OutboxSettings>(configuration.GetSection(OutboxSettings.SectionKey));
         services.AddTransient<IOutboxMessageResolver, OutboxMessageResolver>();
         services.AddQuartz(options =>
         {
