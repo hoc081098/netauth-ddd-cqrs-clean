@@ -5,7 +5,6 @@ using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
-using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Application.Users.LoginWithRefreshToken;
 
