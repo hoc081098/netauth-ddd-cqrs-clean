@@ -13,8 +13,6 @@ internal sealed class OutboxMessageTypeConfiguration : IEntityTypeConfiguration<
     {
         var snakeCaseNameRewriter = new SnakeCaseNameRewriter(CultureInfo.InvariantCulture);
 
-        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(OutboxMessage).Pluralize()));
-
         builder.HasKey(outboxMessage => outboxMessage.Id);
 
         builder.Property(outboxMessage => outboxMessage.Type)

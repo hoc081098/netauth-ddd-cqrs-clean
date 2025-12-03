@@ -16,9 +16,14 @@ internal sealed class AppDbContext(
 ) : DbContext(options),
     IUnitOfWork
 {
+    // Expose DbSet<TEntity> properties for each entity so EF Core's conventions produce pluralized table names.
+
+    internal DbSet<User> Users => Set<User>();
+    internal DbSet<Role> Roles => Set<Role>();
     internal DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     internal DbSet<RoleUser> RoleUsers => Set<RoleUser>();
     internal DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    internal DbSet<Permission> Permissions => Set<Permission>();
     internal DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     /// <inheritdoc />

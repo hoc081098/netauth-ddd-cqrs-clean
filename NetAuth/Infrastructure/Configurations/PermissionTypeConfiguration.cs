@@ -11,10 +11,6 @@ public class PermissionTypeConfiguration : IEntityTypeConfiguration<Permission>
 {
     public void Configure(EntityTypeBuilder<Permission> builder)
     {
-        var snakeCaseNameRewriter = new SnakeCaseNameRewriter(CultureInfo.InvariantCulture);
-
-        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(Permission).Pluralize()));
-
         builder.HasKey(r => r.Id);
 
         builder.Property(r => r.Id)

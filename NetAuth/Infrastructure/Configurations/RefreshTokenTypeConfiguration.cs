@@ -1,6 +1,3 @@
-using System.Globalization;
-using EFCore.NamingConventions.Internal;
-using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NetAuth.Domain.Users;
@@ -11,9 +8,6 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
-        var snakeCaseNameRewriter = new SnakeCaseNameRewriter(CultureInfo.InvariantCulture);
-        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(RefreshToken).Pluralize()));
-
         builder.HasKey(rt => rt.Id);
 
         builder.Property(rt => rt.TokenHash)
@@ -41,7 +35,7 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
 
         builder.Property(rt => rt.ModifiedOnUtc);
 
-        // -- Indexes & Relationships
+        // -------------------- Indexes & Relationships --------------------
 
         builder.HasIndex(rt => rt.TokenHash)
             .IsUnique()
@@ -54,6 +48,7 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
             .WithMany()
             .HasForeignKey(rt => rt.UserId);
 
+        // Query filter to exclude soft-deleted users for any queries targeting the User entity
         builder.HasQueryFilter(rt => !rt.User.IsDeleted);
 
         // Each refresh token can be replaced by another refresh token (one-to-one relationship)

@@ -1,6 +1,5 @@
 using System.Globalization;
 using EFCore.NamingConventions.Internal;
-using Humanizer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NetAuth.Domain.Users;
@@ -13,8 +12,6 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
     public void Configure(EntityTypeBuilder<User> builder)
     {
         var snakeCaseNameRewriter = new SnakeCaseNameRewriter(CultureInfo.InvariantCulture);
-
-        builder.ToTable(snakeCaseNameRewriter.RewriteName(nameof(User).Pluralize()));
 
         builder.HasKey(user => user.Id);
 
@@ -50,6 +47,8 @@ public class UserTypeConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.DeletedOnUtc);
 
         builder.Property(user => user.IsDeleted).HasDefaultValue(false);
+
+        // -------------------- Indexes & Relationships --------------------
 
         // Query filter to exclude soft-deleted users for any queries targeting the User entity
         builder.HasQueryFilter(user => !user.IsDeleted);

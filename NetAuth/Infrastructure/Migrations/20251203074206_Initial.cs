@@ -73,7 +73,7 @@ namespace NetAuth.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "role_permission",
+                name: "role_permissions",
                 columns: table => new
                 {
                     role_id = table.Column<int>(type: "integer", nullable: false),
@@ -81,15 +81,15 @@ namespace NetAuth.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_role_permission", x => new { x.permission_id, x.role_id });
+                    table.PrimaryKey("pk_role_permissions", x => new { x.permission_id, x.role_id });
                     table.ForeignKey(
-                        name: "fk_role_permission_permissions_permission_id",
+                        name: "fk_role_permissions_permissions_permission_id",
                         column: x => x.permission_id,
                         principalTable: "permissions",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "fk_role_permission_roles_role_id",
+                        name: "fk_role_permissions_roles_role_id",
                         column: x => x.role_id,
                         principalTable: "roles",
                         principalColumn: "id",
@@ -97,7 +97,39 @@ namespace NetAuth.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "role_user",
+                name: "refresh_tokens",
+                columns: table => new
+                {
+                    id = table.Column<Guid>(type: "uuid", nullable: false),
+                    token_hash = table.Column<string>(type: "character varying(512)", maxLength: 512, nullable: false),
+                    expires_on_utc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    user_id = table.Column<Guid>(type: "uuid", nullable: false),
+                    device_id = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
+                    revoked_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    status = table.Column<int>(type: "integer", nullable: false),
+                    replaced_by_id = table.Column<Guid>(type: "uuid", nullable: true),
+                    created_on_utc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    modified_on_utc = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("pk_refresh_tokens", x => x.id);
+                    table.ForeignKey(
+                        name: "fk_refresh_tokens_refresh_tokens_replaced_by_id",
+                        column: x => x.replaced_by_id,
+                        principalTable: "refresh_tokens",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "fk_refresh_tokens_users_user_id",
+                        column: x => x.user_id,
+                        principalTable: "users",
+                        principalColumn: "id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "role_users",
                 columns: table => new
                 {
                     role_id = table.Column<int>(type: "integer", nullable: false),
@@ -105,15 +137,15 @@ namespace NetAuth.Infrastructure.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("pk_role_user", x => new { x.role_id, x.user_id });
+                    table.PrimaryKey("pk_role_users", x => new { x.role_id, x.user_id });
                     table.ForeignKey(
-                        name: "fk_role_user_roles_role_id",
+                        name: "fk_role_users_roles_role_id",
                         column: x => x.role_id,
                         principalTable: "roles",
                         principalColumn: "id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "fk_role_user_users_user_id",
+                        name: "fk_role_users_users_user_id",
                         column: x => x.user_id,
                         principalTable: "users",
                         principalColumn: "id",
@@ -139,7 +171,7 @@ namespace NetAuth.Infrastructure.Migrations
                 });
 
             migrationBuilder.InsertData(
-                table: "role_permission",
+                table: "role_permissions",
                 columns: new[] { "permission_id", "role_id" },
                 values: new object[,]
                 {
@@ -156,13 +188,30 @@ namespace NetAuth.Infrastructure.Migrations
                 filter: "\"processed_on_utc\" IS NULL");
 
             migrationBuilder.CreateIndex(
-                name: "ix_role_permission_role_id",
-                table: "role_permission",
+                name: "ix_refresh_token_user_id",
+                table: "refresh_tokens",
+                column: "user_id");
+
+            migrationBuilder.CreateIndex(
+                name: "ix_refresh_tokens_replaced_by_id",
+                table: "refresh_tokens",
+                column: "replaced_by_id",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ux_refresh_token_token",
+                table: "refresh_tokens",
+                column: "token_hash",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ix_role_permissions_role_id",
+                table: "role_permissions",
                 column: "role_id");
 
             migrationBuilder.CreateIndex(
-                name: "ix_role_user_user_id",
-                table: "role_user",
+                name: "ix_role_users_user_id",
+                table: "role_users",
                 column: "user_id");
 
             migrationBuilder.CreateIndex(
@@ -179,10 +228,13 @@ namespace NetAuth.Infrastructure.Migrations
                 name: "outbox_messages");
 
             migrationBuilder.DropTable(
-                name: "role_permission");
+                name: "refresh_tokens");
 
             migrationBuilder.DropTable(
-                name: "role_user");
+                name: "role_permissions");
+
+            migrationBuilder.DropTable(
+                name: "role_users");
 
             migrationBuilder.DropTable(
                 name: "permissions");
