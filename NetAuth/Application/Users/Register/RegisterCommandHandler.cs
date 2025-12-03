@@ -11,8 +11,7 @@ namespace NetAuth.Application.Users.Register;
 internal sealed class RegisterCommandHandler(
     IUserRepository userRepository,
     IUnitOfWork unitOfWork,
-    IPasswordHasher passwordHasher,
-    IJwtProvider jwtProvider
+    IPasswordHasher passwordHasher
 ) : ICommandHandler<RegisterCommand, RegisterResult>
 {
     public Task<Either<DomainError, RegisterResult>> Handle(RegisterCommand command,
@@ -47,7 +46,6 @@ internal sealed class RegisterCommandHandler(
         userRepository.Insert(user);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var accessToken = jwtProvider.Create(user);
-        return new RegisterResult(AccessToken: accessToken);
+        return new RegisterResult(UserId: user.Id);
     }
 }

@@ -8,4 +8,4 @@ public sealed record RegisterCommand(
     string Password
 ) : ICommand<RegisterResult>;
 
-public sealed record RegisterResult(string AccessToken);
+public sealed record RegisterResult(Guid UserId);

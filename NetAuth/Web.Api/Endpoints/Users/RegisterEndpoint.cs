@@ -13,7 +13,7 @@ internal sealed class RegisterEndpoint : IEndpoint
         string Username,
         string Password);
 
-    public sealed record Response(string AccessToken);
+    public sealed record Response(Guid UserId);
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -31,12 +31,12 @@ internal sealed class RegisterEndpoint : IEndpoint
                 var either = await sender.Send(command, cancellationToken);
 
                 return either
-                    .Select(result => new Response(AccessToken: result.AccessToken))
+                    .Select(result => new Response(UserId: result.UserId))
                     .Match(Right: Results.Ok, Left: CustomResults.Err);
             })
             .WithName("Register")
             .WithSummary("Register a new user.")
-            .WithDescription("Creates a new user account and returns an access token.")
+            .WithDescription("Creates a new user account and returns the user's ID.")
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .ProducesProblem(StatusCodes.Status409Conflict)
