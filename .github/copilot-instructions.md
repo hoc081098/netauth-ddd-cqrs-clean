@@ -117,32 +117,62 @@ Application/
 // Command
 public sealed record LoginCommand(
     string Email,
-    string Password
-) : ICommand<Either<DomainError, LoginResult>>;
+    string Password,
+    string DeviceId
+) : ICommand<LoginResult>;
 
-public sealed record LoginResult(string AccessToken);
+public sealed record LoginResult(
+    string AccessToken,
+    string RefreshToken);
 
 // Command Handler
 internal sealed class LoginCommandHandler(
     IUserRepository userRepository,
+    IRefreshTokenRepository refreshTokenRepository,
     IPasswordHashChecker passwordHashChecker,
-    IJwtProvider jwtProvider
-) : ICommandHandler<LoginCommand, Either<DomainError, LoginResult>>
+    IJwtProvider jwtProvider,
+    IRefreshTokenGenerator refreshTokenGenerator,
+    IClock clock,
+    IUnitOfWork unitOfWork) :
+    ICommandHandler<LoginCommand, LoginResult>
 {
     public Task<Either<DomainError, LoginResult>> Handle(
-        LoginCommand command, 
+        LoginCommand command,
         CancellationToken cancellationToken) =>
         Email.Create(command.Email)
-            .MapAsync(email => userRepository.GetByEmailAsync(email, cancellationToken))
-            .BindAsync(user => AuthenticateUser(command, user));
-    
-    private Either<DomainError, LoginResult> AuthenticateUser(LoginCommand command, User? user)
+            .MapAsync(async email => Optional(await userRepository.GetByEmailAsync(email, cancellationToken)))
+            .BindAsync(userOption => AuthenticateUserAsync(command, userOption, cancellationToken));
+
+    private async Task<Either<DomainError, LoginResult>> AuthenticateUserAsync(
+        LoginCommand command,
+        Option<User> userOption,
+        CancellationToken cancellationToken)
     {
+        var user = userOption.IfNoneUnsafe(() => null);
         if (user is null || !user.VerifyPasswordHash(command.Password, passwordHashChecker))
+        {
             return UsersDomainErrors.User.InvalidCredentials;
-        
+        }
+
+        // Generate access token
         var accessToken = jwtProvider.Create(user);
-        return new LoginResult(AccessToken: accessToken);
+
+        // Generate refresh token and save it
+        var refreshTokenResult = refreshTokenGenerator.GenerateRefreshToken();
+        var refreshToken = RefreshToken.Create(
+            tokenHash: refreshTokenResult.TokenHash,
+            expiresOnUtc: clock.UtcNow.Add(refreshTokenGenerator.RefreshTokenExpiration),
+            userId: user.Id,
+            deviceId: command.DeviceId
+        );
+        refreshTokenRepository.Insert(refreshToken);
+
+        // Save changes
+        await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new LoginResult(
+            AccessToken: accessToken,
+            RefreshToken: refreshTokenResult.RawToken);
     }
 }
 
@@ -397,6 +427,18 @@ public Task<Either<DomainError, Result>> Handle(Command command, CancellationTok
         .Bind(email => ValidateEmail(email))
         .MapAsync(email => userRepository.GetByEmailAsync(email, ct))
         .BindAsync(user => ProcessUser(user));
+```
+
+**IMPORTANT**: **DO NOT use nullable types with `Either<L, R>`**. When a repository method may return null, wrap the result in `Option<T>` using `Optional()` helper:
+
+```csharp
+// ❌ WRONG - Don't use nullable with Either
+.MapAsync(email => userRepository.GetByEmailAsync(email, ct)) // returns User?
+.BindAsync(user => ProcessUser(user)); // user is nullable here
+
+// ✅ CORRECT - Wrap nullable result in Option<T>
+.MapAsync(async email => Optional(await userRepository.GetByEmailAsync(email, ct)))
+.BindAsync(userOption => ProcessUser(userOption)); // userOption is Option<User>
 ```
 
 ### Option for Nullable Values
