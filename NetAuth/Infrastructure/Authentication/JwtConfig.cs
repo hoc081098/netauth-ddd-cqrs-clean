@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -15,10 +16,17 @@ public record JwtConfig
 
     private readonly Lock _lock = new();
 
+    [Required(ErrorMessage = "SecretKey is required.")]
     public required string SecretKey { get; init; }
+
+    [Required(ErrorMessage = "Issuer is required.")]
     public required string Issuer { get; init; }
+
+    [Required(ErrorMessage = "Audience is required.")]
     public required string Audience { get; init; }
+
     public required TimeSpan Expiration { get; init; }
+
     public required TimeSpan RefreshTokenExpiration { get; init; }
 
     [JsonIgnore] private SecurityKey? _issuerSigningKey;

@@ -1,3 +1,4 @@
+using System.Text;
 using Ardalis.GuardClauses;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -32,13 +33,10 @@ public static class InfrastructureDiModule
         // Add DbContext
         var dbConnectionString = configuration.GetConnectionString("Database");
         Guard.Against.NullOrEmpty(dbConnectionString);
-        
+
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         services.AddScoped<ISaveChangesInterceptor, SoftDeletableEntityInterceptor>();
-        services.AddSingleton(_ =>
-        {
-            return new NpgsqlDataSourceBuilder(dbConnectionString).Build();
-        });
+        services.AddSingleton(_ => { return new NpgsqlDataSourceBuilder(dbConnectionString).Build(); });
         // https://www.npgsql.org/efcore/release-notes/7.0.html#support-for-dbdatasource
         services.AddDbContext<AppDbContext>((serviceProvider, optionsBuilder) =>
             optionsBuilder
@@ -50,7 +48,22 @@ public static class InfrastructureDiModule
             serviceProvider.GetRequiredService<AppDbContext>());
 
         // Bind section "Jwt" → JwtConfig
-        services.Configure<JwtConfig>(configuration.GetSection(JwtConfig.SectionKey));
+        services.AddOptions<JwtConfig>()
+            .Bind(configuration.GetSection(JwtConfig.SectionKey))
+            .ValidateDataAnnotations()
+            .Validate(
+                validation: jwtConfig =>
+                    jwtConfig.Expiration > TimeSpan.Zero &&
+                    jwtConfig.RefreshTokenExpiration > TimeSpan.Zero &&
+                    jwtConfig.Expiration < jwtConfig.RefreshTokenExpiration,
+                failureMessage: "Jwt Expiration must be less than Refresh Token Expiration and" +
+                                " both must be greater than zero.")
+            .Validate(
+                validation: jwtConfig =>
+                    !string.IsNullOrWhiteSpace(jwtConfig.SecretKey) &&
+                    Encoding.UTF8.GetByteCount(jwtConfig.SecretKey) >= 32,
+                failureMessage: "Jwt SecretKey must be at least 256 bits (32 bytes) long.")
+            .ValidateOnStart();
         services.ConfigureOptions<ConfigureJwtBearerOptions>();
 
         // Add authentication and authorization services
