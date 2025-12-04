@@ -354,7 +354,7 @@ public static class UsersDomainErrors
 
         public static readonly DomainError TooLong = new(
             code: "User.Email.TooLong",
-            message: $"The email cannot exceed {Users.Email.MaxLength} characters.",
+            message: $"The email cannot exceed {Email.MaxLength} characters.",
             type: DomainError.ErrorType.Validation);
 
         public static readonly DomainError InvalidFormat = new(
