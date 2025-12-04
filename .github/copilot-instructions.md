@@ -17,7 +17,7 @@ NetAuth is an ASP.NET Core authentication service built with .NET 9, implementin
 #### Guidelines:
 - **Entities**: Inherit from `AggregateRoot<TId>` or `Entity<TId>`
 - **Value Objects**: Inherit from `ValueObject` and implement `GetAtomicValues()`
-- **Domain Errors**: Use `DomainError` class with proper `ErrorType` enum
+- **Domain Errors**: Use `static readonly` fields (NOT properties) with `DomainError` class and proper `ErrorType` enum to avoid unnecessary allocations
 - **Domain Events**: Implement `IDomainEvent` and use `AddDomainEvent()` in aggregates
 - **Factory Methods**: Use static `Create()` methods with `Either<DomainError, T>` return type
 - **Validation**: Validate in factory methods using switch expressions with pattern matching
