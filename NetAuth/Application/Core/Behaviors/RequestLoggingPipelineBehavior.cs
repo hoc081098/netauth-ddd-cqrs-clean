@@ -32,7 +32,7 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
                     Left: error =>
                     {
                         logger.LogInformation(
-                            "Completed request {RequestName} with domain error: {DomainError}",
+                            "Completed request {RequestName} with domain error: {@DomainError}",
                             requestName,
                             error);
                         return Unit.Value;

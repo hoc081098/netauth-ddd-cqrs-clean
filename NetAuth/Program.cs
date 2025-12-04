@@ -8,8 +8,12 @@ using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Infrastructure;
 using NetAuth.Web.Api;
 using NetAuth.Web.Api.Extensions;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((context, configuration) =>
+    configuration.ReadFrom.Configuration(context.Configuration));
 
 builder.Services
     .AddInfrastructure(builder.Configuration)
@@ -97,5 +101,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     Predicate = _ => true,
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
+
+app.UseSerilogRequestLogging();
 
 app.Run();

@@ -20,5 +20,20 @@ services:
     volumes:
       - postgres_netauth:/var/lib/postgresql
 
+  netauth.seq:
+    image: datalust/seq:latest
+    container_name: netauth.seq
+    environment:
+      - ACCEPT_EULA=Y
+      - SEQ_FIRSTRUN_ADMINUSERNAME=admin
+      - SEQ_FIRSTRUN_ADMINPASSWORD=123456
+    restart: unless-stopped
+    ports:
+      - "5341:5341" # Seq ingestion port
+      - "8081:80"   # Seq UI and API
+    volumes:
+      - seq_data:/data
+
 volumes:
   postgres_netauth:
+  seq_data:
