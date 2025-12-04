@@ -1,6 +1,6 @@
 using LanguageExt;
 using MediatR;
-using NetAuth.Domain.Core.Primitives;
+using Serilog.Context;
 using Unit = MediatR.Unit;
 
 namespace NetAuth.Application.Core.Behaviors;
@@ -52,7 +52,11 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
         }
         catch (Exception exception)
         {
-            logger.LogError(exception, "Completed request {RequestName} with error", requestName);
+            using (LogContext.PushProperty("Error", exception, true))
+            {
+                logger.LogError(exception, "Completed request {RequestName} with error", requestName);
+            }
+
             throw;
         }
     }
