@@ -92,6 +92,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Adds middleware for streamlined request logging
+app.UseSerilogRequestLogging();
+
 // Adds exception handling middleware to the request pipeline
 app.UseExceptionHandler();
 
@@ -101,7 +104,5 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     Predicate = _ => true,
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
-
-app.UseSerilogRequestLogging();
 
 app.Run();
