@@ -18,7 +18,7 @@
         <PackageReference Include="Dapper" Version="2.1.66" />
         <PackageReference Include="EFCore.NamingConventions" Version="9.0.0" />
         <PackageReference Include="FluentValidation" Version="12.1.0" />
-        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.0" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
         <PackageReference Include="Humanizer.Core" Version="3.0.1" />
         <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
         <PackageReference Include="LanguageExt.Core" Version="4.4.9" />
