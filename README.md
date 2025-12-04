@@ -305,10 +305,10 @@ Authentication endpoints are protected with rate limiting:
 
 ## 📖 Additional Documentation
 
-- [Copilot Instructions](.github/copilot-instructions.md) - Development guidelines
-- [Code Review Report](CODE_REVIEW.md) - Detailed code analysis
-- [Improvement Roadmap](CODE_REVIEW_IMPROVEMENTS.md) - Planned enhancements
-- [Domain Errors Implementation](DOMAIN_ERRORS_IMPROVEMENT_SUMMARY.md) - Performance optimization details
+- [Copilot Instructions](./.github/copilot-instructions.md) - Development guidelines
+- [Code Review Report](./Note/CODE_REVIEW.md) - Detailed code analysis
+- [Improvement Roadmap](./Note/CODE_REVIEW_IMPROVEMENTS.md) - Planned enhancements
+- [Domain Errors Implementation](./Note/DOMAIN_ERRORS_IMPROVEMENT_SUMMARY.md) - Performance optimization details
 
 ## 🤝 Contributing
 
