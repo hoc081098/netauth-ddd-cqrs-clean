@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Primitives;
 using Serilog.Context;
 
 namespace NetAuth.Web.Api.Middlewares;
@@ -8,7 +9,19 @@ internal sealed class RequestContextLoggingMiddleware(RequestDelegate next)
 
     public Task Invoke(HttpContext context)
     {
-        using (LogContext.PushProperty("CorrelationId", GetCorrelationId(context)))
+        var correlationId = GetCorrelationId(context);
+
+        context.Response.OnStarting(() =>
+        {
+            if (!context.Response.Headers.ContainsKey(CorrelationIdHeaderName))
+            {
+                context.Response.Headers[CorrelationIdHeaderName] = new StringValues(correlationId);
+            }
+
+            return Task.CompletedTask;
+        });
+
+        using (LogContext.PushProperty("CorrelationId", correlationId))
         {
             return next(context);
         }
@@ -16,7 +29,11 @@ internal sealed class RequestContextLoggingMiddleware(RequestDelegate next)
 
     private static string GetCorrelationId(HttpContext context)
     {
-        context.Request.Headers.TryGetValue(CorrelationIdHeaderName, out var correlationId);
-        return correlationId.FirstOrDefault() ?? context.TraceIdentifier;
+        if (context.Request.Headers.TryGetValue(CorrelationIdHeaderName, out var correlationId))
+        {
+            return correlationId.FirstOrDefault() ?? context.TraceIdentifier;
+        }
+
+        return context.TraceIdentifier;
     }
 }

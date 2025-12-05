@@ -4,13 +4,14 @@ services:
   netauth.redis:
     image: redis:8.4.0-alpine
     container_name: NetAuth.Redis
-    restart: always
+    restart: unless-stopped
     ports:
       - "6379:6379"
 
   netauth.database:
     image: postgres:18-alpine
     container_name: NetAuth.Database
+    restart: unless-stopped
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
