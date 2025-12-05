@@ -15,7 +15,8 @@ internal interface IPermissionService
     Task<IReadOnlySet<string>> GetUserPermissionsAsync(Guid userId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Invalidate cached permissions for user
+    /// Invalidate cached permissions for user.
+    /// Call this when user roles/permissions are modified.
     /// </summary>
     /// <param name="userId">The user ID</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>

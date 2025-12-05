@@ -14,6 +14,7 @@ using NetAuth.Domain.Users;
 using NetAuth.Infrastructure.Authentication;
 using NetAuth.Infrastructure.Authorization;
 using NetAuth.Infrastructure.Cryptography;
+using NetAuth.Infrastructure.HealthChecks;
 using NetAuth.Infrastructure.Interceptors;
 using NetAuth.Infrastructure.Outbox;
 using NetAuth.Infrastructure.Repositories;
@@ -151,7 +152,8 @@ public static class InfrastructureDiModule
             .AddHealthChecks()
             .AddRedis(redisConnectionString)
             .AddNpgSql(dbConnectionString)
-            .AddDbContextCheck<AppDbContext>();
+            .AddDbContextCheck<AppDbContext>()
+            .AddCheck<OutboxHealthCheck>(name: "outbox");
 
         return services;
     }
