@@ -3,6 +3,13 @@ using Serilog.Context;
 
 namespace NetAuth.Web.Api.Middlewares;
 
+// NOTE: https://learn.microsoft.com/vi-vn/aspnet/core/fundamentals/middleware/write?view=aspnetcore-10.0#middleware-class
+// The middleware class must include:
+// - A public constructor with a parameter of type RequestDelegate.
+// - A public method named Invoke or InvokeAsync. This method must:
+//     - Return a Task.
+//     - Accept a first parameter of type HttpContext.
+
 internal sealed class RequestContextLoggingMiddleware(RequestDelegate next)
 {
     private const string CorrelationIdHeaderName = "X-Correlation-Id";
