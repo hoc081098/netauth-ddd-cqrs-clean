@@ -18,21 +18,22 @@ internal sealed class GetTodoItemsQueryHandler(
     {
         var userId = userIdentifierProvider.UserId;
 
-        var todoItems = await todoItemRepository.GetTodoItemsByUserId(userId)
-            .Select(t =>
-                new TodoItemResponse(
-                    Id: t.Id,
-                    Title: t.Title,
-                    Description: t.Description ?? string.Empty,
-                    IsCompleted: t.IsCompleted,
-                    CompletedOnUtc: t.CompletedOnUtc,
-                    DueDateOnUtc: t.DueDateOnUtc,
-                    Labels: t.Labels,
-                    CreatedOnUtc: t.CreatedOnUtc
-                )
-            )
-            .ToListAsync(cancellationToken);
+        var todoItems = (await todoItemRepository.GetTodoItemsByUserId(userId, cancellationToken))
+            .Select(ToTodoItemResponse)
+            .ToList();
 
         return new GetTodoItemsResult(todoItems);
     }
+
+    private static TodoItemResponse ToTodoItemResponse(TodoItem todoItem) =>
+        new(
+            Id: todoItem.Id,
+            Title: todoItem.Title,
+            Description: todoItem.Description ?? string.Empty,
+            IsCompleted: todoItem.IsCompleted,
+            CompletedOnUtc: todoItem.CompletedOnUtc,
+            DueDateOnUtc: todoItem.DueDateOnUtc,
+            Labels: todoItem.Labels,
+            CreatedOnUtc: todoItem.CreatedOnUtc
+        );
 }
