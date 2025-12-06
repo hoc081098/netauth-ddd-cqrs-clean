@@ -4,7 +4,7 @@ public interface ITodoItemRepository
 {
     Task<TodoItem?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyCollection<TodoItem>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TodoItem>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
     void Insert(TodoItem todoItem);
 
