@@ -1,5 +1,4 @@
 using NetAuth.Application.Abstractions.Messaging;
-using NetAuth.Domain.TodoItems;
 
 namespace NetAuth.Application.TodoItems.CreateTodoItem;
 

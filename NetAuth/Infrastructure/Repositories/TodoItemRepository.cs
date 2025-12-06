@@ -7,12 +7,10 @@ internal sealed class TodoItemRepository(AppDbContext dbContext) :
     GenericRepository<Guid, TodoItem>(dbContext),
     ITodoItemRepository
 {
-    public async Task<IReadOnlyList<TodoItem>> GetByUserIdAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default) =>
-        await DbContext.TodoItems
+    public IQueryable<TodoItem> GetTodoItemsByUserId(
+        Guid userId) =>
+         DbContext.TodoItems
             .AsNoTracking()
             .Where(t => t.UserId == userId)
-            .OrderByDescending(t => t.CreatedOnUtc)
-            .ToListAsync(cancellationToken);
+            .OrderByDescending(t => t.CreatedOnUtc);
 }
