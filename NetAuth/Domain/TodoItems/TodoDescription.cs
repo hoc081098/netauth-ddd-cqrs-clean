@@ -18,7 +18,7 @@ public sealed class TodoDescription : ValueObject
 
     /// <summary>
     /// The value of the todo description.
-    /// It can be null or empty or blank.
+    /// It can be empty or blank.
     /// </summary>
     public required string Value { get; init; }
 
