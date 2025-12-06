@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Domain.Core.Primitives;
+using NetAuth.Domain.TodoItems;
 using NetAuth.Domain.Users;
 using NetAuth.Infrastructure.Models;
 using NetAuth.Infrastructure.Outbox;
@@ -25,6 +26,7 @@ internal sealed class AppDbContext(
     internal DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     internal DbSet<Permission> Permissions => Set<Permission>();
     internal DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
+    internal DbSet<TodoItem> TodoItems => Set<TodoItem>();
 
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)

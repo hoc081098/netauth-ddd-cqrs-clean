@@ -10,6 +10,7 @@ using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;
+using NetAuth.Domain.TodoItems;
 using NetAuth.Domain.Users;
 using NetAuth.Infrastructure.Authentication;
 using NetAuth.Infrastructure.Authorization;
@@ -108,6 +109,7 @@ public static class InfrastructureDiModule
         // Add repositories and providers
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<ITodoItemRepository, TodoItemRepository>();
         services.AddSingleton<IJwtProvider, JwtProvider>();
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddScoped<IUserIdentifierProvider, UserIdentifierProvider>();
