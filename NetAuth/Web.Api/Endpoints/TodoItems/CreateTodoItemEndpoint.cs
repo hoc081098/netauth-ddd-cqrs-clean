@@ -44,6 +44,6 @@ internal sealed class CreateTodoItemEndpoint : IEndpoint
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithTags(Tags.TodoItems)
-            .RequireAuthorization("permissions:todo-items:create");
+            .RequireAuthorization("permission:todo-items:create");
     }
 }
