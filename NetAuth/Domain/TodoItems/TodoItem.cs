@@ -5,6 +5,7 @@ using static LanguageExt.Prelude;
 using NetAuth.Domain.Core.Abstractions;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.TodoItems.DomainEvents;
+using NetAuth.Domain.Users;
 
 namespace NetAuth.Domain.TodoItems;
 
@@ -73,6 +74,9 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
     /// <inheritdoc />
     [UsedImplicitly]
     public bool IsDeleted { get; }
+
+    // Navigational property
+    public User User { get; private set; } = null!;
 
     public static Either<DomainError, TodoItem> Create(
         Guid userId,
