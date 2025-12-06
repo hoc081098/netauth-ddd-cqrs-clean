@@ -1,5 +1,4 @@
 using System.Diagnostics.Contracts;
-using Ardalis.GuardClauses;
 using LanguageExt;
 using static LanguageExt.Prelude;
 using NetAuth.Domain.Core.Primitives;
@@ -23,10 +22,9 @@ public sealed class TodoDescription : ValueObject
     [Pure]
     public static Either<DomainError, TodoDescription> Create(string description)
     {
-        Guard.Against.Null(description); // If description is null, use CreateOption instead.
-
         return description switch
         {
+            null => throw new ArgumentNullException(nameof(description)),
             { Length: > MaxLength } =>
                 TodoItemDomainErrors.Description.TooLong,
             _ => new TodoDescription { Value = description }
