@@ -17,7 +17,7 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
     {
         var requestName = typeof(TRequest).Name;
 
-        logger.LogInformation("Processing request {RequestName}", requestName);
+        logger.LogInformation("[PipelineBehavior] Processing request {RequestName}", requestName);
         try
         {
             var result = await next(cancellationToken);
@@ -26,13 +26,13 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
                 either.MatchUntyped(
                     Right: _ =>
                     {
-                        logger.LogInformation("Completed request {RequestName}", requestName);
+                        logger.LogInformation("[PipelineBehavior] Completed request {RequestName}", requestName);
                         return Unit.Value;
                     },
                     Left: error =>
                     {
                         logger.LogInformation(
-                            "Completed request {RequestName} with domain error: {@DomainError}",
+                            "[PipelineBehavior] Completed request {RequestName} with domain error: {@DomainError}",
                             requestName,
                             error);
                         return Unit.Value;
@@ -41,7 +41,7 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
             }
             else
             {
-                logger.LogInformation("Completed request {RequestName}", requestName);
+                logger.LogInformation("[PipelineBehavior] Completed request {RequestName}", requestName);
             }
 
             return result;
@@ -54,7 +54,7 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
         {
             using (LogContext.PushProperty("Error", exception, true))
             {
-                logger.LogError(exception, "Completed request {RequestName} with error", requestName);
+                logger.LogError(exception, "[PipelineBehavior] Completed request {RequestName} with error", requestName);
             }
 
             throw;

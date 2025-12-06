@@ -83,6 +83,8 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
+Log.Information("Running NetAuth Web API...");
+
 app.Run();
 return;
 
