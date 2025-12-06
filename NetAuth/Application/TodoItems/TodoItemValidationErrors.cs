@@ -22,6 +22,16 @@ public static class TodoItemValidationErrors
             message: $"Description cannot exceed {TodoDescription.MaxLength} characters.",
             type: DomainError.ErrorType.Validation);
 
+        public static readonly DomainError DueDateIsRequired = new(
+            code: "CreateTodoItem.DueDateIsRequired",
+            message: "Due date is required.",
+            type: DomainError.ErrorType.Validation);
+
+        public static readonly DomainError DueDateMustBeTodayOrLater = new(
+            code: "CreateTodoItem.DueDateMustBeTodayOrLater",
+            message: "Due date must be today or later.",
+            type: DomainError.ErrorType.Validation);
+
         public static readonly DomainError LabelsIsRequired = new(
             code: "CreateTodoItem.LabelsIsRequired",
             message: "Labels is required.",

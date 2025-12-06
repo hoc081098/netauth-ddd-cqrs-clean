@@ -1,5 +1,6 @@
 using FluentValidation;
 using JetBrains.Annotations;
+using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Core.Extensions;
 using NetAuth.Domain.TodoItems;
 
@@ -8,7 +9,7 @@ namespace NetAuth.Application.TodoItems.CreateTodoItem;
 [UsedImplicitly]
 internal sealed class CreateTodoItemCommandValidator : AbstractValidator<CreateTodoItemCommand>
 {
-    public CreateTodoItemCommandValidator()
+    public CreateTodoItemCommandValidator(IClock clock)
     {
         RuleFor(x => x.Title)
             .NotEmpty()
@@ -19,6 +20,13 @@ internal sealed class CreateTodoItemCommandValidator : AbstractValidator<CreateT
         RuleFor(x => x.Description)
             .MaximumLength(TodoDescription.MaxLength)
             .WithDomainError(TodoItemValidationErrors.CreateTodoItem.DescriptionTooLong);
+
+        var todayUtc = clock.UtcNow.StartOfDay();
+        RuleFor(x => x.DueDate)
+            .NotEmpty()
+            .WithDomainError(TodoItemValidationErrors.CreateTodoItem.DueDateIsRequired)
+            .Must(dueDate => dueDate >= todayUtc)
+            .WithDomainError(TodoItemValidationErrors.CreateTodoItem.DueDateMustBeTodayOrLater);
 
         RuleFor(x => x.Labels)
             .NotNull()
