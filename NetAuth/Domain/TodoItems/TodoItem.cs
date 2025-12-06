@@ -1,6 +1,7 @@
 using Ardalis.GuardClauses;
 using JetBrains.Annotations;
 using LanguageExt;
+using static LanguageExt.Prelude;
 using NetAuth.Domain.Core.Abstractions;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.TodoItems.DomainEvents;
@@ -35,6 +36,12 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         CompletedOnUtc = null;
         DueDateOnUtc = dueDateOnUtc;
         Labels = [..labels];
+
+        AddDomainEvent(
+            new TodoItemCreatedDomainEvent(
+                TodoItemId: Id,
+                UserId: UserId)
+        );
     }
 
     public Guid UserId { get; init; }
@@ -73,29 +80,17 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         string? description,
         DateTimeOffset dueDateOnUtc,
         IReadOnlyList<string> labels
-    )
-    {
-        var todoItemEither = from todoTitle in TodoTitle.Create(title)
-            from todoDescription in TodoDescription.Create(description ?? string.Empty)
-            select new TodoItem(
-                id: Guid.CreateVersion7(),
-                userId: userId,
-                title: todoTitle,
-                description: todoDescription,
-                dueDateOnUtc: dueDateOnUtc,
-                labels: labels
-            );
-
-        todoItemEither.IfRight(item =>
-            item.AddDomainEvent(
-                new TodoItemCreatedDomainEvent(
-                    TodoItemId: item.Id,
-                    UserId: item.UserId)
-            )
+    ) =>
+        from todoTitle in TodoTitle.Create(title)
+        from todoDescription in TodoDescription.CreatOption(description)
+        select new TodoItem(
+            id: Guid.CreateVersion7(),
+            userId: userId,
+            title: todoTitle,
+            description: todoDescription.IfNoneUnsafe(() => null),
+            dueDateOnUtc: dueDateOnUtc,
+            labels: labels
         );
-
-        return todoItemEither;
-    }
 
     public Either<DomainError, Unit> Update(
         TodoTitle title,

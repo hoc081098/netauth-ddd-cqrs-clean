@@ -1,5 +1,6 @@
 using System.Diagnostics.Contracts;
 using LanguageExt;
+using static LanguageExt.Prelude;
 using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Domain.TodoItems;
@@ -16,19 +17,24 @@ public sealed class TodoDescription : ValueObject
     {
     }
 
-    /// <summary>
-    /// The value of the todo description.
-    /// It can be empty or blank.
-    /// </summary>
     public required string Value { get; init; }
 
     [Pure]
-    public static Either<DomainError, TodoDescription?> Create(string description) =>
+    public static Either<DomainError, TodoDescription> Create(string description) =>
         description switch
         {
-            { Length: > MaxLength } => TodoItemDomainErrors.Description.TooLong,
+            _ when string.IsNullOrWhiteSpace(description) =>
+                TodoItemDomainErrors.Description.NullOrEmpty,
+            { Length: > MaxLength } =>
+                TodoItemDomainErrors.Description.TooLong,
             _ => new TodoDescription { Value = description }
         };
+
+    [Pure]
+    public static Either<DomainError, Option<TodoDescription>> CreatOption(string? description) =>
+        description is null
+            ? Right(new Option<TodoDescription>())
+            : Create(description).Map(Some);
 
     protected override IEnumerable<object> GetAtomicValues() => [Value];
 
