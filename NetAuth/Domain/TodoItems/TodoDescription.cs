@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+using Ardalis.GuardClauses;
 using LanguageExt;
 using static LanguageExt.Prelude;
 using NetAuth.Domain.Core.Primitives;
@@ -20,20 +21,22 @@ public sealed class TodoDescription : ValueObject
     public required string Value { get; init; }
 
     [Pure]
-    public static Either<DomainError, TodoDescription> Create(string description) =>
-        description switch
+    public static Either<DomainError, TodoDescription> Create(string description)
+    {
+        Guard.Against.Null(description); // If description is null, use CreateOption instead.
+
+        return description switch
         {
-            _ when string.IsNullOrWhiteSpace(description) =>
-                TodoItemDomainErrors.Description.NullOrEmpty,
             { Length: > MaxLength } =>
                 TodoItemDomainErrors.Description.TooLong,
             _ => new TodoDescription { Value = description }
         };
+    }
 
     [Pure]
-    public static Either<DomainError, Option<TodoDescription>> CreatOption(string? description) =>
+    public static Either<DomainError, Option<TodoDescription>> CreateOption(string? description) =>
         description is null
-            ? Right(new Option<TodoDescription>())
+            ? Right<Option<TodoDescription>>(None)
             : Create(description).Map(Some);
 
     protected override IEnumerable<object> GetAtomicValues() => [Value];

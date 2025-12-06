@@ -19,11 +19,6 @@ public static class TodoItemDomainErrors
 
     public static class Description
     {
-        public static readonly DomainError NullOrEmpty = new(
-            code: "TodoItem.Description.NullOrEmpty",
-            message: "Description is required.",
-            type: DomainError.ErrorType.Validation);
-
         public static readonly DomainError TooLong = new(
             code: "TodoItem.Description.TooLong",
             message: $"Description cannot exceed {TodoDescription.MaxLength} characters.",

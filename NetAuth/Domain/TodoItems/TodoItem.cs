@@ -82,12 +82,12 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         IReadOnlyList<string> labels
     ) =>
         from todoTitle in TodoTitle.Create(title)
-        from todoDescription in TodoDescription.CreatOption(description)
+        from todoDescription in TodoDescription.CreateOption(description)
         select new TodoItem(
             id: Guid.CreateVersion7(),
             userId: userId,
             title: todoTitle,
-            description: todoDescription.IfNoneUnsafe(() => null),
+            description: todoDescription.MatchUnsafe(Some: identity, None: () => null),
             dueDateOnUtc: dueDateOnUtc,
             labels: labels
         );
@@ -98,6 +98,10 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         DateTimeOffset dueDateOnUtc,
         IReadOnlyList<string> labels)
     {
+        Guard.Against.Null(title);
+        Guard.Against.Default(dueDateOnUtc);
+        Guard.Against.Null(labels);
+
         if (IsCompleted)
         {
             return TodoItemDomainErrors.TodoItem.CannotUpdateCompletedItem;
@@ -113,6 +117,8 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
 
     public Either<DomainError, Unit> MarkAsCompleted(DateTimeOffset currentUtc)
     {
+        Guard.Against.Default(currentUtc);
+
         if (IsCompleted)
         {
             return TodoItemDomainErrors.TodoItem.AlreadyCompleted;
