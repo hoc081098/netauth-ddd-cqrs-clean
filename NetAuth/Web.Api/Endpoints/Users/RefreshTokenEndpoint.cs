@@ -42,6 +42,7 @@ internal sealed class RefreshTokenEndpoint : IEndpoint
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .WithTags(Tags.Authentication)
             .RequireRateLimiting(RateLimiterPolicyNames.RefreshTokenLimiter);
     }
 }
