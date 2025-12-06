@@ -32,6 +32,11 @@ public static class TodoItemDomainErrors
 
     public static class TodoItem
     {
+        public static readonly DomainError DueDateInPast = new(
+            code: "TodoItem.DueDateInPast",
+            message: "Due date must be now or later.",
+            type: DomainError.ErrorType.Validation);
+
         public static readonly DomainError CannotUpdateCompletedItem = new(
             code: "TodoItem.CannotUpdateCompletedItem",
             message: "Cannot update a completed todo item.",

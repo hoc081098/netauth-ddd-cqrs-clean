@@ -27,7 +27,6 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
     {
         Guard.Against.Default(userId);
         Guard.Against.Null(title);
-        Guard.Against.Default(dueDateOnUtc);
         Guard.Against.Null(labels);
 
         UserId = userId;
@@ -83,16 +82,18 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         string title,
         string? description,
         DateTimeOffset dueDateOnUtc,
-        IReadOnlyList<string> labels
+        IReadOnlyList<string> labels,
+        DateTimeOffset currentUtc
     ) =>
         from todoTitle in TodoTitle.Create(title)
         from todoDescription in TodoDescription.CreateOption(description)
+        from validDueDate in ValidateDueDate(dueDateOnUtc, currentUtc)
         select new TodoItem(
             id: Guid.CreateVersion7(),
             userId: userId,
             title: todoTitle,
             description: todoDescription.MatchUnsafe(Some: identity, None: () => null),
-            dueDateOnUtc: dueDateOnUtc,
+            dueDateOnUtc: validDueDate,
             labels: labels
         );
 
@@ -100,10 +101,11 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         TodoTitle title,
         TodoDescription? description,
         DateTimeOffset dueDateOnUtc,
-        IReadOnlyList<string> labels)
+        IReadOnlyList<string> labels,
+        DateTimeOffset currentUtc
+    )
     {
         Guard.Against.Null(title);
-        Guard.Against.Default(dueDateOnUtc);
         Guard.Against.Null(labels);
 
         if (IsCompleted)
@@ -111,12 +113,16 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
             return TodoItemDomainErrors.TodoItem.CannotUpdateCompletedItem;
         }
 
-        Title = title;
-        Description = description;
-        DueDateOnUtc = dueDateOnUtc;
-        Labels = [..labels];
+        return ValidateDueDate(dueDateOnUtc, currentUtc)
+            .Map(validDueDateOnUtc =>
+            {
+                Title = title;
+                Description = description;
+                DueDateOnUtc = validDueDateOnUtc;
+                Labels = [..labels];
 
-        return Unit.Default;
+                return Unit.Default;
+            });
     }
 
     public Either<DomainError, Unit> MarkAsCompleted(DateTimeOffset currentUtc)
@@ -147,4 +153,12 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
 
         return Unit.Default;
     }
+
+    private static Either<DomainError, DateTimeOffset> ValidateDueDate(
+        DateTimeOffset dueDateOnUtc,
+        DateTimeOffset currentUtc
+    ) =>
+        dueDateOnUtc >= currentUtc
+            ? Right(dueDateOnUtc)
+            : TodoItemDomainErrors.TodoItem.DueDateInPast;
 }

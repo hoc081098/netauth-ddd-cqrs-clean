@@ -1,5 +1,6 @@
 using LanguageExt;
 using NetAuth.Application.Abstractions.Authentication;
+using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
@@ -10,7 +11,8 @@ namespace NetAuth.Application.TodoItems.CreateTodoItem;
 internal sealed class CreateTodoItemCommandHandler(
     ITodoItemRepository todoItemRepository,
     IUserIdentifierProvider userIdentifierProvider,
-    IUnitOfWork unitOfWork
+    IUnitOfWork unitOfWork,
+    IClock clock
 ) : ICommandHandler<CreateTodoItemCommand, CreateTodoItemResult>
 {
     public async Task<Either<DomainError, CreateTodoItemResult>> Handle(
@@ -23,7 +25,8 @@ internal sealed class CreateTodoItemCommandHandler(
                 title: command.Title,
                 description: command.Description,
                 dueDateOnUtc: command.DueDate.ToUniversalTime(),
-                labels: command.Labels
+                labels: command.Labels,
+                currentUtc: clock.UtcNow
             )
             .MapAsync(async todoItem =>
             {
