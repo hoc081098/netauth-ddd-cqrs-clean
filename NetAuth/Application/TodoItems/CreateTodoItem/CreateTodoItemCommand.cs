@@ -1,0 +1,13 @@
+using NetAuth.Application.Abstractions.Messaging;
+using NetAuth.Domain.TodoItems;
+
+namespace NetAuth.Application.TodoItems.CreateTodoItem;
+
+public sealed record CreateTodoItemCommand(
+    string Title,
+    string? Description,
+    DateTimeOffset DueDate,
+    IReadOnlyList<string> Labels
+) : ICommand<CreateTodoItemResult>;
+
+public sealed record CreateTodoItemResult(Guid TodoItemId);
