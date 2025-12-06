@@ -26,6 +26,7 @@ internal sealed class GetTodoItemsEndpoint : IEndpoint
             .WithDescription("Retrieves all todo items for the authenticated user.")
             .Produces<GetTodoItemsResult>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithTags(Tags.TodoItems)
             .RequireAuthorization("permissions:todo-items:read");
     }
 }

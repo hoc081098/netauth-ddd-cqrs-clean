@@ -2,7 +2,6 @@ using JetBrains.Annotations;
 using MediatR;
 using NetAuth.Application.TodoItems.CreateTodoItem;
 using NetAuth.Web.Api.Contracts;
-using static LanguageExt.Prelude;
 
 namespace NetAuth.Web.Api.Endpoints.TodoItems;
 
@@ -44,6 +43,7 @@ internal sealed class CreateTodoItemEndpoint : IEndpoint
             .Produces(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .WithTags(Tags.TodoItems)
             .RequireAuthorization("permissions:todo-items:create");
     }
 }
