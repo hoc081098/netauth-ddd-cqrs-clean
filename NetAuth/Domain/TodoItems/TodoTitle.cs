@@ -1,3 +1,4 @@
+using JetBrains.Annotations;
 using LanguageExt;
 using NetAuth.Domain.Core.Primitives;
 
@@ -17,6 +18,7 @@ public sealed class TodoTitle : ValueObject
 
     public required string Value { get; init; }
 
+    [Pure]
     public static Either<DomainError, TodoTitle> Create(string title) =>
         title switch
         {
