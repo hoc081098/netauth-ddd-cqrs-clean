@@ -25,6 +25,11 @@ public class PermissionTypeConfiguration : IEntityTypeConfiguration<Permission>
             .IsRequired();
 
         // Add predefined permissions
-        builder.HasData(Permission.GetUsers, Permission.ModifyUser);
+        builder.HasData(
+            Permission.GetUsers,
+            Permission.ModifyUser,
+            Permission.GetTodoItems,
+            Permission.CreateTodoItem
+        );
     }
 }

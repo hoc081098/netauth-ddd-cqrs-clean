@@ -51,10 +51,14 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
                         // Member role permissions
                         CreateRolePermission(Role.Member, Permission.GetUsers),
                         CreateRolePermission(Role.Member, Permission.ModifyUser),
+                        CreateRolePermission(Role.Member, Permission.GetTodoItems),
+                        CreateRolePermission(Role.Member, Permission.CreateTodoItem),
 
                         // Administrator role permissions
                         CreateRolePermission(Role.Administrator, Permission.GetUsers),
-                        CreateRolePermission(Role.Administrator, Permission.ModifyUser)
+                        CreateRolePermission(Role.Administrator, Permission.ModifyUser),
+                        CreateRolePermission(Role.Administrator, Permission.GetTodoItems),
+                        CreateRolePermission(Role.Administrator, Permission.CreateTodoItem)
                     );
                 }
             );
