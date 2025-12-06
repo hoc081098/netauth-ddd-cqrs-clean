@@ -24,9 +24,8 @@ public sealed class TodoDescription : ValueObject
     {
         return description switch
         {
-            null => throw new ArgumentNullException(nameof(description)),
-            { Length: > MaxLength } =>
-                TodoItemDomainErrors.Description.TooLong,
+            null => TodoItemDomainErrors.Description.Null,
+            { Length: > MaxLength } => TodoItemDomainErrors.Description.TooLong,
             _ => new TodoDescription { Value = description }
         };
     }

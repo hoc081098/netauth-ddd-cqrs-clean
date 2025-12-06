@@ -22,10 +22,8 @@ public sealed class TodoTitle : ValueObject
     public static Either<DomainError, TodoTitle> Create(string title) =>
         title switch
         {
-            _ when string.IsNullOrWhiteSpace(title) =>
-                TodoItemDomainErrors.Title.NullOrEmpty,
-            { Length: > MaxLength } =>
-                TodoItemDomainErrors.Title.TooLong,
+            _ when string.IsNullOrWhiteSpace(title) => TodoItemDomainErrors.Title.NullOrEmpty,
+            { Length: > MaxLength } => TodoItemDomainErrors.Title.TooLong,
             _ => new TodoTitle { Value = title }
         };
 
