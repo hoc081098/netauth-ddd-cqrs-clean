@@ -1,6 +1,6 @@
 # NetAuth - ASP.NET Core Authentication Service
 
-A production-ready authentication service built with .NET 9, implementing Domain-Driven Design (DDD), CQRS, Clean Architecture, and Vertical Slice Architecture.
+A production-ready authentication service built with .NET 10, implementing Domain-Driven Design (DDD), CQRS, Clean Architecture, and Vertical Slice Architecture.
 
 ## 🏗️ Architecture
 
@@ -27,7 +27,7 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 ## 🛠️ Technology Stack
 
 ### Core
-- **.NET 9** with C# 13
+- **.NET 10** with C# 14
 - **ASP.NET Core** Minimal APIs
 - **Entity Framework Core** with PostgreSQL
 - **MediatR** for CQRS
@@ -49,7 +49,7 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 
 ### Prerequisites
 
-- .NET 9 SDK
+- .NET 10 SDK
 - PostgreSQL 16+
 - Redis 7+
 - Docker & Docker Compose (optional)
@@ -329,5 +329,4 @@ This project is licensed under the MIT License.
 
 ---
 
-**Built with ❤️ using .NET 9 and Clean Architecture principles**
-
+**Built with ❤️ using .NET 10 and Clean Architecture principles**

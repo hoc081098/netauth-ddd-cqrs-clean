@@ -1,7 +1,7 @@
 # NetAuth Project - GitHub Copilot Instructions
 
 ## Project Overview
-NetAuth is an ASP.NET Core authentication service built with .NET 9, implementing:
+NetAuth is an ASP.NET Core authentication service built with .NET 10, implementing:
 - **Domain-Driven Design (DDD)**
 - **CQRS (Command Query Responsibility Segregation)**
 - **Clean Architecture**
@@ -314,7 +314,7 @@ internal sealed class LoginEndpoint : IEndpoint
 ## Key Technologies & Libraries
 
 ### Core
-- **.NET 9** with C# 13
+- **.NET 10** with C# 14
 - **ASP.NET Core** Minimal APIs
 - **Entity Framework Core** with PostgreSQL
 - **MediatR** for CQRS
@@ -581,4 +581,3 @@ To add a "ChangePassword" feature:
 ---
 
 **Remember**: This is a production-grade authentication service. Security, correctness, and maintainability are paramount.
-

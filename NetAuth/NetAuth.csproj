@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <WarningsAsErrors>Nullable</WarningsAsErrors>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <LangVersion>14</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
