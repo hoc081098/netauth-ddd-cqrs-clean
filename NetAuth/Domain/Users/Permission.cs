@@ -10,6 +10,7 @@ public readonly record struct PermissionId(int Value) : IComparable<PermissionId
     
     internal static readonly PermissionId GetTodoItemsId = new(3);
     internal static readonly PermissionId CreateTodoItemId = new(4);
+    internal static readonly PermissionId ModifyTodoItemId = new(5);
 
     public int CompareTo(PermissionId other) => Value.CompareTo(other.Value);
 
@@ -26,6 +27,7 @@ public sealed class Permission : Entity<PermissionId>
     
     public static readonly Permission GetTodoItems = new(PermissionId.GetTodoItemsId, "todo-items:read");
     public static readonly Permission CreateTodoItem = new(PermissionId.CreateTodoItemId, "todo-items:create");
+    public static readonly Permission ModifyTodoItem = new(PermissionId.ModifyTodoItemId, "todo-items:update");
 
     /// <remarks>Required by EF Core.</remarks>
     [UsedImplicitly]

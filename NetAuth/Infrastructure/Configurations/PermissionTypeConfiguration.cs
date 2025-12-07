@@ -29,7 +29,8 @@ public class PermissionTypeConfiguration : IEntityTypeConfiguration<Permission>
             Permission.GetUsers,
             Permission.ModifyUser,
             Permission.GetTodoItems,
-            Permission.CreateTodoItem
+            Permission.CreateTodoItem,
+            Permission.ModifyTodoItem
         );
     }
 }
