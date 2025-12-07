@@ -1,6 +1,6 @@
 using NetAuth.Application.Abstractions.Messaging;
 
-namespace NetAuth.Application.TodoItems.CreateTodoItem;
+namespace NetAuth.Application.TodoItems.Create;
 
 public sealed record CreateTodoItemCommand(
     string Title,

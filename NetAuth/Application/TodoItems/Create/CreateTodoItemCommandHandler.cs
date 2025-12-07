@@ -6,7 +6,7 @@ using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.TodoItems;
 
-namespace NetAuth.Application.TodoItems.CreateTodoItem;
+namespace NetAuth.Application.TodoItems.Create;
 
 internal sealed class CreateTodoItemCommandHandler(
     ITodoItemRepository todoItemRepository,

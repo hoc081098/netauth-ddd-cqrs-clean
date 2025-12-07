@@ -1,6 +1,6 @@
 using NetAuth.Application.Abstractions.Messaging;
 
-namespace NetAuth.Application.TodoItems.GetTodoItems;
+namespace NetAuth.Application.TodoItems.Get;
 
 public sealed record GetTodoItemsQuery : IQuery<GetTodoItemsResult>;
 

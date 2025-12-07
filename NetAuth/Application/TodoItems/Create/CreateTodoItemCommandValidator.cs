@@ -4,7 +4,7 @@ using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Core.Extensions;
 using NetAuth.Domain.TodoItems;
 
-namespace NetAuth.Application.TodoItems.CreateTodoItem;
+namespace NetAuth.Application.TodoItems.Create;
 
 [UsedImplicitly]
 internal sealed class CreateTodoItemCommandValidator : AbstractValidator<CreateTodoItemCommand>

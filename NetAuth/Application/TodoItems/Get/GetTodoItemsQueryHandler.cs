@@ -1,11 +1,10 @@
 using LanguageExt;
-using Microsoft.EntityFrameworkCore;
 using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.TodoItems;
 
-namespace NetAuth.Application.TodoItems.GetTodoItems;
+namespace NetAuth.Application.TodoItems.Get;
 
 internal sealed class GetTodoItemsQueryHandler(
     ITodoItemRepository todoItemRepository,
