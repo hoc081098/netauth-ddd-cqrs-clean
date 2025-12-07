@@ -17,6 +17,15 @@ public static class CustomResults
     internal static ProblemDetails GetProblemDetails(ValidationException exception) =>
         GetProblemDetails(new ValidationError(exception.Errors));
 
+    internal static ProblemDetails GetProblemDetails(BadHttpRequestException exception) =>
+        GetProblemDetails(
+            new DomainError(
+                code: "General.BadRequest",
+                type: DomainError.ErrorType.Validation,
+                message: "The request could not be understood by the server due to malformed syntax."
+            )
+        );
+
     private static ProblemDetails GetProblemDetails(DomainError error)
     {
         var details = new ProblemDetails
