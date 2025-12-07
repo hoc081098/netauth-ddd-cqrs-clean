@@ -27,7 +27,5 @@ internal abstract class GenericRepository<TId, TEntity>
     public void InsertRange(IEnumerable<TEntity> entities) =>
         EntitySet.AddRange(entities);
 
-    public void Update(TEntity entity) => EntitySet.Update(entity);
-
     public void Remove(TEntity entity) => EntitySet.Remove(entity);
 }
