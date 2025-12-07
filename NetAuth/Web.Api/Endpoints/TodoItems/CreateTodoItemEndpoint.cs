@@ -14,6 +14,8 @@ internal sealed class CreateTodoItemEndpoint : IEndpoint
         DateTimeOffset DueDate,
         IReadOnlyList<string> Labels);
 
+    public sealed record Response(Guid Id);
+
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapPost("/todo-items", async (
@@ -30,17 +32,18 @@ internal sealed class CreateTodoItemEndpoint : IEndpoint
                 var result = await sender.Send(command, cancellationToken);
 
                 return result
-                    .Match(Right: r =>
+                    .Map(r => new Response(r.TodoItemId))
+                    .Match(Right: response =>
                             Results.Created(
-                                uri: $"/todo-items/{r.TodoItemId}",
-                                value: new { id = r.TodoItemId }),
+                                uri: $"/todo-items/{response.Id}",
+                                value: response),
                         Left: CustomResults.Err
                     );
             })
             .WithName("CreateTodoItem")
             .WithSummary("Create a new todo item.")
             .WithDescription("Creates a new todo item for the authenticated user.")
-            .Produces(StatusCodes.Status201Created)
+            .Produces<Response>(StatusCodes.Status201Created)
             .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest)
             .WithTags(Tags.TodoItems)
