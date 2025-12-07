@@ -37,4 +37,37 @@ public static class TodoItemValidationErrors
             message: "Labels is required.",
             type: DomainError.ErrorType.Validation);
     }
+    
+    public static class UpdateTodoItem
+    {
+        public static readonly DomainError TitleIsRequired = new(
+            code: "UpdateTodoItem.TitleIsRequired",
+            message: "Title is required.",
+            type: DomainError.ErrorType.Validation);
+
+        public static readonly DomainError TitleTooLong = new(
+            code: "UpdateTodoItem.TitleTooLong",
+            message: $"Title cannot exceed {TodoTitle.MaxLength} characters.",
+            type: DomainError.ErrorType.Validation);
+
+        public static readonly DomainError DescriptionTooLong = new(
+            code: "UpdateTodoItem.DescriptionTooLong",
+            message: $"Description cannot exceed {TodoDescription.MaxLength} characters.",
+            type: DomainError.ErrorType.Validation);
+
+        public static readonly DomainError DueDateIsRequired = new(
+            code: "UpdateTodoItem.DueDateIsRequired",
+            message: "Due date is required.",
+            type: DomainError.ErrorType.Validation);
+
+        public static readonly DomainError DueDateMustBeTodayOrLater = new(
+            code: "UpdateTodoItem.DueDateMustBeTodayOrLater",
+            message: "Due date must be today or later.",
+            type: DomainError.ErrorType.Validation);
+
+        public static readonly DomainError LabelsIsRequired = new(
+            code: "UpdateTodoItem.LabelsIsRequired",
+            message: "Labels is required.",
+            type: DomainError.ErrorType.Validation);
+    }
 }
