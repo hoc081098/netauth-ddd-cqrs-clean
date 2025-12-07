@@ -1,7 +1,6 @@
 using JetBrains.Annotations;
 using MediatR;
 using NetAuth.Application.TodoItems.Complete;
-using NetAuth.Application.TodoItems.Create;
 using NetAuth.Web.Api.Contracts;
 
 namespace NetAuth.Web.Api.Endpoints.TodoItems;
