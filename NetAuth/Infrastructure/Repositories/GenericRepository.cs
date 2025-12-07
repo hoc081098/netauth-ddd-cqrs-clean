@@ -16,12 +16,10 @@ internal abstract class GenericRepository<TId, TEntity>
     protected DbSet<TEntity> EntitySet => DbContext.Set<TEntity>();
 
     public Task<TEntity?> GetByIdAsync(TId id, CancellationToken cancellationToken = default) =>
-        EntitySet
-            .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken: cancellationToken);
+        EntitySet.FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken: cancellationToken);
 
-    public ValueTask<TEntity?> FindAsync(Guid id, CancellationToken cancellationToken = default) =>
-        EntitySet.FindAsync([id], cancellationToken);
+    public ValueTask<TEntity?> FindAsync(object?[]? keyValues, CancellationToken cancellationToken = default) =>
+        EntitySet.FindAsync(keyValues, cancellationToken);
 
     public void Insert(TEntity entity) =>
         EntitySet.Add(entity);

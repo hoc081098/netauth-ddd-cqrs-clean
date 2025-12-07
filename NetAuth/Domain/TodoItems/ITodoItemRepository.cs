@@ -8,7 +8,5 @@ public interface ITodoItemRepository
 
     void Insert(TodoItem todoItem);
 
-    void Update(TodoItem todoItem);
-
     void Remove(TodoItem todoItem);
 }
