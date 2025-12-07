@@ -158,7 +158,8 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         DateTimeOffset dueDateOnUtc,
         DateTimeOffset currentUtc
     ) =>
-        dueDateOnUtc >= currentUtc
+        // Due date must be now or later, and in UTC
+        dueDateOnUtc >= currentUtc && dueDateOnUtc.Offset == TimeSpan.Zero
             ? Right(dueDateOnUtc)
             : TodoItemDomainErrors.TodoItem.DueDateInPast;
 }
