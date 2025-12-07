@@ -36,12 +36,6 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         CompletedOnUtc = null;
         DueDateOnUtc = dueDateOnUtc;
         Labels = [..labels];
-
-        AddDomainEvent(
-            new TodoItemCreatedDomainEvent(
-                TodoItemId: Id,
-                UserId: UserId)
-        );
     }
 
     public Guid UserId { get; init; }
@@ -85,16 +79,25 @@ public sealed class TodoItem : AggregateRoot<Guid>, IAuditableEntity, ISoftDelet
         IReadOnlyList<string> labels,
         DateTimeOffset currentUtc
     ) =>
-        from todoTitle in TodoTitle.Create(title)
-        from todoDescription in TodoDescription.CreateOption(description)
-        from validDueDate in ValidateDueDate(dueDateOnUtc, currentUtc)
-        select new TodoItem(
-            id: Guid.CreateVersion7(),
-            userId: userId,
-            title: todoTitle,
-            description: todoDescription.MatchUnsafe(Some: identity, None: () => null),
-            dueDateOnUtc: validDueDate,
-            labels: labels
+        (from todoTitle in TodoTitle.Create(title)
+            from todoDescription in TodoDescription.CreateOption(description)
+            from validDueDate in ValidateDueDate(dueDateOnUtc, currentUtc)
+            select new TodoItem(
+                id: Guid.CreateVersion7(),
+                userId: userId,
+                title: todoTitle,
+                description: todoDescription.MatchUnsafe(Some: identity, None: () => null),
+                dueDateOnUtc: validDueDate,
+                labels: labels
+            )).Map(item =>
+            {
+                item.AddDomainEvent(
+                    new TodoItemCreatedDomainEvent(
+                        TodoItemId: item.Id,
+                        UserId: item.UserId)
+                );
+                return item;
+            }
         );
 
     public Either<DomainError, Unit> Update(
