@@ -11,23 +11,23 @@ internal sealed class UpdateTodoItemCommandValidator: AbstractValidator<UpdateTo
 {
     public UpdateTodoItemCommandValidator(IClock clock)
     {
-        RuleFor(x => x.Title)
+        RuleFor(c => c.Title)
             .NotEmpty()
             .WithDomainError(TodoItemValidationErrors.UpdateTodoItem.TitleIsRequired)
             .MaximumLength(TodoTitle.MaxLength)
             .WithDomainError(TodoItemValidationErrors.UpdateTodoItem.TitleTooLong);
 
-        RuleFor(x => x.Description)
+        RuleFor(c => c.Description)
             .MaximumLength(TodoDescription.MaxLength)
             .WithDomainError(TodoItemValidationErrors.UpdateTodoItem.DescriptionTooLong);
 
-        RuleFor(x => x.DueDate)
+        RuleFor(c => c.DueDate)
             .NotEmpty()
             .WithDomainError(TodoItemValidationErrors.UpdateTodoItem.DueDateIsRequired)
             .Must(dueDate => dueDate >= clock.UtcNow.StartOfDay())
             .WithDomainError(TodoItemValidationErrors.UpdateTodoItem.DueDateMustBeTodayOrLater);
 
-        RuleFor(x => x.Labels)
+        RuleFor(c => c.Labels)
             .NotNull()
             .WithDomainError(TodoItemValidationErrors.UpdateTodoItem.LabelsIsRequired);
     }
