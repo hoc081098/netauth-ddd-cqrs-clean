@@ -4,7 +4,7 @@ using NetAuth.Web.Api.Endpoints;
 
 namespace NetAuth.Web.Api.Extensions;
 
-public static class EndpointExtensions
+public static partial class EndpointExtensions
 {
     public static IServiceCollection AddEndpoints(this IServiceCollection services, Assembly assembly)
     {
@@ -34,9 +34,16 @@ public static class EndpointExtensions
         foreach (var endpoint in endpoints)
         {
             endpoint.MapEndpoint(builder);
+            LogMappedEndpoint(app.Logger, endpoint.GetType().Name);
         }
 
-        app.Logger.LogInformation("Mapped {EndPointsCount} endpoints.", endpoints.Length);
+        LogMappedEndpointsCount(app.Logger, endpoints.Length);
         return app;
     }
+
+    [LoggerMessage(LogLevel.Information, "Mapped {EndPointsCount} endpoints.")]
+    static partial void LogMappedEndpointsCount(this ILogger logger, int endPointsCount);
+
+    [LoggerMessage(LogLevel.Information, "Mapped endpoint: {EndPointName}.")]
+    static partial void LogMappedEndpoint(this ILogger logger, string? endPointName);
 }
