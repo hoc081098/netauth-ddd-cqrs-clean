@@ -8,12 +8,12 @@ namespace NetAuth.Web.Api.Endpoints.TodoItems;
 [UsedImplicitly]
 internal sealed class UpdateTodoItemEndpoint : IEndpoint
 {
+    [UsedImplicitly]
     public sealed record Request(
         string Title,
         string? Description,
         DateTimeOffset DueDate,
         IReadOnlyList<string> Labels);
-
 
     public void MapEndpoint(IEndpointRouteBuilder app)
     {

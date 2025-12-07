@@ -8,8 +8,10 @@ namespace NetAuth.Web.Api.Endpoints.TodoItems;
 [UsedImplicitly]
 internal sealed class GetTodoItemsEndpoint : IEndpoint
 {
+    [UsedImplicitly]
     public sealed record Response(IReadOnlyList<TodoItemResponse> TodoItems);
 
+    [UsedImplicitly]
     public sealed record TodoItemResponse(
         Guid Id,
         string Title,

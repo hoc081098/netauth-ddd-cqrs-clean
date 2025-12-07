@@ -8,12 +8,14 @@ namespace NetAuth.Web.Api.Endpoints.TodoItems;
 [UsedImplicitly]
 internal sealed class CreateTodoItemEndpoint : IEndpoint
 {
+    [UsedImplicitly]
     public sealed record Request(
         string Title,
         string? Description,
         DateTimeOffset DueDate,
         IReadOnlyList<string> Labels);
 
+    [UsedImplicitly]
     public sealed record Response(Guid Id);
 
     public void MapEndpoint(IEndpointRouteBuilder app)
