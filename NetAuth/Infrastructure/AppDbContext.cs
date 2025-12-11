@@ -67,7 +67,7 @@ internal sealed class AppDbContext(
                 ProcessedOnUtc = null,
                 Error = null
             })
-            .ToArray();
+            .ToList();
 
         OutboxMessages.AddRange(outboxMessages);
     }

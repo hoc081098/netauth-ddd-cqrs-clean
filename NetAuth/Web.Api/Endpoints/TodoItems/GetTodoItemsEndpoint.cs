@@ -38,7 +38,7 @@ internal sealed class GetTodoItemsEndpoint : IEndpoint
                         new Response(
                             items.TodoItems
                                 .Select(ToTodoItemResponse)
-                                .ToList()
+                                .ToArray()
                         )
                     )
                     .Match(Right: Results.Ok, Left: CustomResults.Err);

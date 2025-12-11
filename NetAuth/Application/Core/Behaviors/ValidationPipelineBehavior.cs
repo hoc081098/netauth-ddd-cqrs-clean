@@ -23,7 +23,7 @@ internal static class EitherLeftMethodCache
         // use Reflection to call `public static method Either<DomainError, R>.Left(validationError)`
         var leftMethod = closedEitherType
             .GetMethod(
-                name: nameof(Either<object, object>.Left),
+                name: nameof(Either<,>.Left),
                 bindingAttr: BindingFlags.Static | BindingFlags.Public,
                 binder: null,
                 types: [typeof(DomainError)],
@@ -68,7 +68,7 @@ internal sealed class ValidationPipelineBehavior<TRequest, TResponse>(
             : validationResults
                 .SelectMany(r => r.Errors)
                 .Where(f => f is not null)
-                .ToArray();
+                .ToList();
     }
 
 
