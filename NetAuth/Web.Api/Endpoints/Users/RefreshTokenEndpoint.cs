@@ -2,12 +2,14 @@ using JetBrains.Annotations;
 using MediatR;
 using NetAuth.Application.Users.LoginWithRefreshToken;
 using NetAuth.Web.Api.Contracts;
+using NetAuth.Web.Api.OpenApi;
 
 namespace NetAuth.Web.Api.Endpoints.Users;
 
 [UsedImplicitly]
 internal sealed class RefreshTokenEndpoint : IEndpoint
 {
+    [SwaggerRequired]
     public sealed record Request(
         string RefreshToken,
         string DeviceId);

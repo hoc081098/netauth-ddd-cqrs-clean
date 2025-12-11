@@ -2,12 +2,14 @@ using JetBrains.Annotations;
 using MediatR;
 using NetAuth.Application.TodoItems.Update;
 using NetAuth.Web.Api.Contracts;
+using NetAuth.Web.Api.OpenApi;
 
 namespace NetAuth.Web.Api.Endpoints.TodoItems;
 
 [UsedImplicitly]
 internal sealed class UpdateTodoItemEndpoint : IEndpoint
 {
+    [SwaggerRequired]
     [UsedImplicitly]
     public sealed record Request(
         string Title,

@@ -2,12 +2,14 @@ using JetBrains.Annotations;
 using MediatR;
 using NetAuth.Application.TodoItems.Create;
 using NetAuth.Web.Api.Contracts;
+using NetAuth.Web.Api.OpenApi;
 
 namespace NetAuth.Web.Api.Endpoints.TodoItems;
 
 [UsedImplicitly]
 internal sealed class CreateTodoItemEndpoint : IEndpoint
 {
+    [SwaggerRequired]
     [UsedImplicitly]
     public sealed record Request(
         string Title,
