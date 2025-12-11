@@ -19,7 +19,7 @@ internal sealed class AddSwaggerRequiredSchemaFilter : ISchemaFilter
         if (schema.Properties is null || schemaRequired is null) return;
 
         // If the entire type is marked as required, mark all properties as required
-        if (Attribute.IsDefined(context.Type, typeof(SwaggerRequiredAttribute)))
+        if (Attribute.IsDefined(element: context.Type, attributeType: typeof(SwaggerRequiredAttribute), inherit: true))
         {
             foreach (var property in schema.Properties.Keys)
             {
@@ -40,8 +40,15 @@ internal sealed class AddSwaggerRequiredSchemaFilter : ISchemaFilter
         }
     }
 
-    private static PropertyInfo? FindClrProperty(PropertyInfo[] props, string name) =>
-        props.FirstOrDefault(prop => JsonNamingPolicy.CamelCase.ConvertName(prop.Name) == name);
+    private static PropertyInfo? FindClrProperty(PropertyInfo[] props, string key) =>
+        props.FirstOrDefault(prop =>
+        {
+            var jsonPropertyNameAttr = prop.GetCustomAttribute<JsonPropertyNameAttribute>();
+
+            return jsonPropertyNameAttr is not null
+                ? jsonPropertyNameAttr.Name == key
+                : JsonNamingPolicy.CamelCase.ConvertName(prop.Name) == key;
+        });
 
     /// <summary>
     /// Determines if a property is marked as required via <see cref="SwaggerRequiredAttribute"/>
