@@ -109,6 +109,7 @@ public static class InfrastructureDiModule
         // Add repositories and providers
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<ITodoItemRepository, TodoItemRepository>();
         services.AddSingleton<IJwtProvider, JwtProvider>();
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
