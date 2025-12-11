@@ -17,7 +17,7 @@
         <PackageReference Include="AspNetCore.HealthChecks.Redis" Version="9.0.0" />
         <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
         <PackageReference Include="Dapper" Version="2.1.66" />
-        <PackageReference Include="EFCore.NamingConventions" Version="10.0.0-rc.1" />
+        <PackageReference Include="EFCore.NamingConventions" Version="10.0.0-rc.2" />
         <PackageReference Include="FluentValidation" Version="12.1.1" />
         <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
         <PackageReference Include="Humanizer.Core" Version="3.0.1" />
