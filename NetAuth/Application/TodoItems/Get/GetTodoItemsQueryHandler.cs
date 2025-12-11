@@ -19,7 +19,7 @@ internal sealed class GetTodoItemsQueryHandler(
 
         var todoItems = (await todoItemRepository.GetTodoItemsByUserId(userId, cancellationToken))
             .Select(ToTodoItemResponse)
-            .ToList();
+            .ToArray();
 
         return new GetTodoItemsResult(todoItems);
     }
