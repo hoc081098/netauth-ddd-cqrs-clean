@@ -2,12 +2,14 @@ using JetBrains.Annotations;
 using MediatR;
 using NetAuth.Application.Users.Login;
 using NetAuth.Web.Api.Contracts;
+using NetAuth.Web.Api.OpenApi;
 
 namespace NetAuth.Web.Api.Endpoints.Users;
 
 [UsedImplicitly]
 internal sealed class LoginEndpoint : IEndpoint
 {
+    [SwaggerRequired]
     public sealed record Request(
         string Email,
         string Password,

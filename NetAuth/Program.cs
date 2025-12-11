@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Asp.Versioning;
 using HealthChecks.UI.Client;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi;
 using NetAuth.Application;
 using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Infrastructure;
@@ -50,7 +50,10 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
+    app.UseSwagger(options =>
+    {
+        options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
+    });
     app.UseSwaggerUI(options =>
     {
         // Build a swagger endpoint for each discovered API version

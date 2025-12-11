@@ -1,7 +1,7 @@
 using Asp.Versioning.ApiExplorer;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace NetAuth.Web.Api.OpenApi;
@@ -12,6 +12,21 @@ internal sealed class ConfigureSwaggerGenOptions(
 {
     public void Configure(SwaggerGenOptions options)
     {
+        // Enable the detection of non-nullable reference types 
+        // so that the nullable flag is set correctly in swagger.json.
+        options.SupportNonNullableReferenceTypes();
+
+        // Use the 'allOf' keyword to extend reference schemas.
+        // Fixes issues with representing nullable Enum types.
+        // See: https://github.com/domaindrivendev/Swashbuckle.AspNetCore/issues/2378
+        options.UseAllOfToExtendReferenceSchemas();
+
+        // Credits:
+        //   - https://chwastek.eu/blog/from-csharp-to-typescript-tackling-nullability-challenges-in-model-generation
+        //   - https://github.com/DmitryHudrich/InsuranceGoSmoke/blob/1270bf530119a8098fa47f86585d343c4ac675ba/src/Common/Hosts/Common/Features/AppFeatures/Swagger/Filters/AddSwaggerRequiredSchemaFilter.cs
+        // Apply a schema filter to mark properties with [SwaggerRequired] as required in the OpenAPI schema.
+        options.SchemaFilter<AddSwaggerRequiredSchemaFilter>();
+
         foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
         {
             var apiVersion = description.ApiVersion;
@@ -41,7 +56,7 @@ internal sealed class ConfigureSwaggerGenOptions(
         options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
         {
             Name = "JWT Authentication",
-            Description = "Enter your JWT token in this field",
+            Description = "JWT Authorization header using the Bearer scheme.",
             In = ParameterLocation.Header,
             Type = SecuritySchemeType.Http,
             Scheme = JwtBearerDefaults.AuthenticationScheme,
@@ -54,17 +69,10 @@ internal sealed class ConfigureSwaggerGenOptions(
         // - Users must provide a JWT token to test endpoints
         // - The security scheme references the JWT Bearer authentication defined earlier
         // - The empty array [] means no specific scopes are required—just a valid JWT token.
-        options.AddSecurityRequirement(new OpenApiSecurityRequirement
+        options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
         {
             {
-                new OpenApiSecurityScheme
-                {
-                    Reference = new OpenApiReference
-                    {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = JwtBearerDefaults.AuthenticationScheme
-                    }
-                },
+                new OpenApiSecuritySchemeReference(JwtBearerDefaults.AuthenticationScheme, document),
                 []
             }
         });
