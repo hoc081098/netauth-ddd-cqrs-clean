@@ -9,13 +9,12 @@ namespace NetAuth.Web.Api.Endpoints.TodoItems;
 [UsedImplicitly]
 internal sealed class CreateTodoItemEndpoint : IEndpoint
 {
-    [SwaggerRequired]
     [UsedImplicitly]
     public sealed record Request(
-        string Title,
+        [property: SwaggerRequired] string Title,
         string? Description,
-        DateTimeOffset DueDate,
-        IReadOnlyList<string> Labels);
+        [property: SwaggerRequired] DateTimeOffset DueDate,
+        [property: SwaggerRequired] IReadOnlyList<string> Labels);
 
     [UsedImplicitly]
     public sealed record Response(Guid Id);
