@@ -10,7 +10,7 @@ namespace NetAuth.Web.Api.ExceptionHandlers;
 /// <param name="logger"></param>
 internal sealed class BadHttpRequestExceptionHandler(
     IProblemDetailsService problemDetailsService,
-    ILogger<ValidationExceptionHandler> logger) : IExceptionHandler
+    ILogger<BadHttpRequestExceptionHandler> logger) : IExceptionHandler
 {
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext,
         Exception exception,
