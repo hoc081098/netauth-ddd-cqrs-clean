@@ -26,11 +26,15 @@ public class PermissionTypeConfiguration : IEntityTypeConfiguration<Permission>
 
         // Add predefined permissions
         builder.HasData(
+            // Users
             Permission.GetUsers,
             Permission.ModifyUser,
+            // Todo Items
             Permission.GetTodoItems,
             Permission.CreateTodoItem,
-            Permission.ModifyTodoItem
+            Permission.ModifyTodoItem,
+            // Roles
+            Permission.GetRoles
         );
     }
 }

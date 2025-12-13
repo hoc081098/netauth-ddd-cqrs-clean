@@ -48,19 +48,25 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
                             value => new PermissionId(value));
 
                     rolePermissionBuilder.HasData(
-                        // Member role permissions
+                        // --------------- Member role permissions ---------------
+                        // Users
                         CreateRolePermission(Role.Member, Permission.GetUsers),
                         CreateRolePermission(Role.Member, Permission.ModifyUser),
+                        // Todo Items
                         CreateRolePermission(Role.Member, Permission.GetTodoItems),
                         CreateRolePermission(Role.Member, Permission.CreateTodoItem),
                         CreateRolePermission(Role.Member, Permission.ModifyTodoItem),
 
-                        // Administrator role permissions
+                        // --------------- Administrator role permissions ---------------
+                        // Users
                         CreateRolePermission(Role.Administrator, Permission.GetUsers),
                         CreateRolePermission(Role.Administrator, Permission.ModifyUser),
+                        // Todo Items
                         CreateRolePermission(Role.Administrator, Permission.GetTodoItems),
                         CreateRolePermission(Role.Administrator, Permission.CreateTodoItem),
-                        CreateRolePermission(Role.Administrator, Permission.ModifyTodoItem)
+                        CreateRolePermission(Role.Administrator, Permission.ModifyTodoItem),
+                        // Roles
+                        CreateRolePermission(Role.Administrator, Permission.GetRoles)
                     );
                 }
             );
