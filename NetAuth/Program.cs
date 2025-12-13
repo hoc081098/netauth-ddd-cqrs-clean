@@ -79,6 +79,9 @@ app.UseSerilogRequestLogging();
 // Adds exception handling middleware to the request pipeline
 app.UseExceptionHandler();
 
+// Returns the Problem Details response for (empty) non-successful responses
+app.UseStatusCodePages();
+
 // Adds middleware for redirecting HTTP Requests to HTTPS.
 app.UseHttpsRedirection();
 
