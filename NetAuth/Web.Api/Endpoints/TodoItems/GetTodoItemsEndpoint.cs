@@ -34,13 +34,7 @@ internal sealed class GetTodoItemsEndpoint : IEndpoint
                 var result = await sender.Send(query, cancellationToken);
 
                 return result
-                    .Map(items =>
-                        new Response(
-                            items.TodoItems
-                                .Select(ToTodoItemResponse)
-                                .ToArray()
-                        )
-                    )
+                    .Map(ToResponse)
                     .Match(Right: Results.Ok, Left: CustomResults.Err);
             })
             .WithName("GetTodoItems")
@@ -53,15 +47,24 @@ internal sealed class GetTodoItemsEndpoint : IEndpoint
             .RequireAuthorization("permission:todo-items:read");
     }
 
-    private static TodoItemResponse ToTodoItemResponse(Application.TodoItems.Get.TodoItemResponse item) =>
-        new(
-            Id: item.Id,
-            Title: item.Title,
-            Description: item.Description,
-            IsCompleted: item.IsCompleted,
-            CompletedOnUtc: item.CompletedOnUtc,
-            DueDateOnUtc: item.DueDateOnUtc,
-            Labels: item.Labels,
-            CreatedOnUtc: item.CreatedOnUtc
-        );
+    private static Response ToResponse(GetTodoItemsResult result)
+    {
+        var items = result.TodoItems
+            .Select(ToTodoItemResponse)
+            .ToArray();
+
+        return new Response(items);
+
+        static TodoItemResponse ToTodoItemResponse(Application.TodoItems.Get.TodoItemResponse item) =>
+            new(
+                Id: item.Id,
+                Title: item.Title,
+                Description: item.Description,
+                IsCompleted: item.IsCompleted,
+                CompletedOnUtc: item.CompletedOnUtc,
+                DueDateOnUtc: item.DueDateOnUtc,
+                Labels: item.Labels,
+                CreatedOnUtc: item.CreatedOnUtc
+            );
+    }
 }
