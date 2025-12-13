@@ -47,8 +47,9 @@ internal sealed class CreateTodoItemEndpoint : IEndpoint
             .WithSummary("Create a new todo item.")
             .WithDescription("Creates a new todo item for the authenticated user.")
             .Produces<Response>(StatusCodes.Status201Created)
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .ProducesProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesProblem(StatusCodes.Status403Forbidden)
             .WithTags(Tags.TodoItems)
             .RequireAuthorization("permission:todo-items:create");
     }
