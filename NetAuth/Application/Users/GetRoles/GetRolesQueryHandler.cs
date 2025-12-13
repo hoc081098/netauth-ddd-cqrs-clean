@@ -11,16 +11,12 @@ internal sealed class GetRolesQueryHandler(
 ) : IQueryHandler<GetRolesQuery, GetRolesResult>
 {
     public Task<Either<DomainError, GetRolesResult>> Handle(
-        GetRolesQuery request,
-        CancellationToken cancellationToken)
-    {
-        var toGetRolesResult = ToGetRolesResult;
-        var right = Right<DomainError, GetRolesResult>;
-
-        return roleRepository
+        GetRolesQuery query,
+        CancellationToken cancellationToken) =>
+        roleRepository
             .GetAllRolesAsync(cancellationToken)
-            .Map(toGetRolesResult.Compose(right));
-    }
+            .Map(ToGetRolesResult)
+            .Map(Right<DomainError, GetRolesResult>);
 
     private static GetRolesResult ToGetRolesResult(IReadOnlyList<Role> roles)
     {
