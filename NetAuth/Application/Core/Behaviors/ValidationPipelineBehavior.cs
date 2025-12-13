@@ -68,7 +68,7 @@ internal sealed class ValidationPipelineBehavior<TRequest, TResponse>(
             : validationResults
                 .SelectMany(r => r.Errors)
                 .Where(f => f is not null)
-                .ToList();
+                .ToArray();
     }
 
 

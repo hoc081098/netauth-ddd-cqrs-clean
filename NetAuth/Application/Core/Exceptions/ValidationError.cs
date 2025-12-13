@@ -18,5 +18,5 @@ public sealed class ValidationError(
                     message: failure.ErrorMessage,
                     type: ErrorType.Validation))
             .Distinct()
-            .ToList();
+            .ToArray();
 }

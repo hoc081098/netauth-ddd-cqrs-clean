@@ -16,7 +16,7 @@ public static partial class EndpointExtensions
                 type is { IsAbstract: false, IsInterface: false } &&
                 type.IsAssignableTo(typeof(IEndpoint)))
             .Select(type => ServiceDescriptor.Transient(service: typeof(IEndpoint), implementationType: type))
-            .ToList();
+            .ToArray();
 
         services.TryAddEnumerable(serviceDescriptors);
 
@@ -28,7 +28,7 @@ public static partial class EndpointExtensions
         RouteGroupBuilder? routeGroupBuilder = null)
     {
         // Retrieve all registered IEndpoint services and call MapEndpoint on each with the provided builder.
-        var endpoints = app.Services.GetRequiredService<IEnumerable<IEndpoint>>().ToList();
+        var endpoints = app.Services.GetRequiredService<IEnumerable<IEndpoint>>().ToArray();
         IEndpointRouteBuilder builder = routeGroupBuilder is null ? app : routeGroupBuilder;
 
         foreach (var endpoint in endpoints)
@@ -37,7 +37,7 @@ public static partial class EndpointExtensions
             LogMappedEndpoint(app.Logger, endpoint.GetType().Name);
         }
 
-        LogMappedEndpointsCount(app.Logger, endpoints.Count);
+        LogMappedEndpointsCount(app.Logger, endpoints.Length);
         return app;
     }
 
