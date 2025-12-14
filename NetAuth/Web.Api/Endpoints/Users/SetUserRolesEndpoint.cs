@@ -26,13 +26,13 @@ public class SetUserRolesEndpoint : IEndpoint
                     ? RoleChangeActor.User
                     : RoleChangeActor.Administrator;
 
-                var query = new SetUserRolesCommand(
+                var command = new SetUserRolesCommand(
                     UserId: id,
                     RoleIds: request.RoleIds,
                     RoleChangeActor: actor
                 );
 
-                var result = await sender.Send(query, cancellationToken);
+                var result = await sender.Send(command, cancellationToken);
 
                 return result
                     .Match(Right: _ => Results.NoContent(), Left: CustomResults.Err);
