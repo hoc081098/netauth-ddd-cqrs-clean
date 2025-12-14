@@ -66,29 +66,8 @@ public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         return user;
     }
 
-    /// <summary>
-    /// Updates the user's roles with the specified collection.
-    /// </summary>
-    /// <param name="roles">The new roles to assign to the user. Must not be null or empty.</param>
-    /// <param name="isPerformedByAdmin">
-    /// Indicates whether this operation is performed by an administrator.
-    /// If false, additional validation prevents users from modifying their own admin roles or granting themselves admin access.
-    /// </param>
-    /// <returns>
-    /// Returns <see cref="Unit.Default"/> if the roles were successfully updated,
-    /// or a <see cref="DomainError"/> if validation fails.
-    /// </returns>
-    /// <remarks>
-    /// This method ensures that:
-    /// <list type="bullet">
-    /// <item>The roles collection is not empty</item>
-    /// <item>Duplicate roles are removed</item>
-    /// <item>Non-admin users cannot modify their own admin roles</item>
-    /// <item>Non-admin users cannot grant themselves admin privileges</item>
-    /// <item>A <see cref="UserRolesChangedDomainEvent"/> is raised when roles actually change</item>
-    /// </list>
-    /// </remarks>
-    public Either<DomainError, Unit> SetRoles(IReadOnlyList<Role> roles, bool isPerformedByAdmin)
+    public Either<DomainError, Unit> SetRoles(IReadOnlyList<Role> roles,
+        RoleChangeActor actor)
     {
         if (roles is null or { Count: 0 })
         {
@@ -105,13 +84,14 @@ public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         }
 
         return EnsureAdminRoleChangeIsAllowed(
-                isPerformedByAdmin: isPerformedByAdmin,
+                actor: actor,
                 currentRoleIds: currentRoleIds,
                 newRoleIds: newRoleIds)
             .Map(_ =>
             {
                 _roles.Clear();
                 _roles.AddRange(newRoles);
+
                 AddDomainEvent(
                     new UserRolesChangedDomainEvent(
                         UserId: Id,
@@ -124,44 +104,28 @@ public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             });
     }
 
-    /// <summary>
-    /// Validates that admin role changes are allowed based on who is performing the operation.
-    /// </summary>
-    /// <param name="isPerformedByAdmin">True if an administrator is performing this operation.</param>
-    /// <param name="currentRoleIds">The user's current role IDs before the change.</param>
-    /// <param name="newRoleIds">The proposed new role IDs after the change.</param>
-    /// <returns>
-    /// Returns <see cref="Unit.Default"/> if the admin role change is allowed,
-    /// or a <see cref="DomainError"/> if the change violates security rules.
-    /// </returns>
-    /// <remarks>
-    /// Security rules:
-    /// <list type="bullet">
-    /// <item>Administrators can perform any role changes</item>
-    /// <item>Non-admin users cannot remove their own admin role (prevents privilege escalation attacks)</item>
-    /// <item>Non-admin users cannot grant themselves admin role</item>
-    /// </list>
-    /// </remarks>
+    [Pure]
     private static Either<DomainError, Unit> EnsureAdminRoleChangeIsAllowed(
-        bool isPerformedByAdmin,
-        IReadOnlySet<RoleId> currentRoleIds,
-        IReadOnlySet<RoleId> newRoleIds)
+        RoleChangeActor actor,
+        IReadOnlyCollection<RoleId> currentRoleIds,
+        IReadOnlyCollection<RoleId> newRoleIds)
     {
-        if (isPerformedByAdmin)
-        {
-            return Unit.Default;
-        }
+        var hasAdminNow = currentRoleIds.Any(id => id.IsAdministrator);
+        var hasAdminNext = newRoleIds.Any(id => id.IsAdministrator);
 
-        if (currentRoleIds.Contains(RoleId.AdministratorId))
+        return (actor, hasAdminNow, hasAdminNext) switch
         {
-            return UsersDomainErrors.User.CannotModifyOwnAdminRoles;
-        }
+            // Privileged actors: allow anything
+            (RoleChangeActor.Administrator or RoleChangeActor.System, _, _) => Unit.Default,
 
-        if (newRoleIds.Contains(RoleId.AdministratorId))
-        {
-            return UsersDomainErrors.User.CannotGrantAdminRole;
-        }
+            // Non-privileged actor currently has admin => cannot modify own admin roles
+            (RoleChangeActor.User, true, _) => UsersDomainErrors.User.CannotModifyOwnAdminRoles,
 
-        return Unit.Default;
+            // Non-privileged actor tries to grant admin => forbidden
+            (RoleChangeActor.User, false, true) => UsersDomainErrors.User.CannotGrantAdminRole,
+
+            // Otherwise ok
+            _ => Unit.Default
+        };
     }
 }

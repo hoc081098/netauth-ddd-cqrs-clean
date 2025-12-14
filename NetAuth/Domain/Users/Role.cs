@@ -14,6 +14,8 @@ public readonly record struct RoleId(int Value) : IComparable<RoleId>
     public static bool operator <(RoleId left, RoleId right) => left.CompareTo(right) < 0;
     public static bool operator >=(RoleId left, RoleId right) => left.CompareTo(right) >= 0;
     public static bool operator <=(RoleId left, RoleId right) => left.CompareTo(right) <= 0;
+
+    public bool IsAdministrator => this == AdministratorId;
 }
 
 public sealed class Role : Entity<RoleId>
