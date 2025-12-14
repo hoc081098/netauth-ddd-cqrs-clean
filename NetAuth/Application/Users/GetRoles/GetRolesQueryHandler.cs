@@ -21,7 +21,7 @@ internal sealed class GetRolesQueryHandler(
     private static GetRolesResult ToGetRolesResult(IReadOnlyList<Role> roles)
     {
         var rolesResponses = roles
-            .Select(role => role.ToRoleResponse())
+            .Select(role => role.ToRoleDto())
             .ToArray();
         return new GetRolesResult(rolesResponses);
     }

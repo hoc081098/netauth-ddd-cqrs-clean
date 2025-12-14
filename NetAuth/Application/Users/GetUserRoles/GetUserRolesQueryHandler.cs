@@ -17,5 +17,5 @@ internal sealed class GetUserRolesQueryHandler(
             .Map(Right<DomainError, GetUserRolesResult>);
 
     private static GetUserRolesResult ToGetUserRolesResult(IReadOnlyList<Role> roles) =>
-        new(roles.Select(role => role.ToRoleResponse()).ToArray());
+        new(roles.Select(role => role.ToRoleDto()).ToArray());
 }

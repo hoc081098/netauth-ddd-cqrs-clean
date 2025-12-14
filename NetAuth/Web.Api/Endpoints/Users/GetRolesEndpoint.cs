@@ -11,12 +11,6 @@ public class GetRolesEndpoint : IEndpoint
     [UsedImplicitly]
     public sealed record Response(IReadOnlyList<RoleResponse> Roles);
 
-    [UsedImplicitly]
-    public sealed record RoleResponse(
-        int Id,
-        string Name
-    );
-
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
         app.MapGet("/roles", async (
@@ -44,9 +38,7 @@ public class GetRolesEndpoint : IEndpoint
     private static Response ToResponse(GetRolesResult result)
     {
         var roles = result.Roles
-            .Select(role => new RoleResponse(
-                Id: role.Id.Value,
-                Name: role.Name))
+            .Select(role => role.ToRoleResponse())
             .ToArray();
 
         return new Response(roles);

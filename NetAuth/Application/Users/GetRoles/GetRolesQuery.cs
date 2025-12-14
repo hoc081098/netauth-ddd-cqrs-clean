@@ -5,4 +5,4 @@ namespace NetAuth.Application.Users.GetRoles;
 
 public sealed record GetRolesQuery : IQuery<GetRolesResult>;
 
-public sealed record GetRolesResult(IReadOnlyList<RoleResponse> Roles);
+public sealed record GetRolesResult(IReadOnlyList<RoleDto> Roles);

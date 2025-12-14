@@ -2,14 +2,14 @@ using NetAuth.Domain.Users;
 
 namespace NetAuth.Application.Users;
 
-public sealed record RoleResponse(
+public sealed record RoleDto(
     RoleId Id,
     string Name
 );
 
-internal static class RoleMapper
+internal static class RoleDtoExtensions
 {
-    public static RoleResponse ToRoleResponse(this Role role) =>
+    public static RoleDto ToRoleDto(this Role role) =>
         new(
             Id: role.Id,
             Name: role.Name);
