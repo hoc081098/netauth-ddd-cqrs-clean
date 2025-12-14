@@ -15,11 +15,8 @@ internal sealed class PermissionClaimsTransformation(
             return principal;
         }
 
-        var userIdClaim = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
-        if (
-            string.IsNullOrEmpty(userIdClaim) ||
-            !Guid.TryParse(userIdClaim, out var userId) ||
-            principal.Identity is not ClaimsIdentity claimsIdentity)
+        var userId = principal.GetUserIdOrNull();
+        if (userId is null || principal.Identity is not ClaimsIdentity claimsIdentity)
         {
             return principal;
         }
@@ -30,7 +27,7 @@ internal sealed class PermissionClaimsTransformation(
             return principal;
         }
 
-        var permissions = await permissionService.GetUserPermissionsAsync(userId);
+        var permissions = await permissionService.GetUserPermissionsAsync(userId.Value);
         foreach (var permission in permissions)
         {
             claimsIdentity.AddClaim(new Claim(CustomClaimTypes.Permission, permission));
