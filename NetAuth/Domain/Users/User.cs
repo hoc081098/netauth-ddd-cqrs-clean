@@ -121,7 +121,7 @@ public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
         return (actor, hasAdminNow, hasAdminNext) switch
         {
             // Privileged actors: allow anything
-            (RoleChangeActor.Administrator or RoleChangeActor.System, _, _) => Unit.Default,
+            (RoleChangeActor.Privileged or RoleChangeActor.System, _, _) => Unit.Default,
 
             // Non-privileged actor currently has admin => cannot modify own admin roles
             (RoleChangeActor.User, true, _) => UsersDomainErrors.User.CannotModifyOwnAdminRoles,

@@ -62,4 +62,22 @@ public static class UsersValidationErrors
             message: "Device id must be a valid non-empty UUID.",
             type: DomainError.ErrorType.Validation);
     }
+
+    public static class SetUserRoles
+    {
+        public static readonly DomainError UserIdIsRequired = new(
+            code: "SetUserRoles.UserIdIsRequired",
+            message: "User id is required.",
+            type: DomainError.ErrorType.Validation);
+
+        public static readonly DomainError RoleIdsAreRequired = new(
+            code: "SetUserRoles.RoleIdsAreRequired",
+            message: "Role ids are required.",
+            type: DomainError.ErrorType.Validation);
+
+        public static readonly DomainError RoleChangeActorIsInvalid = new(
+            code: "SetUserRoles.RoleChangeActorIsInvalid",
+            message: "Role change actor is invalid.",
+            type: DomainError.ErrorType.Validation);
+    }
 }
