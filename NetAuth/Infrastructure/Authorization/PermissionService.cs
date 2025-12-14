@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using NetAuth.Application.Abstractions.Authorization;
 
 namespace NetAuth.Infrastructure.Authorization;
 

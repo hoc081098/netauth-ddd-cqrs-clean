@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.Hybrid;
 using NetAuth.Application.Abstractions.Authentication;
+using NetAuth.Application.Abstractions.Authorization;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;

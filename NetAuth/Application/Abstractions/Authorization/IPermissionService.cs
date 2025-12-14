@@ -1,4 +1,4 @@
-namespace NetAuth.Infrastructure.Authorization;
+namespace NetAuth.Application.Abstractions.Authorization;
 
 /// <summary>
 /// Service to manage user permissions

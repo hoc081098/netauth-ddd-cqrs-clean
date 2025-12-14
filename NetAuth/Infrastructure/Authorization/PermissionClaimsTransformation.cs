@@ -1,6 +1,6 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
+using NetAuth.Application.Abstractions.Authorization;
 using NetAuth.Infrastructure.Authentication;
 
 namespace NetAuth.Infrastructure.Authorization;
