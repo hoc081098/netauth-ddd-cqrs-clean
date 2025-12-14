@@ -18,24 +18,28 @@ internal sealed class SetUserRolesCommandHandler(
     public async Task<Either<DomainError, Unit>> Handle(SetUserRolesCommand command,
         CancellationToken cancellationToken)
     {
+        // 1. Retrieve user with roles
         var user = await userRepository.GetByIdAsyncWithRoles(command.UserId, cancellationToken);
         if (user is null)
         {
             return UsersDomainErrors.User.NotFound;
         }
 
+        // 2. Retrieve roles from repository
         var roleIds = command.RoleIds
             .Select(raw => new RoleId(raw))
             .ToHashSet();
         var roles = await roleRepository.GetRolesByIdsAsync(roleIds, cancellationToken);
 
+        // 3. Validate all requested roles exist
         if (!roleIds.SetEquals(roles.Select(r => r.Id)))
         {
             return UsersDomainErrors.User.OneOrMoreRolesNotFound;
         }
 
+        // 4. Set roles and save changes
         return await user
-            .SetRoles(roles: roles, actor: RoleChangeActor.Administrator)
+            .SetRoles(roles, command.RoleChangeActor)
             .MapAsync(async _ =>
             {
                 await unitOfWork.SaveChangesAsync(cancellationToken);
