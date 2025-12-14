@@ -21,10 +21,14 @@ internal sealed class UserRolesChangedDomainEventHandler(
             await permissionService.InvalidatePermissionsCacheAsync(notification.UserId, cancellationToken);
             logger.LogInformation("Invalidated permissions cache for User ID: {UserId}", notification.UserId);
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception ex)
         {
             logger.LogError(ex,
-                "Error while invalidating permissions cache for User ID: {UserId}",
+                "Failed to invalidate permissions cache for User ID: {UserId}",
                 notification.UserId);
         }
     }
