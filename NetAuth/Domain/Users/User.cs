@@ -69,13 +69,16 @@ public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
     public Either<DomainError, Unit> SetRoles(IReadOnlyList<Role> roles,
         RoleChangeActor actor)
     {
+        // 1. Validate input
         if (roles is null or { Count: 0 })
         {
             return UsersDomainErrors.User.EmptyRolesNotAllowed;
         }
 
+        // 2. Remove duplicates if any
         var newRoles = roles.DistinctBy(r => r.Id).ToArray();
 
+        // 3. Check if roles are actually changing
         var newRoleIds = newRoles.Select(r => r.Id).ToHashSet();
         var currentRoleIds = _roles.Select(r => r.Id).ToHashSet();
         if (currentRoleIds.SetEquals(newRoleIds))
@@ -83,12 +86,14 @@ public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
             return Unit.Default;
         }
 
+        // 4. Ensure admin role changes are allowed
         return EnsureAdminRoleChangeIsAllowed(
                 actor: actor,
                 currentRoleIds: currentRoleIds,
                 newRoleIds: newRoleIds)
             .Map(_ =>
             {
+                // 5. Apply changes
                 _roles.Clear();
                 _roles.AddRange(newRoles);
 
