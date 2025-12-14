@@ -97,7 +97,7 @@ return;
 static void MapDemoEndpoints(RouteGroupBuilder routeGroupBuilder)
 {
     routeGroupBuilder.MapGet("/me",
-            (IUserIdentifierProvider userIdentifierProvider) => new { userIdentifierProvider.UserId })
+            (IUserContext userContext) => new { userContext.UserId })
         .RequireAuthorization("permission:users:read")
         .WithName("GetCurrentUser")
         .WithSummary("Get current authenticated user.")
@@ -112,12 +112,12 @@ static void MapDemoEndpoints(RouteGroupBuilder routeGroupBuilder)
         .MapToApiVersion(2);
     routeGroupBuilder
         .MapGet("/me-required-auth",
-            (ClaimsPrincipal user, IUserIdentifierProvider identifierProvider) =>
-                new { user.Identity, identifierProvider.UserId })
+            (ClaimsPrincipal user, IUserContext context) =>
+                new { user.Identity, context.UserId })
         .RequireAuthorization();
     routeGroupBuilder
         .MapGet("/me-required-permission",
-            (ClaimsPrincipal user, IUserIdentifierProvider identifierProvider) =>
-                new { user.Identity, identifierProvider.UserId })
+            (ClaimsPrincipal user, IUserContext context) =>
+                new { user.Identity, context.UserId })
         .RequireAuthorization("permission:users:read");
 }

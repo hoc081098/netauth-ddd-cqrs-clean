@@ -14,7 +14,7 @@ internal sealed class UpdateTodoItemCommandHandler(
     ITodoItemRepository todoItemRepository,
     IUnitOfWork unitOfWork,
     IClock clock,
-    IUserIdentifierProvider userIdentifierProvider
+    IUserContext userContext
 ) : ICommandHandler<UpdateTodoItemCommand, Unit>
 {
     public async Task<Either<DomainError, Unit>> Handle(UpdateTodoItemCommand command,
@@ -51,7 +51,7 @@ internal sealed class UpdateTodoItemCommandHandler(
             return TodoItemDomainErrors.TodoItem.NotFound;
         }
 
-        if (item.UserId != userIdentifierProvider.UserId)
+        if (item.UserId != userContext.UserId)
         {
             return TodoItemDomainErrors.TodoItem.NotOwnedByUser;
         }

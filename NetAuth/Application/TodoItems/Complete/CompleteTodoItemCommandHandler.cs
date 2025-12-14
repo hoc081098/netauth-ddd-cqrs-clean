@@ -13,7 +13,7 @@ internal sealed class CompleteTodoItemCommandHandler(
     ITodoItemRepository todoItemRepository,
     IUnitOfWork unitOfWork,
     IClock clock,
-    IUserIdentifierProvider userIdentifierProvider
+    IUserContext userContext
 ) : ICommandHandler<CompleteTodoItemCommand, Unit>
 {
     public async Task<Either<DomainError, Unit>> Handle(CompleteTodoItemCommand command,
@@ -25,7 +25,7 @@ internal sealed class CompleteTodoItemCommandHandler(
             return TodoItemDomainErrors.TodoItem.NotFound;
         }
 
-        if (item.UserId != userIdentifierProvider.UserId)
+        if (item.UserId != userContext.UserId)
         {
             return TodoItemDomainErrors.TodoItem.NotOwnedByUser;
         }

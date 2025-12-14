@@ -12,7 +12,7 @@ internal sealed class SetUserRolesCommandHandler(
     IRoleRepository roleRepository,
     IUserRepository userRepository,
     IUnitOfWork unitOfWork,
-    IUserIdentifierProvider userIdentifierProvider
+    IUserContext userContext
 ) : ICommandHandler<SetUserRolesCommand, Unit>
 {
     public async Task<Either<DomainError, Unit>> Handle(SetUserRolesCommand command,

@@ -8,14 +8,14 @@ namespace NetAuth.Application.TodoItems.Get;
 
 internal sealed class GetTodoItemsQueryHandler(
     ITodoItemRepository todoItemRepository,
-    IUserIdentifierProvider userIdentifierProvider
+    IUserContext userContext
 ) : IQueryHandler<GetTodoItemsQuery, GetTodoItemsResult>
 {
     public async Task<Either<DomainError, GetTodoItemsResult>> Handle(
         GetTodoItemsQuery query,
         CancellationToken cancellationToken)
     {
-        var userId = userIdentifierProvider.UserId;
+        var userId = userContext.UserId;
 
         var todoItems = (await todoItemRepository.GetTodoItemsByUserId(userId, cancellationToken))
             .Select(ToTodoItemResponse)

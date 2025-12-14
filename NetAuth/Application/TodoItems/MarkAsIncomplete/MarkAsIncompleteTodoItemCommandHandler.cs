@@ -11,7 +11,7 @@ namespace NetAuth.Application.TodoItems.MarkAsIncomplete;
 internal sealed class MarkAsIncompleteTodoItemCommandHandler(
     ITodoItemRepository todoItemRepository,
     IUnitOfWork unitOfWork,
-    IUserIdentifierProvider userIdentifierProvider
+    IUserContext userContext
 ) : ICommandHandler<MarkAsIncompleteTodoItemCommand, Unit>
 {
     public async Task<Either<DomainError, Unit>> Handle(MarkAsIncompleteTodoItemCommand command,
@@ -23,7 +23,7 @@ internal sealed class MarkAsIncompleteTodoItemCommandHandler(
             return TodoItemDomainErrors.TodoItem.NotFound;
         }
 
-        if (item.UserId != userIdentifierProvider.UserId)
+        if (item.UserId != userContext.UserId)
         {
             return TodoItemDomainErrors.TodoItem.NotOwnedByUser;
         }

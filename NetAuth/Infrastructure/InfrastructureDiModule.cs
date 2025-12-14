@@ -113,7 +113,7 @@ public static class InfrastructureDiModule
         services.AddScoped<ITodoItemRepository, TodoItemRepository>();
         services.AddSingleton<IJwtProvider, JwtProvider>();
         services.AddSingleton<IRefreshTokenGenerator, RefreshTokenGenerator>();
-        services.AddScoped<IUserIdentifierProvider, UserIdentifierProvider>();
+        services.AddScoped<IUserContext, UserContext>();
 
         // Add password hasher
         services.AddTransient<IPasswordHasher, Pbkdf2PasswordHasher>();

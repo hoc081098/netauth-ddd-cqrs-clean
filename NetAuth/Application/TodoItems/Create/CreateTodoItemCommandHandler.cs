@@ -10,7 +10,7 @@ namespace NetAuth.Application.TodoItems.Create;
 
 internal sealed class CreateTodoItemCommandHandler(
     ITodoItemRepository todoItemRepository,
-    IUserIdentifierProvider userIdentifierProvider,
+    IUserContext userContext,
     IUnitOfWork unitOfWork,
     IClock clock
 ) : ICommandHandler<CreateTodoItemCommand, CreateTodoItemResult>
@@ -21,7 +21,7 @@ internal sealed class CreateTodoItemCommandHandler(
     ) =>
         await TodoItem
             .Create(
-                userId: userIdentifierProvider.UserId,
+                userId: userContext.UserId,
                 title: command.Title,
                 description: command.Description,
                 dueDateOnUtc: command.DueDate.ToUniversalTime(),
