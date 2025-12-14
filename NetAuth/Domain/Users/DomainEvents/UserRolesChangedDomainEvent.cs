@@ -4,5 +4,5 @@ namespace NetAuth.Domain.Users.DomainEvents;
 
 public sealed record UserRolesChangedDomainEvent(
     Guid UserId,
-    IReadOnlySet<RoleId> OldRoleIds,
-    IReadOnlySet<RoleId> NewRoleIds) : IDomainEvent;
+    HashSet<RoleId> OldRoleIds,
+    HashSet<RoleId> NewRoleIds) : IDomainEvent;
