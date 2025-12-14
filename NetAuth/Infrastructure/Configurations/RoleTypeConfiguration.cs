@@ -67,7 +67,8 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
                         CreateRolePermission(Role.Administrator, Permission.ModifyTodoItem),
                         // Roles
                         CreateRolePermission(Role.Administrator, Permission.GetRoles),
-                        CreateRolePermission(Role.Administrator, Permission.GetUserRoles)
+                        CreateRolePermission(Role.Administrator, Permission.GetUserRoles),
+                        CreateRolePermission(Role.Administrator, Permission.ModifyUserRoles)
                     );
                 }
             );
