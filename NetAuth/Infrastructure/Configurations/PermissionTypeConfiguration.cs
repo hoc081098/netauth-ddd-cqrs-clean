@@ -36,7 +36,8 @@ public class PermissionTypeConfiguration : IEntityTypeConfiguration<Permission>
             // Roles
             Permission.GetRoles,
             Permission.GetUserRoles,
-            Permission.ModifyUserRoles
+            Permission.ModifyUserRoles,
+            Permission.ManageUserRolesAdmin
         );
     }
 }

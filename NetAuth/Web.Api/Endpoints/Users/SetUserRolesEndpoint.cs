@@ -22,9 +22,9 @@ public class SetUserRolesEndpoint : IEndpoint
                 IUserContext userContext,
                 CancellationToken cancellationToken) =>
             {
-                var actor = id == userContext.UserId
-                    ? RoleChangeActor.User
-                    : RoleChangeActor.Administrator;
+                var actor = userContext.HasPermission("users:roles:admin")
+                    ? RoleChangeActor.Administrator
+                    : RoleChangeActor.User;
 
                 var command = new SetUserRolesCommand(
                     UserId: id,

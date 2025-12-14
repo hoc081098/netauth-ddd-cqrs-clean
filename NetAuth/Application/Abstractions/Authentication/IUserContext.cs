@@ -14,4 +14,6 @@ public interface IUserContext
     /// Gets a value indicating whether the current user is authenticated.
     /// </summary>
     bool IsAuthenticated { get; }
+    
+    bool HasPermission(string permission);
 }

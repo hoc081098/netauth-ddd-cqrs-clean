@@ -5,23 +5,39 @@ namespace NetAuth.Infrastructure.Authentication;
 
 internal static class ClaimsPrincipalExtensions
 {
-    /// <summary>
-    /// Gets the user identifier from the claims principal or `null` if not found/invalid/empty.
-    /// </summary>
     /// <param name="principal"></param>
-    /// <returns></returns>
-    internal static Guid? GetUserIdOrNull(this ClaimsPrincipal principal)
+    extension(ClaimsPrincipal principal)
     {
-        var userIdClaim = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
-        if (
-            string.IsNullOrWhiteSpace(userIdClaim) ||
-            !Guid.TryParse(userIdClaim, out var userId) ||
-            userId == Guid.Empty
-        )
+        /// <summary>
+        /// Gets the user identifier from the claims principal or `null` if not found/invalid/empty.
+        /// </summary>
+        /// <returns></returns>
+        internal Guid? GetUserIdOrNull()
         {
-            return null;
+            var userIdClaim = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            if (
+                string.IsNullOrWhiteSpace(userIdClaim) ||
+                !Guid.TryParse(userIdClaim, out var userId) ||
+                userId == Guid.Empty
+            )
+            {
+                return null;
+            }
+
+            return userId;
         }
 
-        return userId;
+        /// <summary>
+        /// Checks if the claims principal has the specified permission.
+        /// </summary>
+        /// <param name="permission"></param>
+        /// <returns></returns>
+        internal bool HasPermission(string permission)
+        {
+            return principal
+                .HasClaim(claim =>
+                    string.Equals(claim.Type, CustomClaimTypes.Permission, StringComparison.Ordinal) &&
+                    string.Equals(claim.Value, permission, StringComparison.Ordinal));
+        }
     }
 }

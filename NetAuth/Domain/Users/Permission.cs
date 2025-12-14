@@ -18,6 +18,7 @@ public readonly record struct PermissionId(int Value) : IComparable<PermissionId
     internal static readonly PermissionId GetRolesId = new(6);
     internal static readonly PermissionId GetUserRolesId = new(7);
     internal static readonly PermissionId ModifyUserRolesId = new(8);
+    internal static readonly PermissionId ManageUserRolesAdminId = new(9);
 
     public int CompareTo(PermissionId other) => Value.CompareTo(other.Value);
 
@@ -42,6 +43,7 @@ public sealed class Permission : Entity<PermissionId>
     public static readonly Permission GetRoles = new(PermissionId.GetRolesId, "roles:read");
     public static readonly Permission GetUserRoles = new(PermissionId.GetUserRolesId, "users:roles:read");
     public static readonly Permission ModifyUserRoles = new(PermissionId.ModifyUserRolesId, "users:roles:update");
+    public static readonly Permission ManageUserRolesAdmin = new(PermissionId.ManageUserRolesAdminId, "users:roles:admin");
     
     /// <remarks>Required by EF Core.</remarks>
     [UsedImplicitly]

@@ -27,4 +27,14 @@ internal sealed class UserContext(
     }
 
     public bool IsAuthenticated => ClaimsPrincipal?.Identity?.IsAuthenticated == true;
+
+    public bool HasPermission(string permission)
+    {
+        if (!IsAuthenticated)
+        {
+            throw new InvalidOperationException("The user is not authenticated.");
+        }
+
+        return ClaimsPrincipal?.HasPermission(permission) == true;
+    }
 }

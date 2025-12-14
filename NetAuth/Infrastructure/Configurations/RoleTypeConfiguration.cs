@@ -68,7 +68,8 @@ public class RoleTypeConfiguration : IEntityTypeConfiguration<Role>
                         // Roles
                         CreateRolePermission(Role.Administrator, Permission.GetRoles),
                         CreateRolePermission(Role.Administrator, Permission.GetUserRoles),
-                        CreateRolePermission(Role.Administrator, Permission.ModifyUserRoles)
+                        CreateRolePermission(Role.Administrator, Permission.ModifyUserRoles),
+                        CreateRolePermission(Role.Administrator, Permission.ManageUserRolesAdmin) // Admin only
                     );
                 }
             );
