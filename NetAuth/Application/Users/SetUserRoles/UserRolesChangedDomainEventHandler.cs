@@ -1,12 +1,11 @@
 using NetAuth.Application.Abstractions.Authorization;
 using NetAuth.Application.Abstractions.Messaging;
-using NetAuth.Application.Users.Register;
 using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Application.Users.SetUserRoles;
 
 internal sealed class UserRolesChangedDomainEventHandler(
-    ILogger<UserCreatedDomainEventHandler> logger,
+    ILogger<UserRolesChangedDomainEventHandler> logger,
     IPermissionService permissionService
 ) : IDomainEventHandler<UserRolesChangedDomainEvent>
 {
