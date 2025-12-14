@@ -64,4 +64,11 @@ public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletable
 
         return user;
     }
+
+    public void SetRoles(IReadOnlyList<Role> roles)
+    {
+        _roles.Clear();
+        _roles.AddRange(roles);
+        AddDomainEvent(new UserRolesChangedDomainEvent(UserId: Id));
+    }
 }
