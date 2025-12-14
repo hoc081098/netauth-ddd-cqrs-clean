@@ -34,7 +34,8 @@ public class PermissionTypeConfiguration : IEntityTypeConfiguration<Permission>
             Permission.CreateTodoItem,
             Permission.ModifyTodoItem,
             // Roles
-            Permission.GetRoles
+            Permission.GetRoles,
+            Permission.GetUserRoles
         );
     }
 }
