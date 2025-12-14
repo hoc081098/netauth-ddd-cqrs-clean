@@ -20,6 +20,26 @@ public static class UsersDomainErrors
             code: "User.NotFound",
             message: "The user was not found.",
             type: DomainError.ErrorType.NotFound);
+
+        public static readonly DomainError OneOrMoreRolesNotFound = new(
+            code: "User.OneOrMoreRolesNotFound",
+            message: " One or more specified roles were not found.",
+            type: DomainError.ErrorType.NotFound);
+
+        public static readonly DomainError EmptyRolesNotAllowed = new(
+            code: "User.EmptyRolesNotAllowed",
+            message: "A user must have at least one role assigned.",
+            type: DomainError.ErrorType.Validation);
+        
+        public static readonly DomainError CannotModifyOwnAdminRoles = new(
+            code: "User.CannotModifyOwnAdminRoles",
+            message: "An administrator cannot modify their own admin roles.",
+            type: DomainError.ErrorType.Validation);
+        
+        public static readonly DomainError CannotGrantAdminRole = new(
+            code: "User.CannotGrantAdminRole",
+            message: "Only an administrator can grant the admin role to a user.",
+            type: DomainError.ErrorType.Unauthorized);
     }
 
     public static class RefreshToken
