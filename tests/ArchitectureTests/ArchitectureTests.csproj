@@ -7,6 +7,7 @@
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <WarningsAsErrors>true</WarningsAsErrors>
+        <RootNamespace>NetAuth.ArchitectureTests</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\NetAuth\NetAuth\NetAuth.csproj" />
+      <ProjectReference Include="..\..\src\NetAuth\NetAuth.csproj" />
     </ItemGroup>
 
 </Project>

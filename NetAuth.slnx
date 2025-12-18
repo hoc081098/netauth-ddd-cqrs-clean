@@ -2,6 +2,6 @@
   <Folder Name="/Solution Items/">
     <File Path="compose.yaml" />
   </Folder>
-  <Project Path="NetAuth.ArchitectureTests/NetAuth.ArchitectureTests.csproj" />
   <Project Path="src/NetAuth/NetAuth.csproj" />
+  <Project Path="tests/ArchitectureTests/ArchitectureTests.csproj" />
 </Solution>
