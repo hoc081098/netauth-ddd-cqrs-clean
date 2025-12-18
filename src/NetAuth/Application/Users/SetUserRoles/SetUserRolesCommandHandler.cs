@@ -1,5 +1,4 @@
 using LanguageExt;
-using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Core.Primitives;
@@ -11,8 +10,7 @@ namespace NetAuth.Application.Users.SetUserRoles;
 internal sealed class SetUserRolesCommandHandler(
     IRoleRepository roleRepository,
     IUserRepository userRepository,
-    IUnitOfWork unitOfWork,
-    IUserContext userContext
+    IUnitOfWork unitOfWork
 ) : ICommandHandler<SetUserRolesCommand, Unit>
 {
     public async Task<Either<DomainError, Unit>> Handle(SetUserRolesCommand command,
