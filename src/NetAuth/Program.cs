@@ -50,10 +50,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
 
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger(options =>
-    {
-        options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
-    });
+    app.UseSwagger(options => options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1);
     app.UseSwaggerUI(options =>
     {
         // Build a swagger endpoint for each discovered API version
