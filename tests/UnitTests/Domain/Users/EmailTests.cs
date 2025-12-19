@@ -1,57 +1,51 @@
 using LanguageExt.UnitTesting;
 using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
+// ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 
 namespace NetAuth.UnitTests.Domain.Users;
 
 public class EmailTests
 {
-    // [Theory]
-    // [InlineData("test@example.com")]
-    // [InlineData("user.name@example.com")]
-    // [InlineData("user+tag@example.com")]
-    // [InlineData("user_name@example.com")]
-    // [InlineData("user123@example.co.uk")]
-    // [InlineData("test@sub.example.com")]
-    // [InlineData("a@b.co")]
-    // [InlineData("TEST@EXAMPLE.COM")]
-    // [InlineData("Test.User@Example.Com")]
-    // public void Create_WithValidEmail_ShouldReturnSuccess(string validEmail)
-    // {
-    //     // Act
-    //     var result = Email.Create(validEmail);
-    //
-    //     // Assert
-    //     Assert.True(result.IsRight);
-    //     result.IfRight(email =>
-    //     {
-    //         Assert.Equal(validEmail, email.Value);
-    //         Assert.Equal(validEmail, (string)email); // Test implicit conversion
-    //     });
-    // }
+    [Theory]
+    [InlineData("test@example.com")]
+    [InlineData("user.name@example.com")]
+    [InlineData("user+tag@example.com")]
+    [InlineData("user_name@example.com")]
+    [InlineData("user123@example.co.uk")]
+    [InlineData("test@sub.example.com")]
+    [InlineData("a@b.co")]
+    [InlineData("TEST@EXAMPLE.COM")]
+    [InlineData("Test.User@Example.Com")]
+    public void Create_WithValidEmail_ShouldReturnSuccess(string validEmail)
+    {
+        // Act
+        var result = Email.Create(validEmail);
 
-    // [Theory]
-    // [InlineData(null)]
-    // [InlineData("")]
-    // [InlineData(" ")]
-    // [InlineData("   ")]
-    // [InlineData("\t")]
-    // [InlineData("\n")]
-    // public void Create_WithNullOrWhiteSpace_ShouldReturnNullOrEmptyError(string? invalidEmail)
-    // {
-    //     // Act
-    //     var result = Email.Create(invalidEmail!);
-    //
-    //     // Assert
-    //     Assert.True(result.IsLeft);
-    //     result.IfLeft(error =>
-    //     {
-    //         Assert.Equal(UsersDomainErrors.Email.NullOrEmpty.Code, error.Code);
-    //         Assert.Equal(UsersDomainErrors.Email.NullOrEmpty.Message, error.Message);
-    //         Assert.Equal(DomainError.ErrorType.Validation, error.Type);
-    //     });
-    // }
-    //
+        // Assert
+        result.ShouldBeRight(right =>
+        {
+            Assert.Equal(validEmail, right.Value);
+            Assert.Equal(validEmail, (string)right); // Test implicit conversion
+        });
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("\t")]
+    [InlineData("\n")]
+    public void Create_WithNullOrWhiteSpace_ShouldReturnNullOrEmptyError(string? invalidEmail)
+    {
+        // Act
+        var result = Email.Create(invalidEmail!);
+
+        // Assert
+        result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Email.NullOrEmpty, left));
+    }
+
     // [Fact]
     // public void Create_WithEmailExceedingMaxLength_ShouldReturnTooLongError()
     // {
@@ -78,6 +72,9 @@ public class EmailTests
     [InlineData("invalid@.com")]
     [InlineData("invalid@domain")]
     [InlineData("invalid.domain.com")]
+    [InlineData("invalid.-domain.com")]
+    [InlineData("invalid.-domain-.com")]
+    [InlineData("invalid.domain-.com")]
     [InlineData("invalid@domain..com")]
     [InlineData("invalid@@domain.com")]
     [InlineData("invalid @domain.com")]
