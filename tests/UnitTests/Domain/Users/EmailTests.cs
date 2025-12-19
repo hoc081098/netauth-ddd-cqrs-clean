@@ -50,7 +50,7 @@ public class EmailTests
     public void Create_WithEmailExceedingMaxLength_ShouldReturnTooLongError()
     {
         // Arrange
-        var longEmail = new string('a', Email.MaxLength - 10) + "@example.com"; // Exceeds MaxLength
+        var longEmail = new string('a', Email.MaxLength) + "@example.com"; // Exceeds MaxLength
 
         // Act
         var result = Email.Create(longEmail);
