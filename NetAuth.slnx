@@ -4,4 +4,5 @@
   </Folder>
   <Project Path="src/NetAuth/NetAuth.csproj" />
   <Project Path="tests/ArchitectureTests/ArchitectureTests.csproj" />
+  <Project Path="tests/UnitTests/UnitTests.csproj" />
 </Solution>
