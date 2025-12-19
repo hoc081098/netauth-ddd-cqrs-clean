@@ -15,7 +15,7 @@ public class LayerTest
     #region Domain Layer Tests
 
     [Fact]
-    public void DomainLayer_Should_NotHaveDependencyOnApplication()
+    public void DomainLayer_ShouldNotHaveDependencyOnApplication()
     {
         var result = Types
             .InAssembly(typeof(Program).Assembly)
@@ -89,7 +89,6 @@ public class LayerTest
     }
 
     #endregion
-
 
     [Fact]
     public void InfrastructureLayer_ShouldNotHaveDependencyOn_WebApiLayer()
