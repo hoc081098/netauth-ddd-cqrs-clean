@@ -32,8 +32,8 @@ public static class TodoItemTestData
         TodoItem
             .Create(
                 userId: UserId,
-                title: Title,
-                description: Description,
+                title: Title.Value,
+                description: Description.Value,
                 dueDateOnUtc: CurrentUtc.AddDays(1),
                 labels: NonEmptyLabels,
                 currentUtc: CurrentUtc
@@ -187,7 +187,7 @@ public class TodoItemTests : BaseTest
         var newTitle = TodoTitle.Create("Updated title").RightValueOrThrow();
         var newDescription = TodoDescription.Create("Updated description").RightValueOrThrow();
         var newDueDateOnUtc = currentUtc.AddDays(3);
-        var newLabels = new List<string> { "updated", "label" };
+        List<string> newLabels = ["updated", "label"];
 
         // Act
         var result = todoItem.Update(title: newTitle,
