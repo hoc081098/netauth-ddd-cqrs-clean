@@ -1,4 +1,3 @@
-using LanguageExt.UnitTesting;
 using NetAuth.Domain.Users;
 using NetAuth.Domain.Users.DomainEvents;
 
@@ -6,8 +5,8 @@ namespace NetAuth.UnitTests.Domain.Users;
 
 public static class UserTestData
 {
-    public const string ValidUsername = "valid-user";
-    public const string ValidEmail = "valid-user@gmail.com";
+    public static readonly Username ValidUsername = Username.Create("valid-user").RightValueOrThrow();
+    public static readonly Email ValidEmail = Email.Create("valid-user@gmail.com").RightValueOrThrow();
     public const string PasswordHash = "ValidPasswordHash123@";
 }
 
@@ -17,26 +16,20 @@ public class UserTests : BaseTest
     public void CreateUser_WithValidData_ShouldReturnSuccess()
     {
         // Arrange
-        var usernameResult = Username.Create(UserTestData.ValidUsername);
-        var emailResult = Email.Create(UserTestData.ValidEmail);
+        var email = UserTestData.ValidEmail;
+        var username = UserTestData.ValidUsername;
 
-        usernameResult.ShouldBeRight(username =>
-        {
-            emailResult.ShouldBeRight(email =>
-            {
-                // Act
-                var user = User.Create(email, username, UserTestData.PasswordHash);
+        // Act
+        var user = User.Create(email, username, UserTestData.PasswordHash);
 
-                // Assert
-                Assert.NotNull(user);
-                Assert.Equal(email, user.Email);
-                Assert.Equal(username, user.Username);
-                Assert.Contains(Role.Member, user.Roles);
+        // Assert
+        Assert.NotNull(user);
+        Assert.Equal(email, user.Email);
+        Assert.Equal(username, user.Username);
+        Assert.Contains(Role.Member, user.Roles);
 
-                var userCreatedDomainEvent = AssertDomainEventWasPublished<UserCreatedDomainEvent>(user);
-                Assert.Equal(user.Id, userCreatedDomainEvent.UserId);
-            });
-        });
+        var userCreatedDomainEvent = AssertDomainEventWasPublished<UserCreatedDomainEvent>(user);
+        Assert.Equal(user.Id, userCreatedDomainEvent.UserId);
     }
 
     [Fact]
@@ -44,24 +37,18 @@ public class UserTests : BaseTest
     {
         // Arrange
         var passwordHashChecker = new TestPasswordHashChecker();
+        var email = UserTestData.ValidEmail;
+        var username = UserTestData.ValidUsername;
+        var passwordHash = UserTestData.PasswordHash;
 
-        var usernameResult = Username.Create(UserTestData.ValidUsername);
-        var emailResult = Email.Create(UserTestData.ValidEmail);
+        var user = User.Create(email, username, passwordHash);
 
-        usernameResult.ShouldBeRight(username =>
-        {
-            emailResult.ShouldBeRight(email =>
-            {
-                var user = User.Create(email, username, UserTestData.PasswordHash);
+        // Act
+        var isMatch = user.VerifyPasswordHash(password: passwordHash,
+            passwordHashChecker: passwordHashChecker);
 
-                // Act
-                var isMatch = user.VerifyPasswordHash(password: UserTestData.PasswordHash,
-                    passwordHashChecker: passwordHashChecker);
-
-                // Assert
-                Assert.True(isMatch);
-            });
-        });
+        // Assert
+        Assert.True(isMatch);
     }
 
     [Fact]
@@ -69,24 +56,17 @@ public class UserTests : BaseTest
     {
         // Arrange
         var passwordHashChecker = new TestPasswordHashChecker();
+        var email = UserTestData.ValidEmail;
+        var username = UserTestData.ValidUsername;
 
-        var usernameResult = Username.Create(UserTestData.ValidUsername);
-        var emailResult = Email.Create(UserTestData.ValidEmail);
+        var user = User.Create(email, username, UserTestData.PasswordHash);
 
-        usernameResult.ShouldBeRight(username =>
-        {
-            emailResult.ShouldBeRight(email =>
-            {
-                var user = User.Create(email, username, UserTestData.PasswordHash);
+        // Act
+        var isMatch = user.VerifyPasswordHash(
+            password: UserTestData.PasswordHash + "Wrong",
+            passwordHashChecker: passwordHashChecker);
 
-                // Act
-                var isMatch = user.VerifyPasswordHash(
-                    password: UserTestData.PasswordHash + "Wrong",
-                    passwordHashChecker: passwordHashChecker);
-
-                // Assert
-                Assert.False(isMatch);
-            });
-        });
+        // Assert
+        Assert.False(isMatch);
     }
 }
