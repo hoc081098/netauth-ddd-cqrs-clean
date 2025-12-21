@@ -1,3 +1,4 @@
+using LanguageExt.UnitTesting;
 using NetAuth.Domain.Users;
 using NetAuth.Domain.Users.DomainEvents;
 
@@ -85,5 +86,24 @@ public class UserTests : BaseTest
         // Act & Assert
         Assert.IsType<IReadOnlyCollection<Role>>(user.Roles, exactMatch: false);
         Assert.ThrowsAny<NotSupportedException>(() => ((ICollection<Role>)user.Roles).Add(Role.Administrator));
+    }
+
+    public static TheoryData<IReadOnlyList<Role>?> InvalidRoles => [null, []];
+
+    [Theory]
+    [MemberData(nameof(InvalidRoles))]
+    public void SetRoles_WithNullOrEmptyRoles_ShouldReturnDomainError(IReadOnlyList<Role>? roles)
+    {
+        // Arrange
+        var user = User.Create(
+            UserTestData.ValidEmail,
+            UserTestData.ValidUsername,
+            UserTestData.PlainPassword);
+
+        // Act
+        var result = user.SetRoles(roles: roles!, actor: RoleChangeActor.System);
+
+        // Assert
+        result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.User.EmptyRolesNotAllowed, left));
     }
 }
