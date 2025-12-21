@@ -156,4 +156,42 @@ public class UserTests : BaseTest
             roleChangedDomainEvent.NewRoleIds
                 .SetEquals(newRoles.Select(r => r.Id)));
     }
+
+    [Fact]
+    public void SetRoles_UserActorModifyingOwnAdminRoles_ShouldReturnDomainError()
+    {
+        // Arrange
+        var user = User.Create(
+            UserTestData.ValidEmail,
+            UserTestData.ValidUsername,
+            UserTestData.PlainPassword);
+        // Make user an admin
+        user.SetRoles([Role.Administrator], RoleChangeActor.System).RightValueOrThrow();
+
+        var newRoles = new List<Role> { Role.Member };
+
+        // Act
+        var result = user.SetRoles(newRoles, RoleChangeActor.User);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(UsersDomainErrors.User.CannotModifyOwnAdminRoles, left));
+    }
+
+    [Fact]
+    public void SetRoles_UserActorGrantingAdminRole_ShouldReturnDomainError()
+    {
+        // Arrange
+        var user = User.Create(
+            UserTestData.ValidEmail,
+            UserTestData.ValidUsername,
+            UserTestData.PlainPassword);
+
+        // Act
+        var result = user.SetRoles([Role.Administrator], RoleChangeActor.User);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(UsersDomainErrors.User.CannotGrantAdminRole, left));
+    }
 }
