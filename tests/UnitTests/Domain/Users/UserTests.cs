@@ -7,7 +7,7 @@ public static class UserTestData
 {
     public static readonly Username ValidUsername = Username.Create("valid-user").RightValueOrThrow();
     public static readonly Email ValidEmail = Email.Create("valid-user@gmail.com").RightValueOrThrow();
-    public const string PasswordHash = "ValidPasswordHash123@";
+    public const string PlainPassword = "ValidPassword123@";
 }
 
 public class UserTests : BaseTest
@@ -18,9 +18,10 @@ public class UserTests : BaseTest
         // Arrange
         var email = UserTestData.ValidEmail;
         var username = UserTestData.ValidUsername;
+        var passwordHash = UserTestData.PlainPassword; // Use plain password as hash for testing
 
         // Act
-        var user = User.Create(email, username, UserTestData.PasswordHash);
+        var user = User.Create(email, username, passwordHash);
 
         // Assert
         Assert.NotNull(user);
@@ -39,12 +40,13 @@ public class UserTests : BaseTest
         var passwordHashChecker = new TestPasswordHashChecker();
         var email = UserTestData.ValidEmail;
         var username = UserTestData.ValidUsername;
-        var passwordHash = UserTestData.PasswordHash;
+        var password = UserTestData.PlainPassword;
+        var passwordHash = UserTestData.PlainPassword; // Use plain password as hash for testing
 
         var user = User.Create(email, username, passwordHash);
 
         // Act
-        var isMatch = user.VerifyPasswordHash(password: passwordHash,
+        var isMatch = user.VerifyPasswordHash(password: password,
             passwordHashChecker: passwordHashChecker);
 
         // Assert
@@ -58,15 +60,30 @@ public class UserTests : BaseTest
         var passwordHashChecker = new TestPasswordHashChecker();
         var email = UserTestData.ValidEmail;
         var username = UserTestData.ValidUsername;
-
-        var user = User.Create(email, username, UserTestData.PasswordHash);
+        var password = UserTestData.PlainPassword;
+        var passwordHash = UserTestData.PlainPassword; // Use plain password as hash for testing
+        var user = User.Create(email, username, passwordHash);
 
         // Act
         var isMatch = user.VerifyPasswordHash(
-            password: UserTestData.PasswordHash + "Wrong",
+            password: password + "Wrong",
             passwordHashChecker: passwordHashChecker);
 
         // Assert
         Assert.False(isMatch);
+    }
+
+    [Fact]
+    public void Roles_ShouldBeReadOnly()
+    {
+        // Arrange
+        var user = User.Create(
+            UserTestData.ValidEmail,
+            UserTestData.ValidUsername,
+            UserTestData.PlainPassword);
+
+        // Act & Assert
+        Assert.IsType<IReadOnlyCollection<Role>>(user.Roles, exactMatch: false);
+        Assert.ThrowsAny<NotSupportedException>(() => ((ICollection<Role>)user.Roles).Add(Role.Administrator));
     }
 }
