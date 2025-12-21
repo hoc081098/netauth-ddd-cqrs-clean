@@ -1,4 +1,3 @@
-using LanguageExt;
 using LanguageExt.UnitTesting;
 using NetAuth.Domain.TodoItems;
 
@@ -15,7 +14,7 @@ public class TodoDescriptionTests
     [InlineData("Short")]
     [InlineData("Description with numbers 123 and symbols !@#$%")]
     [InlineData("Multi-line\ndescription\nwith breaks")]
-    [InlineData("")]
+    [InlineData("")] // Empty string is allowed for descriptions
     [InlineData("   ")] // Whitespace is allowed for descriptions
     public void Create_WithValidDescription_ShouldReturnSuccess(string validDescription)
     {
@@ -77,10 +76,7 @@ public class TodoDescriptionTests
 
         // Assert
         result.ShouldBeRight(right =>
-        {
-            Assert.True(right.IsSome);
-            right.IfSome(description => Assert.Equal(validDescription, description.Value));
-        });
+            right.ShouldBeSome(description => Assert.Equal(validDescription, description.Value)));
     }
 
     [Fact]
@@ -90,11 +86,7 @@ public class TodoDescriptionTests
         var result = TodoDescription.CreateOption(null);
 
         // Assert
-        result.ShouldBeRight(right =>
-        {
-            Assert.True(right.IsNone);
-            Assert.Equal(Option<TodoDescription>.None, right);
-        });
+        result.ShouldBeRight(right => right.ShouldBeNone());
     }
 
     [Fact]
@@ -164,4 +156,3 @@ public class TodoDescriptionTests
         });
     }
 }
-

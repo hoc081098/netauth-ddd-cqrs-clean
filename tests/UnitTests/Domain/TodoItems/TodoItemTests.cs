@@ -2,17 +2,43 @@ using LanguageExt.UnitTesting;
 using NetAuth.Domain.TodoItems;
 using NetAuth.Domain.TodoItems.DomainEvents;
 
+// ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
+
 namespace NetAuth.UnitTests.Domain.TodoItems;
 
 public static class TodoItemTestData
 {
-    public static readonly Guid ValidUserId = Guid.NewGuid();
-    public static readonly TodoTitle ValidTitle = TodoTitle.Create("Buy groceries").RightValueOrThrow();
-    public static readonly TodoDescription ValidDescription = TodoDescription.Create("Get milk, eggs, and bread").RightValueOrThrow();
-    public static readonly IReadOnlyList<string> ValidLabels = new List<string> { "shopping", "urgent" };
-    public static readonly IReadOnlyList<string> EmptyLabels = new List<string>();
-    public static readonly DateTimeOffset ValidCurrentUtc = new DateTimeOffset(2025, 1, 1, 12, 0, 0, TimeSpan.Zero);
-    public static readonly DateTimeOffset ValidFutureDueDate = new DateTimeOffset(2025, 1, 2, 12, 0, 0, TimeSpan.Zero);
+    public static readonly Guid UserId = Guid.NewGuid();
+
+    public static readonly TodoTitle Title = TodoTitle
+        .Create("Buy groceries")
+        .RightValueOrThrow();
+
+    public static readonly TodoDescription Description = TodoDescription
+        .Create("Get milk, eggs, and bread")
+        .RightValueOrThrow();
+
+    public static readonly IReadOnlyList<string> NonEmptyLabels = ["shopping", "urgent"];
+
+    public static readonly IReadOnlyList<string> EmptyLabels = [];
+
+    public static readonly DateTimeOffset CurrentUtc =
+        new(year: 2025, month: 1, day: 1, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
+
+    public static readonly DateTimeOffset FutureDueDate =
+        new(year: 2025, month: 1, day: 2, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
+
+    public static TodoItem CreateTodoItem() =>
+        TodoItem
+            .Create(
+                userId: UserId,
+                title: Title,
+                description: Description,
+                dueDateOnUtc: CurrentUtc.AddDays(1),
+                labels: NonEmptyLabels,
+                currentUtc: CurrentUtc
+            )
+            .RightValueOrThrow();
 }
 
 public class TodoItemTests : BaseTest
@@ -21,15 +47,20 @@ public class TodoItemTests : BaseTest
     public void Create_WithValidData_ShouldReturnSuccess()
     {
         // Arrange
-        var userId = TodoItemTestData.ValidUserId;
-        var title = "Buy groceries";
-        var description = "Get milk and bread";
-        var dueDateOnUtc = TodoItemTestData.ValidFutureDueDate;
-        var labels = TodoItemTestData.ValidLabels;
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
+        var userId = TodoItemTestData.UserId;
+        var title = TodoItemTestData.Title.Value;
+        var description = TodoItemTestData.Description.Value;
+        var dueDateOnUtc = TodoItemTestData.FutureDueDate;
+        var labels = TodoItemTestData.NonEmptyLabels;
+        var currentUtc = TodoItemTestData.CurrentUtc;
 
         // Act
-        var result = TodoItem.Create(userId, title, description, dueDateOnUtc, labels, currentUtc);
+        var result = TodoItem.Create(userId: userId,
+            title: title,
+            description: description,
+            dueDateOnUtc: dueDateOnUtc,
+            labels: labels,
+            currentUtc: currentUtc);
 
         // Assert
         result.ShouldBeRight(todoItem =>
@@ -54,15 +85,20 @@ public class TodoItemTests : BaseTest
     public void Create_WithNullDescription_ShouldReturnSuccess()
     {
         // Arrange
-        var userId = TodoItemTestData.ValidUserId;
-        var title = "Simple task";
+        var userId = TodoItemTestData.UserId;
+        var title = TodoItemTestData.Title.Value;
         string? description = null;
-        var dueDateOnUtc = TodoItemTestData.ValidFutureDueDate;
+        var dueDateOnUtc = TodoItemTestData.FutureDueDate;
         var labels = TodoItemTestData.EmptyLabels;
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
+        var currentUtc = TodoItemTestData.CurrentUtc;
 
         // Act
-        var result = TodoItem.Create(userId, title, description, dueDateOnUtc, labels, currentUtc);
+        var result = TodoItem.Create(userId: userId,
+            title: title,
+            description: description,
+            dueDateOnUtc: dueDateOnUtc,
+            labels: labels,
+            currentUtc: currentUtc);
 
         // Assert
         result.ShouldBeRight(todoItem =>
@@ -76,15 +112,20 @@ public class TodoItemTests : BaseTest
     public void Create_WithInvalidTitle_ShouldReturnError()
     {
         // Arrange
-        var userId = TodoItemTestData.ValidUserId;
+        var userId = TodoItemTestData.UserId;
         var title = ""; // Invalid
-        var description = "Valid description";
-        var dueDateOnUtc = TodoItemTestData.ValidFutureDueDate;
+        var description = TodoItemTestData.Description.Value;
+        var dueDateOnUtc = TodoItemTestData.FutureDueDate;
         var labels = TodoItemTestData.EmptyLabels;
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
+        var currentUtc = TodoItemTestData.CurrentUtc;
 
         // Act
-        var result = TodoItem.Create(userId, title, description, dueDateOnUtc, labels, currentUtc);
+        var result = TodoItem.Create(userId: userId,
+            title: title,
+            description: description,
+            dueDateOnUtc: dueDateOnUtc,
+            labels: labels,
+            currentUtc: currentUtc);
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(TodoItemDomainErrors.Title.NullOrEmpty, left));
@@ -94,15 +135,20 @@ public class TodoItemTests : BaseTest
     public void Create_WithPastDueDate_ShouldReturnError()
     {
         // Arrange
-        var userId = TodoItemTestData.ValidUserId;
-        var title = "Task";
-        var description = "Description";
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
+        var userId = TodoItemTestData.UserId;
+        var title = TodoItemTestData.Title.Value;
+        var description = TodoItemTestData.Description.Value;
+        var currentUtc = TodoItemTestData.CurrentUtc;
         var dueDateOnUtc = currentUtc.AddDays(-1); // Past date
         var labels = TodoItemTestData.EmptyLabels;
 
         // Act
-        var result = TodoItem.Create(userId, title, description, dueDateOnUtc, labels, currentUtc);
+        var result = TodoItem.Create(userId: userId,
+            title: title,
+            description: description,
+            dueDateOnUtc: dueDateOnUtc,
+            labels: labels,
+            currentUtc: currentUtc);
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(TodoItemDomainErrors.TodoItem.DueDateInPast, left));
@@ -112,37 +158,43 @@ public class TodoItemTests : BaseTest
     public void Create_WithCurrentDueDate_ShouldReturnSuccess()
     {
         // Arrange
-        var userId = TodoItemTestData.ValidUserId;
-        var title = "Task";
-        var description = "Description";
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
+        var userId = TodoItemTestData.UserId;
+        var title = TodoItemTestData.Title.Value;
+        var description = TodoItemTestData.Description.Value;
+        var currentUtc = TodoItemTestData.CurrentUtc;
         var dueDateOnUtc = currentUtc; // Current date (valid)
         var labels = TodoItemTestData.EmptyLabels;
 
         // Act
-        var result = TodoItem.Create(userId, title, description, dueDateOnUtc, labels, currentUtc);
+        var result = TodoItem.Create(userId: userId,
+            title: title,
+            description: description,
+            dueDateOnUtc: dueDateOnUtc,
+            labels: labels,
+            currentUtc: currentUtc);
 
         // Assert
-        result.ShouldBeRight(todoItem =>
-        {
-            Assert.Equal(dueDateOnUtc, todoItem.DueDateOnUtc);
-        });
+        result.ShouldBeRight(todoItem => Assert.Equal(dueDateOnUtc, todoItem.DueDateOnUtc));
     }
 
     [Fact]
     public void Update_WithValidData_ShouldReturnSuccess()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
-        var todoItem = CreateValidTodoItem(currentUtc);
+        var currentUtc = TodoItemTestData.CurrentUtc;
+        var todoItem = TodoItemTestData.CreateTodoItem();
 
         var newTitle = TodoTitle.Create("Updated title").RightValueOrThrow();
         var newDescription = TodoDescription.Create("Updated description").RightValueOrThrow();
         var newDueDateOnUtc = currentUtc.AddDays(3);
-        var newLabels = new List<string> { "updated", "label" }.AsReadOnly();
+        var newLabels = new List<string> { "updated", "label" };
 
         // Act
-        var result = todoItem.Update(newTitle, newDescription, newDueDateOnUtc, newLabels, currentUtc);
+        var result = todoItem.Update(title: newTitle,
+            description: newDescription,
+            dueDateOnUtc: newDueDateOnUtc,
+            labels: newLabels,
+            currentUtc: currentUtc);
 
         // Assert
         result.ShouldBeRight(_ =>
@@ -158,9 +210,9 @@ public class TodoItemTests : BaseTest
     public void Update_CompletedTodoItem_ShouldReturnError()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
-        var todoItem = CreateValidTodoItem(currentUtc);
-        todoItem.MarkAsCompleted(currentUtc);
+        var currentUtc = TodoItemTestData.CurrentUtc;
+        var todoItem = TodoItemTestData.CreateTodoItem();
+        todoItem.MarkAsCompleted(currentUtc).ShouldBeRight();
 
         var newTitle = TodoTitle.Create("Updated title").RightValueOrThrow();
         var newDescription = TodoDescription.Create("Updated description").RightValueOrThrow();
@@ -168,7 +220,11 @@ public class TodoItemTests : BaseTest
         var newLabels = TodoItemTestData.EmptyLabels;
 
         // Act
-        var result = todoItem.Update(newTitle, newDescription, newDueDateOnUtc, newLabels, currentUtc);
+        var result = todoItem.Update(title: newTitle,
+            description: newDescription,
+            dueDateOnUtc: newDueDateOnUtc,
+            labels: newLabels,
+            currentUtc: currentUtc);
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(TodoItemDomainErrors.TodoItem.CannotUpdateCompletedItem, left));
@@ -178,8 +234,8 @@ public class TodoItemTests : BaseTest
     public void Update_WithPastDueDate_ShouldReturnError()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
-        var todoItem = CreateValidTodoItem(currentUtc);
+        var currentUtc = TodoItemTestData.CurrentUtc;
+        var todoItem = TodoItemTestData.CreateTodoItem();
 
         var newTitle = TodoTitle.Create("Updated title").RightValueOrThrow();
         var newDescription = TodoDescription.Create("Updated description").RightValueOrThrow();
@@ -187,7 +243,11 @@ public class TodoItemTests : BaseTest
         var newLabels = TodoItemTestData.EmptyLabels;
 
         // Act
-        var result = todoItem.Update(newTitle, newDescription, pastDueDate, newLabels, currentUtc);
+        var result = todoItem.Update(title: newTitle,
+            description: newDescription,
+            dueDateOnUtc: pastDueDate,
+            labels: newLabels,
+            currentUtc: currentUtc);
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(TodoItemDomainErrors.TodoItem.DueDateInPast, left));
@@ -197,8 +257,8 @@ public class TodoItemTests : BaseTest
     public void MarkAsCompleted_WithIncompleteTodoItem_ShouldReturnSuccess()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
-        var todoItem = CreateValidTodoItem(currentUtc);
+        var currentUtc = TodoItemTestData.CurrentUtc;
+        var todoItem = TodoItemTestData.CreateTodoItem();
         var completedOnUtc = currentUtc.AddHours(1);
 
         // Act
@@ -220,9 +280,9 @@ public class TodoItemTests : BaseTest
     public void MarkAsCompleted_WithAlreadyCompletedTodoItem_ShouldReturnError()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
-        var todoItem = CreateValidTodoItem(currentUtc);
-        todoItem.MarkAsCompleted(currentUtc);
+        var currentUtc = TodoItemTestData.CurrentUtc;
+        var todoItem = TodoItemTestData.CreateTodoItem();
+        todoItem.MarkAsCompleted(currentUtc).ShouldBeRight();
 
         // Act
         var result = todoItem.MarkAsCompleted(currentUtc.AddHours(1));
@@ -235,9 +295,9 @@ public class TodoItemTests : BaseTest
     public void MarkAsIncomplete_WithCompletedTodoItem_ShouldReturnSuccess()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
-        var todoItem = CreateValidTodoItem(currentUtc);
-        todoItem.MarkAsCompleted(currentUtc);
+        var currentUtc = TodoItemTestData.CurrentUtc;
+        var todoItem = TodoItemTestData.CreateTodoItem();
+        todoItem.MarkAsCompleted(currentUtc).ShouldBeRight();
 
         // Act
         var result = todoItem.MarkAsIncomplete();
@@ -254,8 +314,7 @@ public class TodoItemTests : BaseTest
     public void MarkAsIncomplete_WithIncompleteTodoItem_ShouldReturnError()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
-        var todoItem = CreateValidTodoItem(currentUtc);
+        var todoItem = TodoItemTestData.CreateTodoItem();
 
         // Act
         var result = todoItem.MarkAsIncomplete();
@@ -268,45 +327,34 @@ public class TodoItemTests : BaseTest
     public void Create_WithEmptyLabels_ShouldReturnSuccess()
     {
         // Arrange
-        var userId = TodoItemTestData.ValidUserId;
-        var title = "Task without labels";
-        var description = "Description";
-        var dueDateOnUtc = TodoItemTestData.ValidFutureDueDate;
+        var userId = TodoItemTestData.UserId;
+        var title = TodoItemTestData.Title.Value;
+        var description = TodoItemTestData.Description.Value;
+        var dueDateOnUtc = TodoItemTestData.FutureDueDate;
         var labels = TodoItemTestData.EmptyLabels;
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
+        var currentUtc = TodoItemTestData.CurrentUtc;
 
         // Act
-        var result = TodoItem.Create(userId, title, description, dueDateOnUtc, labels, currentUtc);
+        var result = TodoItem.Create(userId: userId,
+            title: title,
+            description: description,
+            dueDateOnUtc: dueDateOnUtc,
+            labels: labels,
+            currentUtc: currentUtc);
 
         // Assert
-        result.ShouldBeRight(todoItem =>
-        {
-            Assert.Empty(todoItem.Labels);
-        });
+        result.ShouldBeRight(todoItem => Assert.Empty(todoItem.Labels));
     }
 
     [Fact]
     public void Labels_ShouldBeReadOnly()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.ValidCurrentUtc;
-        var todoItem = CreateValidTodoItem(currentUtc);
+        var todoItem = TodoItemTestData.CreateTodoItem();
 
         // Act & Assert
         Assert.IsType<IReadOnlyList<string>>(todoItem.Labels, exactMatch: false);
-        Assert.ThrowsAny<NotSupportedException>(() => ((IList<string>)todoItem.Labels).Add("new-label"));
-    }
-
-    private static TodoItem CreateValidTodoItem(DateTimeOffset currentUtc)
-    {
-        return TodoItem.Create(
-            userId: TodoItemTestData.ValidUserId,
-            title: "Valid title",
-            description: "Valid description",
-            dueDateOnUtc: currentUtc.AddDays(1),
-            labels: TodoItemTestData.ValidLabels,
-            currentUtc: currentUtc
-        ).RightValueOrThrow();
+        Assert.ThrowsAny<NotSupportedException>(() =>
+            ((IList<string>)todoItem.Labels).Add("new-label"));
     }
 }
-

@@ -87,7 +87,8 @@ public class UserTests : BaseTest
 
         // Act & Assert
         Assert.IsType<IReadOnlyCollection<Role>>(user.Roles, exactMatch: false);
-        Assert.ThrowsAny<NotSupportedException>(() => ((ICollection<Role>)user.Roles).Add(Role.Administrator));
+        Assert.ThrowsAny<NotSupportedException>(() =>
+            ((ICollection<Role>)user.Roles).Add(Role.Administrator));
     }
 
     [Theory]
@@ -166,7 +167,7 @@ public class UserTests : BaseTest
             UserTestData.ValidUsername,
             UserTestData.PlainPassword);
         // Make user an admin
-        user.SetRoles([Role.Administrator], RoleChangeActor.System).RightValueOrThrow();
+        user.SetRoles([Role.Administrator], RoleChangeActor.System).ShouldBeRight();
 
         var newRoles = new List<Role> { Role.Member };
 
