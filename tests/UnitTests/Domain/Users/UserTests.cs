@@ -108,4 +108,52 @@ public class UserTests : BaseTest
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.User.EmptyRolesNotAllowed, left));
     }
+
+    [Fact]
+    public void SetRoles_WithTheCurrentRoles_ShouldReturnSuccessButMakeNoChanges()
+    {
+        // Arrange
+        var user = User.Create(
+            UserTestData.ValidEmail,
+            UserTestData.ValidUsername,
+            UserTestData.PlainPassword);
+        var currentRoles = user.Roles;
+
+        // Act
+        var result = user.SetRoles(roles: currentRoles, actor: RoleChangeActor.System);
+
+        // Assert
+        result.ShouldBeRight();
+        Assert.Equal(currentRoles, user.Roles);
+    }
+
+    [Theory]
+    [InlineData(RoleChangeActor.Privileged)]
+    [InlineData(RoleChangeActor.System)]
+    public void SetRoles_WithNewValidRolesAndValidActor_ShouldReturnSuccess(RoleChangeActor actor)
+    {
+        // Arrange
+        var user = User.Create(
+            UserTestData.ValidEmail,
+            UserTestData.ValidUsername,
+            UserTestData.PlainPassword);
+        var oldRoles = user.Roles;
+        var newRoles = new List<Role> { Role.Administrator, Role.Member };
+
+        // Act
+        var result = user.SetRoles(newRoles, actor);
+
+        // Assert
+        result.ShouldBeRight();
+        Assert.Equal(newRoles, user.Roles);
+
+        var roleChangedDomainEvent = AssertDomainEventWasPublished<UserRolesChangedDomainEvent>(user);
+        Assert.Equal(user.Id, roleChangedDomainEvent.UserId);
+        Assert.True(
+            roleChangedDomainEvent.OldRoleIds
+                .SetEquals(oldRoles.Select(r => r.Id)));
+        Assert.True(
+            roleChangedDomainEvent.NewRoleIds
+                .SetEquals(newRoles.Select(r => r.Id)));
+    }
 }
