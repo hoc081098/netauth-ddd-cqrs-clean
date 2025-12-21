@@ -9,6 +9,8 @@ public static class UserTestData
     public static readonly Username ValidUsername = Username.Create("valid-user").RightValueOrThrow();
     public static readonly Email ValidEmail = Email.Create("valid-user@gmail.com").RightValueOrThrow();
     public const string PlainPassword = "ValidPassword123@";
+
+    public static TheoryData<IReadOnlyList<Role>?> InvalidRoles => [null, []];
 }
 
 public class UserTests : BaseTest
@@ -88,10 +90,10 @@ public class UserTests : BaseTest
         Assert.ThrowsAny<NotSupportedException>(() => ((ICollection<Role>)user.Roles).Add(Role.Administrator));
     }
 
-    public static TheoryData<IReadOnlyList<Role>?> InvalidRoles => [null, []];
-
     [Theory]
-    [MemberData(nameof(InvalidRoles))]
+    [MemberData(
+        memberName: nameof(UserTestData.InvalidRoles),
+        MemberType = typeof(UserTestData))]
     public void SetRoles_WithNullOrEmptyRoles_ShouldReturnDomainError(IReadOnlyList<Role>? roles)
     {
         // Arrange
