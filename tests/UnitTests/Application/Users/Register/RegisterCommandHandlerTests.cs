@@ -66,4 +66,20 @@ public class RegisterCommandHandlerTests : IDisposable
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Username.NullOrEmpty, left));
     }
+
+    [Fact]
+    public async Task Handle_WithEmptyPassword_ShouldReturnDomainError()
+    {
+        // Arrange
+        var command = new RegisterCommand(
+            Username: UserTestData.ValidUsername.Value,
+            Email: UserTestData.ValidEmail.Value,
+            Password: "");
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Password.NullOrEmpty, left));
+    }
 }
