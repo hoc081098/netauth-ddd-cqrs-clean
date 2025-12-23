@@ -120,4 +120,40 @@ public class RegisterCommandHandlerTests
             .DidNotReceive()
             .Insert(Arg.Any<User>());
     }
+
+    [Fact]
+    public async Task Handle_WithValidData_ShouldCreateUserAndSave()
+    {
+        // Arrange
+        var command = new RegisterCommand(
+            Username: UserTestData.ValidUsername.Value,
+            Email: UserTestData.ValidEmail.Value,
+            Password: UserTestData.PlainPassword);
+
+        _passwordHasher.HashPassword(Arg.Any<Password>())
+            .Returns("hashed-password");
+
+        _userRepository
+            .IsEmailUniqueAsync(
+                email: Arg.Any<Email>(),
+                cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(true);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeRight(right => Assert.NotEqual(Guid.Empty, right.UserId));
+
+        await _userRepository.Received(1)
+            .IsEmailUniqueAsync(
+                email: Arg.Any<Email>(),
+                cancellationToken: Arg.Any<CancellationToken>());
+        _passwordHasher.Received(1)
+            .HashPassword(Arg.Any<Password>());
+        _userRepository.Received(1)
+            .Insert(Arg.Any<User>());
+        await _unitOfWork.Received(1)
+            .SaveChangesAsync();
+    }
 }
