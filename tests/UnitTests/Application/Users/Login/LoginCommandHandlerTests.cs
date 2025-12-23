@@ -60,6 +60,10 @@ public class LoginCommandHandlerTests
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Email.InvalidFormat, left));
+
+        await _userRepository
+            .DidNotReceiveWithAnyArgs()
+            .GetByEmailAsync(default, default);
     }
 
     [Fact]
