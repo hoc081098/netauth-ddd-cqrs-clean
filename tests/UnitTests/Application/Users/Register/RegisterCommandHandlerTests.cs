@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using LanguageExt.UnitTesting;
 using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;
@@ -9,8 +8,7 @@ using NSubstitute;
 
 namespace NetAuth.UnitTests.Application.Users.Register;
 
-[SuppressMessage("Usage", "CA1816:Dispose methods should call SuppressFinalize")]
-public class RegisterCommandHandlerTests : IDisposable
+public class RegisterCommandHandlerTests
 {
     private readonly RegisterCommandHandler _handler;
     private readonly IUserRepository _userRepository;
@@ -30,10 +28,11 @@ public class RegisterCommandHandlerTests : IDisposable
         );
     }
 
-    public void Dispose()
-    {
-        // Tear down
-    }
+    // Implement IDisposable if needed
+    // public void Dispose()
+    // {
+    //     // Tear down
+    // }
 
     [Fact]
     public async Task Handle_WithInvalidFormatEmail_ShouldReturnDomainError()
@@ -49,6 +48,9 @@ public class RegisterCommandHandlerTests : IDisposable
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Email.InvalidFormat, left));
+        await _userRepository.DidNotReceive()
+            .IsEmailUniqueAsync(email: Arg.Any<Email>(),
+                cancellationToken: Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -65,6 +67,9 @@ public class RegisterCommandHandlerTests : IDisposable
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Username.NullOrEmpty, left));
+        await _userRepository.DidNotReceive()
+            .IsEmailUniqueAsync(email: Arg.Any<Email>(),
+                cancellationToken: Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -81,6 +86,10 @@ public class RegisterCommandHandlerTests : IDisposable
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Password.NullOrEmpty, left));
+        await _userRepository
+            .DidNotReceive()
+            .IsEmailUniqueAsync(email: Arg.Any<Email>(),
+                cancellationToken: Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -104,8 +113,11 @@ public class RegisterCommandHandlerTests : IDisposable
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.User.DuplicateEmail, left));
         await _userRepository
-            .Received(requiredNumberOfCalls: 1)
+            .Received(1)
             .IsEmailUniqueAsync(email: Arg.Any<Email>(),
                 cancellationToken: Arg.Any<CancellationToken>());
+        _userRepository
+            .DidNotReceive()
+            .Insert(Arg.Any<User>());
     }
 }
