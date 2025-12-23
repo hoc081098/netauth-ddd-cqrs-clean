@@ -63,7 +63,7 @@ public class LoginCommandHandlerTests
 
         await _userRepository
             .DidNotReceiveWithAnyArgs()
-            .GetByEmailAsync(default, default);
+            .GetByEmailAsync(null!, CancellationToken.None);
     }
 
     [Fact]
