@@ -152,10 +152,15 @@ public class RegisterCommandHandlerTests
             .IsEmailUniqueAsync(
                 email: Arg.Any<Email>(),
                 cancellationToken: Arg.Any<CancellationToken>());
+
         _passwordHasher.Received(1)
             .HashPassword(Arg.Any<Password>());
+
         _userRepository.Received(1)
-            .Insert(Arg.Any<User>());
+            .Insert(Arg.Is<User>(u =>
+                u.Email == UserTestData.ValidEmail &&
+                u.Username == UserTestData.ValidUsername));
+
         await _unitOfWork.Received(1)
             .SaveChangesAsync();
     }
