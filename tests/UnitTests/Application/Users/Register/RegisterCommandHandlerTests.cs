@@ -36,7 +36,7 @@ public class RegisterCommandHandlerTests : IDisposable
     }
 
     [Fact]
-    public async Task Handle_WithInvalidEmail_ShouldReturnDomainError()
+    public async Task Handle_WithInvalidFormatEmail_ShouldReturnDomainError()
     {
         // Arrange
         var command = new RegisterCommand(
@@ -49,5 +49,21 @@ public class RegisterCommandHandlerTests : IDisposable
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Email.InvalidFormat, left));
+    }
+
+    [Fact]
+    public async Task Handle_WithEmptyUsername_ShouldReturnDomainError()
+    {
+        // Arrange
+        var command = new RegisterCommand(
+            Username: "",
+            Email: UserTestData.ValidEmail.Value,
+            Password: UserTestData.PlainPassword);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Username.NullOrEmpty, left));
     }
 }
