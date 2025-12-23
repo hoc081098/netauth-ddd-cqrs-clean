@@ -139,6 +139,9 @@ public class RegisterCommandHandlerTests
                 cancellationToken: Arg.Any<CancellationToken>())
             .Returns(true);
 
+        _unitOfWork.SaveChangesAsync()
+            .Returns(Task.FromResult(1));
+
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
