@@ -8,6 +8,8 @@ using NetAuth.UnitTests.Application.Abstractions.Common;
 using NetAuth.UnitTests.Domain.Users;
 using NSubstitute;
 
+// ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
+
 namespace NetAuth.UnitTests.Application.Users.Login;
 
 public class LoginCommandHandlerTests
@@ -125,5 +127,73 @@ public class LoginCommandHandlerTests
 
         _passwordHashChecker.Received(1)
             .IsMatch(Arg.Any<string>(), command.Password);
+    }
+
+    [Fact]
+    public async Task Handle_WithValidCredentials_ShouldReturnTokensAndPersistRefreshToken()
+    {
+        // Arrange
+        var email = UserTestData.ValidEmail;
+
+        var user = User.Create(
+            email: email,
+            username: UserTestData.ValidUsername,
+            passwordHash: UserTestData.PlainPassword // Use plain password as hash for testing
+        );
+
+        var command = new LoginCommand(
+            Email: email.Value,
+            Password: UserTestData.PlainPassword,
+            DeviceId: "device-123");
+
+        const string expectedAccessToken = "access-token";
+        const string expectedRawRefreshToken = "raw";
+
+        _userRepository.GetByEmailAsync(
+                email: Arg.Any<Email>(),
+                cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<User?>(user));
+
+        _passwordHashChecker.IsMatch(passwordHash: Arg.Any<string>(), providedPassword: command.Password)
+            .Returns(true);
+
+        _jwtProvider.Create(user)
+            .Returns(expectedAccessToken);
+
+        _refreshTokenGenerator.GenerateRefreshToken()
+            .Returns(new RefreshTokenResult(RawToken: expectedRawRefreshToken, TokenHash: "hash"));
+
+        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeRight(right =>
+        {
+            Assert.Equal(expectedAccessToken, right.AccessToken);
+            Assert.Equal(expectedRawRefreshToken, right.RefreshToken);
+        });
+
+        await _userRepository.Received(1)
+            .GetByEmailAsync(
+                email: Arg.Is<Email>(e => e == email),
+                cancellationToken: Arg.Any<CancellationToken>());
+
+        _passwordHashChecker.Received(1)
+            .IsMatch(Arg.Any<string>(), command.Password);
+
+        _jwtProvider.Received(1)
+            .Create(user);
+
+        _refreshTokenGenerator.Received(1)
+            .GenerateRefreshToken();
+
+        _refreshTokenRepository.Received(1)
+            .Insert(Arg.Is<RefreshToken>(rt => rt.UserId == user.Id));
+
+        await _unitOfWork.Received(1)
+            .SaveChangesAsync(Arg.Any<CancellationToken>());
     }
 }
