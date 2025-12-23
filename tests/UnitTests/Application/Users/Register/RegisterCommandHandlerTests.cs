@@ -82,4 +82,30 @@ public class RegisterCommandHandlerTests : IDisposable
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.Password.NullOrEmpty, left));
     }
+
+    [Fact]
+    public async Task Handle_WithDuplicateEmail_ShouldReturnDomainError()
+    {
+        // Arrange
+        var command = new RegisterCommand(
+            Username: UserTestData.ValidUsername.Value,
+            Email: UserTestData.ValidEmail.Value,
+            Password: UserTestData.PlainPassword);
+
+        _userRepository
+            .IsEmailUniqueAsync(
+                email: Arg.Any<Email>(),
+                cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(false);
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.User.DuplicateEmail, left));
+        await _userRepository
+            .Received(requiredNumberOfCalls: 1)
+            .IsEmailUniqueAsync(email: Arg.Any<Email>(),
+                cancellationToken: Arg.Any<CancellationToken>());
+    }
 }
