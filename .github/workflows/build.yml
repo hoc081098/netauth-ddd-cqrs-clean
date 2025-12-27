@@ -30,4 +30,9 @@ jobs:
         run: dotnet build --configuration Release --no-restore
 
       - name: Test 🧪
-        run: dotnet test --configuration Release --no-build --verbosity normal
+        run: dotnet test --configuration Release --no-build --verbosity normal /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+
+      - name: Codecov
+        uses: codecov/codecov-action@v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
