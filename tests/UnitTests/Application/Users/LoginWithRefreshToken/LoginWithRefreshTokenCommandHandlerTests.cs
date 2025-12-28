@@ -59,7 +59,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenRefreshTokenDoesNotExist_ShouldReturnDomainError()
+    public async Task Handle_WhenRefreshTokenDoesNotExist_ShouldReturnInvalidError()
     {
         // Arrange
         _refreshTokenGenerator
@@ -90,7 +90,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenRefreshTokenStatusIsNotActive_ShouldReturnDomainError()
+    public async Task Handle_WhenRefreshTokenStatusIsNotActive_ShouldReturnRevokedError()
     {
         // Arrange
         var refreshToken = RefreshTokenTestData.CreateRefreshToken();
@@ -162,7 +162,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenRefreshTokenIsExpired_ShouldReturnDomainError()
+    public async Task Handle_WhenRefreshTokenIsExpiredOnUsage_ShouldReturnExpiredError()
     {
         // Arrange
         var refreshToken = RefreshTokenTestData.CreateRefreshToken(
