@@ -14,8 +14,13 @@ namespace NetAuth.UnitTests.Application.Users.Login;
 
 public class LoginCommandHandlerTests
 {
+    // Fixed point in time for consistent test results
+    private static readonly DateTimeOffset Now = DateTimeOffset.Now;
+
+    // Subject under test (SUT)
     private readonly LoginCommandHandler _handler;
 
+    // Dependencies
     private readonly IUserRepository _userRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IPasswordHashChecker _passwordHashChecker;
@@ -24,8 +29,13 @@ public class LoginCommandHandlerTests
     private readonly IClock _clock;
     private readonly IUnitOfWork _unitOfWork;
 
-    private static readonly DateTimeOffset Now = DateTimeOffset.Now;
-    private static readonly Guid DeviceId = Guid.NewGuid();
+    // Test data
+    private static readonly Email Email = UserTestData.ValidEmail;
+
+    private static readonly LoginCommand Command = new(
+        Email: Email.Value,
+        Password: UserTestData.PlainPassword,
+        DeviceId: Guid.NewGuid());
 
     public LoginCommandHandlerTests()
     {
@@ -51,10 +61,7 @@ public class LoginCommandHandlerTests
     public async Task Handle_WithInvalidFormatEmail_ShouldReturnDomainError()
     {
         // Arrange
-        var command = new LoginCommand(
-            Email: "invalid-email",
-            Password: UserTestData.PlainPassword,
-            DeviceId: DeviceId);
+        var command = Command with { Email = "invalid-email" };
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -71,26 +78,20 @@ public class LoginCommandHandlerTests
     public async Task Handle_WhenUserDoesNotExist_ShouldReturnInvalidCredentialsError()
     {
         // Arrange
-        var validEmail = UserTestData.ValidEmail;
-        var command = new LoginCommand(
-            Email: validEmail.Value,
-            Password: UserTestData.PlainPassword,
-            DeviceId: DeviceId);
-
         _userRepository.GetByEmailAsync(
                 email: Arg.Any<Email>(),
                 cancellationToken: Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<User?>(null));
 
         // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(Command, CancellationToken.None);
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.User.InvalidCredentials, left));
 
         await _userRepository.Received(1)
             .GetByEmailAsync(
-                email: Arg.Is<Email>(email => email == validEmail),
+                email: Arg.Is<Email>(email => email == Email),
                 cancellationToken: Arg.Any<CancellationToken>());
     }
 
@@ -98,58 +99,44 @@ public class LoginCommandHandlerTests
     public async Task Handle_WhenPasswordIsIncorrect_ShouldReturnInvalidCredentialsError()
     {
         // Arrange
-        var email = UserTestData.ValidEmail;
-
         var user = User.Create(
-            email: email,
+            email: Email,
             username: UserTestData.ValidUsername,
             passwordHash: UserTestData.PlainPassword // Use plain password as hash for testing
         );
-
-        var command = new LoginCommand(
-            Email: email.Value,
-            Password: UserTestData.PlainPassword,
-            DeviceId: DeviceId);
 
         _userRepository.GetByEmailAsync(
                 email: Arg.Any<Email>(),
                 cancellationToken: Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<User?>(user));
 
-        _passwordHashChecker.IsMatch(passwordHash: Arg.Any<string>(), providedPassword: command.Password)
+        _passwordHashChecker.IsMatch(passwordHash: Arg.Any<string>(), providedPassword: Command.Password)
             .Returns(false);
 
         // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(Command, CancellationToken.None);
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.User.InvalidCredentials, left));
 
         await _userRepository.Received(1)
             .GetByEmailAsync(
-                email: Arg.Is<Email>(e => e == email),
+                email: Arg.Is<Email>(e => e == Email),
                 cancellationToken: Arg.Any<CancellationToken>());
 
         _passwordHashChecker.Received(1)
-            .IsMatch(Arg.Any<string>(), command.Password);
+            .IsMatch(Arg.Any<string>(), Command.Password);
     }
 
     [Fact]
     public async Task Handle_WithValidCredentials_ShouldReturnTokensAndPersistRefreshToken()
     {
         // Arrange
-        var email = UserTestData.ValidEmail;
-
         var user = User.Create(
-            email: email,
+            email: Email,
             username: UserTestData.ValidUsername,
             passwordHash: UserTestData.PlainPassword // Use plain password as hash for testing
         );
-
-        var command = new LoginCommand(
-            Email: email.Value,
-            Password: UserTestData.PlainPassword,
-            DeviceId: DeviceId);
 
         const string expectedAccessToken = "access-token";
         const string expectedRawRefreshToken = "raw";
@@ -159,7 +146,7 @@ public class LoginCommandHandlerTests
                 cancellationToken: Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<User?>(user));
 
-        _passwordHashChecker.IsMatch(passwordHash: Arg.Any<string>(), providedPassword: command.Password)
+        _passwordHashChecker.IsMatch(passwordHash: Arg.Any<string>(), providedPassword: Command.Password)
             .Returns(true);
 
         _jwtProvider.Create(user)
@@ -172,7 +159,7 @@ public class LoginCommandHandlerTests
             .Returns(Task.FromResult(1));
 
         // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(Command, CancellationToken.None);
 
         // Assert
         result.ShouldBeRight(right =>
@@ -183,11 +170,11 @@ public class LoginCommandHandlerTests
 
         await _userRepository.Received(1)
             .GetByEmailAsync(
-                email: Arg.Is<Email>(e => e == email),
+                email: Arg.Is<Email>(e => e == Email),
                 cancellationToken: Arg.Any<CancellationToken>());
 
         _passwordHashChecker.Received(1)
-            .IsMatch(Arg.Any<string>(), command.Password);
+            .IsMatch(Arg.Any<string>(), Command.Password);
 
         _jwtProvider.Received(1)
             .Create(user);
