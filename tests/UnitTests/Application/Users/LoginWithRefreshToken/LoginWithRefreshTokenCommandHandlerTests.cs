@@ -160,4 +160,56 @@ public class LoginWithRefreshTokenCommandHandlerTests
             Assert.Empty(token.DomainEvents.OfType<RefreshTokenChainCompromisedDomainEvent>());
         });
     }
+
+    [Fact]
+    public async Task Handle_WhenRefreshTokenIsExpired_ShouldReturnDomainError()
+    {
+        // Arrange
+        var refreshToken = RefreshTokenTestData.CreateRefreshToken(
+            expiresOnUtc: Now.AddMinutes(-100) // Already expired
+        );
+        Assert.True(refreshToken.IsExpired(Now));
+
+        _refreshTokenGenerator
+            .ComputeTokenHash(rawToken: Command.RefreshToken)
+            .Returns(refreshToken.TokenHash);
+
+        _refreshTokenRepository
+            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
+                cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<RefreshToken?>(refreshToken));
+
+        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
+            .Returns(_transaction);
+
+        _transaction.CommitAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _handler.Handle(Command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Expired, left));
+
+        await _unitOfWork.Received(1)
+            .BeginTransactionAsync(Arg.Any<CancellationToken>());
+
+        await _refreshTokenRepository.Received(1)
+            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
+                Arg.Any<CancellationToken>());
+
+        await _unitOfWork.Received(1)
+            .SaveChangesAsync(Arg.Any<CancellationToken>());
+
+        await _transaction.Received(1)
+            .CommitAsync(Arg.Any<CancellationToken>());
+
+        // Assert the token is marked as revoked
+        Assert.Equal(RefreshTokenStatus.Revoked, refreshToken.Status);
+        Assert.Equal(Now, refreshToken.RevokedAt);
+        Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenExpiredUsageDomainEvent>());
+    }
 }
