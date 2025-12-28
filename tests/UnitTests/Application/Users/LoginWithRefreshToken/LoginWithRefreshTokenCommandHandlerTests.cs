@@ -16,7 +16,8 @@ namespace NetAuth.UnitTests.Application.Users.LoginWithRefreshToken;
 public class LoginWithRefreshTokenCommandHandlerTests
 {
     // Fixed point in time for consistent test results
-    private static readonly DateTimeOffset UtcNow = DateTimeOffset.UtcNow;
+    private static readonly DateTimeOffset UtcNow =
+        new(2025, 01, 01, 0, 0, 0, TimeSpan.Zero);
 
     // Test data constants
     private const string RefreshTokenRaw = "some-refresh-token";

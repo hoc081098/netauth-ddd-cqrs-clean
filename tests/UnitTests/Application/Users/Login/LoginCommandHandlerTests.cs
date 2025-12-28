@@ -15,7 +15,8 @@ namespace NetAuth.UnitTests.Application.Users.Login;
 public class LoginCommandHandlerTests
 {
     // Fixed point in time for consistent test results
-    private static readonly DateTimeOffset UtcNow = DateTimeOffset.UtcNow;
+    private static readonly DateTimeOffset UtcNow =
+        new(2025, 01, 01, 0, 0, 0, TimeSpan.Zero);
 
     // Subject under test (SUT)
     private readonly LoginCommandHandler _handler;
