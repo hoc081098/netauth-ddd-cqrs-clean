@@ -266,4 +266,91 @@ public class LoginWithRefreshTokenCommandHandlerTests
         Assert.Equal(Now, refreshToken.RevokedAt);
         Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenDeviceMismatchDetectedDomainEvent>());
     }
+
+    [Fact]
+    public async Task Handle_WithValidData_ShouldReturnSuccess()
+    {
+        // Arrange
+        const string newAccessToken = "new-access-token";
+        const string newRawRefreshToken = "new-raw-refresh-token";
+        const string newRefreshTokenHash = "new-refresh-token-hash";
+
+        var refreshTokenExpiration = TimeSpan.FromDays(7);
+        var refreshToken = RefreshTokenTestData.CreateRefreshToken(
+            deviceId: DeviceId,
+            expiresOnUtc: Now.AddMinutes(100).ToUniversalTime() // Ensure token is not expired
+        );
+        Assert.False(refreshToken.IsExpired(Now));
+
+        _refreshTokenGenerator
+            .ComputeTokenHash(rawToken: Command.RefreshToken)
+            .Returns(refreshToken.TokenHash);
+
+        _refreshTokenRepository
+            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
+                cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<RefreshToken?>(refreshToken));
+
+        _jwtProvider.Create(refreshToken.User)
+            .Returns(newAccessToken);
+
+        _refreshTokenGenerator.GenerateRefreshToken()
+            .Returns(
+                new RefreshTokenResult(RawToken: newRawRefreshToken,
+                    TokenHash: newRefreshTokenHash));
+
+        _refreshTokenGenerator.RefreshTokenExpiration
+            .Returns(refreshTokenExpiration);
+
+        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
+            .Returns(_transaction);
+
+        _transaction.CommitAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _handler.Handle(Command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeRight(right =>
+        {
+            Assert.Equal(newAccessToken, right.AccessToken);
+            Assert.Equal(newRawRefreshToken, right.RefreshToken);
+        });
+
+        await _unitOfWork.Received(1)
+            .BeginTransactionAsync(Arg.Any<CancellationToken>());
+
+        await _refreshTokenRepository.Received(1)
+            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
+                Arg.Any<CancellationToken>());
+
+        _jwtProvider.Received(1)
+            .Create(refreshToken.User);
+
+        _refreshTokenGenerator.Received(1)
+            .GenerateRefreshToken();
+
+        _refreshTokenRepository.Received(1)
+            .Insert(
+                Arg.Is<RefreshToken>(rt =>
+                    rt.TokenHash == newRefreshTokenHash &&
+                    rt.ExpiresOnUtc == Now.Add(refreshTokenExpiration) &&
+                    rt.UserId == refreshToken.UserId &&
+                    rt.DeviceId == DeviceId &&
+                    rt.Status == RefreshTokenStatus.Active));
+
+        await _unitOfWork.Received(1)
+            .SaveChangesAsync(Arg.Any<CancellationToken>());
+
+        await _transaction.Received(1)
+            .CommitAsync(Arg.Any<CancellationToken>());
+
+        // Assert the old token is marked revoked and a new token is created
+        Assert.Equal(RefreshTokenStatus.Revoked, refreshToken.Status);
+        Assert.Equal(Now, refreshToken.RevokedAt);
+    }
 }
