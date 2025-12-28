@@ -1,7 +1,6 @@
 using LanguageExt.UnitTesting;
 using Microsoft.EntityFrameworkCore.Storage;
 using NetAuth.Application.Abstractions.Authentication;
-using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.Users.LoginWithRefreshToken;
 using NetAuth.Domain.Users;
@@ -19,59 +18,117 @@ public class LoginWithRefreshTokenCommandHandlerTests
     // Fixed point in time for consistent test results
     private static readonly DateTimeOffset Now = DateTimeOffset.Now;
 
-    // Subject under test (SUT)
-    private readonly LoginWithRefreshTokenCommandHandler _handler;
-
-    // Dependencies
-    private readonly IRefreshTokenRepository _refreshTokenRepository;
-    private readonly IJwtProvider _jwtProvider;
-    private readonly IRefreshTokenGenerator _refreshTokenGenerator;
-    private readonly IClock _clock;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IDbContextTransaction _transaction;
-
-    // Test data
+    // Test data constants
     private const string RefreshTokenRaw = "some-refresh-token";
     private const string HashedRefreshToken = "hashed-refresh-token";
-
     private static readonly Guid DeviceId = Guid.NewGuid();
 
     private static readonly LoginWithRefreshTokenCommand Command = new(
         RefreshToken: RefreshTokenRaw,
         DeviceId: DeviceId);
 
+    // Subject under test (SUT)
+    private readonly LoginWithRefreshTokenCommandHandler _handler;
+
+    // Dependencies (mocks)
+    private readonly IRefreshTokenRepository _refreshTokenRepository;
+    private readonly IJwtProvider _jwtProvider;
+    private readonly IRefreshTokenGenerator _refreshTokenGenerator;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDbContextTransaction _transaction;
+
     public LoginWithRefreshTokenCommandHandlerTests()
     {
-        // Set up
+        // Initialize mocks
         _refreshTokenGenerator = Substitute.For<IRefreshTokenGenerator>();
         _jwtProvider = Substitute.For<IJwtProvider>();
         _refreshTokenRepository = Substitute.For<IRefreshTokenRepository>();
-        _clock = FixedClock.Create(Now);
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _transaction = Substitute.For<IDbContextTransaction>();
+
+        var clock = FixedClock.Create(Now);
 
         _handler = new LoginWithRefreshTokenCommandHandler(
             _refreshTokenRepository,
             _jwtProvider,
             _refreshTokenGenerator,
-            _clock,
+            clock,
             _unitOfWork);
+
+        // Setup common mocks
+        SetupCommonMocks();
+    }
+
+    private void SetupCommonMocks()
+    {
+        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
+            .Returns(_transaction);
+
+        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        _transaction.CommitAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+    }
+
+    private void SetupTokenHashComputation(string tokenHash)
+    {
+        _refreshTokenGenerator
+            .ComputeTokenHash(rawToken: Command.RefreshToken)
+            .Returns(tokenHash);
+    }
+
+    private void SetupGetRefreshToken(RefreshToken? refreshToken)
+    {
+        var tokenHash = refreshToken?.TokenHash ?? HashedRefreshToken;
+        SetupTokenHashComputation(tokenHash);
+
+        _refreshTokenRepository
+            .GetByTokenHashAsync(tokenHash, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(refreshToken));
+    }
+
+    private static void AssertTransactionFlow(
+        IUnitOfWork unitOfWork,
+        IDbContextTransaction transaction,
+        bool shouldCommit = true)
+    {
+        unitOfWork.Received(1).BeginTransactionAsync(Arg.Any<CancellationToken>());
+
+        if (shouldCommit)
+        {
+            unitOfWork.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+            transaction.Received(1).CommitAsync(Arg.Any<CancellationToken>());
+        }
+        else
+        {
+            unitOfWork.DidNotReceiveWithAnyArgs().SaveChangesAsync(Arg.Any<CancellationToken>());
+            transaction.DidNotReceiveWithAnyArgs().CommitAsync(CancellationToken.None);
+        }
+    }
+
+    private static void AssertTokenMarkedAsCompromised(
+        RefreshToken refreshToken,
+        Type expectedDomainEventType)
+    {
+        Assert.Equal(RefreshTokenStatus.Compromised, refreshToken.Status);
+        Assert.Equal(Now, refreshToken.RevokedAt);
+
+        var domainEvent = Assert.Single(refreshToken.DomainEvents, e => e.GetType() == expectedDomainEventType);
+        Assert.NotNull(domainEvent);
+    }
+
+    private static void AssertTokenMarkedAsRevoked(RefreshToken refreshToken)
+    {
+        Assert.Equal(RefreshTokenStatus.Revoked, refreshToken.Status);
+        Assert.Equal(Now, refreshToken.RevokedAt);
     }
 
     [Fact]
     public async Task Handle_WhenRefreshTokenDoesNotExist_ShouldReturnInvalidError()
     {
         // Arrange
-        _refreshTokenGenerator
-            .ComputeTokenHash(rawToken: Command.RefreshToken)
-            .Returns(HashedRefreshToken);
-
-        _refreshTokenRepository
-            .GetByTokenHashAsync(HashedRefreshToken, Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<RefreshToken?>(null));
-
-        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
-            .Returns(_transaction);
+        SetupGetRefreshToken(refreshToken: null);
 
         // Act
         var result = await _handler.Handle(Command, CancellationToken.None);
@@ -79,14 +136,10 @@ public class LoginWithRefreshTokenCommandHandlerTests
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Invalid, left));
 
-        await _unitOfWork.Received(1)
-            .BeginTransactionAsync(Arg.Any<CancellationToken>());
-
         await _refreshTokenRepository.Received(1)
             .GetByTokenHashAsync(HashedRefreshToken, Arg.Any<CancellationToken>());
 
-        await _transaction.DidNotReceiveWithAnyArgs()
-            .CommitAsync(CancellationToken.None);
+        AssertTransactionFlow(_unitOfWork, _transaction, shouldCommit: false);
     }
 
     [Fact]
@@ -99,29 +152,16 @@ public class LoginWithRefreshTokenCommandHandlerTests
         // Create additional active tokens that should be marked as compromised
         var activeToken1 = RefreshTokenTestData.CreateRefreshToken(userId: refreshToken.UserId);
         var activeToken2 = RefreshTokenTestData.CreateRefreshToken(userId: refreshToken.UserId);
-        var activeTokensInChain = new List<RefreshToken> { activeToken1, activeToken2 };
+        IReadOnlyList<RefreshToken> activeTokensInChain = [activeToken1, activeToken2];
 
-        _refreshTokenGenerator
-            .ComputeTokenHash(rawToken: Command.RefreshToken)
-            .Returns(refreshToken.TokenHash);
+        SetupGetRefreshToken(refreshToken);
 
         _refreshTokenRepository
-            .GetByTokenHashAsync(refreshToken.TokenHash, Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<RefreshToken?>(refreshToken));
-
-        _refreshTokenRepository
-            .GetNonExpiredActiveTokensByUserIdAsync(refreshToken.UserId, Arg.Any<DateTimeOffset>(),
+            .GetNonExpiredActiveTokensByUserIdAsync(
+                refreshToken.UserId,
+                Now,
                 Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<IReadOnlyList<RefreshToken>>(activeTokensInChain));
-
-        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(1));
-
-        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
-            .Returns(_transaction);
-
-        _transaction.CommitAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
+            .Returns(Task.FromResult(activeTokensInChain));
 
         // Act
         var result = await _handler.Handle(Command, CancellationToken.None);
@@ -129,29 +169,24 @@ public class LoginWithRefreshTokenCommandHandlerTests
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Revoked, left));
 
-        await _unitOfWork.Received(1)
-            .BeginTransactionAsync(Arg.Any<CancellationToken>());
-
         await _refreshTokenRepository.Received(1)
             .GetByTokenHashAsync(refreshToken.TokenHash, Arg.Any<CancellationToken>());
 
         await _refreshTokenRepository.Received(1)
-            .GetNonExpiredActiveTokensByUserIdAsync(refreshToken.UserId, Arg.Any<DateTimeOffset>(),
+            .GetNonExpiredActiveTokensByUserIdAsync(
+                refreshToken.UserId,
+                Now,
                 Arg.Any<CancellationToken>());
 
-        await _unitOfWork.Received(1)
-            .SaveChangesAsync(Arg.Any<CancellationToken>());
+        AssertTransactionFlow(_unitOfWork, _transaction, shouldCommit: true);
 
-        await _transaction.Received(1)
-            .CommitAsync(Arg.Any<CancellationToken>());
-
-        // Assert the reused token is marked as compromised
+        // Assert the reused token is marked as compromised with chain event
         Assert.Equal(RefreshTokenStatus.Compromised, refreshToken.Status);
         Assert.Equal(Now, refreshToken.RevokedAt);
         Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenReuseDetectedDomainEvent>());
         Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenChainCompromisedDomainEvent>());
 
-        // Assert all tokens in the chain are also marked as compromised
+        // Assert all tokens in the chain are also marked as compromised (without chain event)
         Assert.All(activeTokensInChain, static token =>
         {
             Assert.Equal(RefreshTokenStatus.Compromised, token.Status);
@@ -170,23 +205,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
         );
         Assert.True(refreshToken.IsExpired(Now));
 
-        _refreshTokenGenerator
-            .ComputeTokenHash(rawToken: Command.RefreshToken)
-            .Returns(refreshToken.TokenHash);
-
-        _refreshTokenRepository
-            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
-                cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<RefreshToken?>(refreshToken));
-
-        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(1));
-
-        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
-            .Returns(_transaction);
-
-        _transaction.CommitAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
+        SetupGetRefreshToken(refreshToken);
 
         // Act
         var result = await _handler.Handle(Command, CancellationToken.None);
@@ -194,22 +213,13 @@ public class LoginWithRefreshTokenCommandHandlerTests
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Expired, left));
 
-        await _unitOfWork.Received(1)
-            .BeginTransactionAsync(Arg.Any<CancellationToken>());
-
         await _refreshTokenRepository.Received(1)
-            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
-                Arg.Any<CancellationToken>());
+            .GetByTokenHashAsync(refreshToken.TokenHash, Arg.Any<CancellationToken>());
 
-        await _unitOfWork.Received(1)
-            .SaveChangesAsync(Arg.Any<CancellationToken>());
-
-        await _transaction.Received(1)
-            .CommitAsync(Arg.Any<CancellationToken>());
+        AssertTransactionFlow(_unitOfWork, _transaction, shouldCommit: true);
 
         // Assert the token is marked as revoked
-        Assert.Equal(RefreshTokenStatus.Revoked, refreshToken.Status);
-        Assert.Equal(Now, refreshToken.RevokedAt);
+        AssertTokenMarkedAsRevoked(refreshToken);
         Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenExpiredUsageDomainEvent>());
     }
 
@@ -224,23 +234,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
         );
         Assert.False(refreshToken.IsExpired(Now));
 
-        _refreshTokenGenerator
-            .ComputeTokenHash(rawToken: Command.RefreshToken)
-            .Returns(refreshToken.TokenHash);
-
-        _refreshTokenRepository
-            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
-                cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<RefreshToken?>(refreshToken));
-
-        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(1));
-
-        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
-            .Returns(_transaction);
-
-        _transaction.CommitAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
+        SetupGetRefreshToken(refreshToken);
 
         // Act
         var result = await _handler.Handle(Command, CancellationToken.None);
@@ -248,23 +242,13 @@ public class LoginWithRefreshTokenCommandHandlerTests
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.InvalidDevice, left));
 
-        await _unitOfWork.Received(1)
-            .BeginTransactionAsync(Arg.Any<CancellationToken>());
-
         await _refreshTokenRepository.Received(1)
-            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
-                Arg.Any<CancellationToken>());
+            .GetByTokenHashAsync(refreshToken.TokenHash, Arg.Any<CancellationToken>());
 
-        await _unitOfWork.Received(1)
-            .SaveChangesAsync(Arg.Any<CancellationToken>());
-
-        await _transaction.Received(1)
-            .CommitAsync(Arg.Any<CancellationToken>());
+        AssertTransactionFlow(_unitOfWork, _transaction, shouldCommit: true);
 
         // Assert the token is marked as compromised
-        Assert.Equal(RefreshTokenStatus.Compromised, refreshToken.Status);
-        Assert.Equal(Now, refreshToken.RevokedAt);
-        Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenDeviceMismatchDetectedDomainEvent>());
+        AssertTokenMarkedAsCompromised(refreshToken, typeof(RefreshTokenDeviceMismatchDetectedDomainEvent));
     }
 
     [Fact]
@@ -282,34 +266,18 @@ public class LoginWithRefreshTokenCommandHandlerTests
         );
         Assert.False(refreshToken.IsExpired(Now));
 
-        _refreshTokenGenerator
-            .ComputeTokenHash(rawToken: Command.RefreshToken)
-            .Returns(refreshToken.TokenHash);
-
-        _refreshTokenRepository
-            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
-                cancellationToken: Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<RefreshToken?>(refreshToken));
+        SetupGetRefreshToken(refreshToken);
 
         _jwtProvider.Create(refreshToken.User)
             .Returns(newAccessToken);
 
         _refreshTokenGenerator.GenerateRefreshToken()
-            .Returns(
-                new RefreshTokenResult(RawToken: newRawRefreshToken,
-                    TokenHash: newRefreshTokenHash));
+            .Returns(new RefreshTokenResult(
+                RawToken: newRawRefreshToken,
+                TokenHash: newRefreshTokenHash));
 
         _refreshTokenGenerator.RefreshTokenExpiration
             .Returns(refreshTokenExpiration);
-
-        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult(1));
-
-        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
-            .Returns(_transaction);
-
-        _transaction.CommitAsync(Arg.Any<CancellationToken>())
-            .Returns(Task.CompletedTask);
 
         // Act
         var result = await _handler.Handle(Command, CancellationToken.None);
@@ -321,12 +289,8 @@ public class LoginWithRefreshTokenCommandHandlerTests
             Assert.Equal(newRawRefreshToken, right.RefreshToken);
         });
 
-        await _unitOfWork.Received(1)
-            .BeginTransactionAsync(Arg.Any<CancellationToken>());
-
         await _refreshTokenRepository.Received(1)
-            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
-                Arg.Any<CancellationToken>());
+            .GetByTokenHashAsync(refreshToken.TokenHash, Arg.Any<CancellationToken>());
 
         _jwtProvider.Received(1)
             .Create(refreshToken.User);
@@ -343,14 +307,9 @@ public class LoginWithRefreshTokenCommandHandlerTests
                     rt.DeviceId == DeviceId &&
                     rt.Status == RefreshTokenStatus.Active));
 
-        await _unitOfWork.Received(1)
-            .SaveChangesAsync(Arg.Any<CancellationToken>());
-
-        await _transaction.Received(1)
-            .CommitAsync(Arg.Any<CancellationToken>());
+        AssertTransactionFlow(_unitOfWork, _transaction, shouldCommit: true);
 
         // Assert the old token is marked revoked and a new token is created
-        Assert.Equal(RefreshTokenStatus.Revoked, refreshToken.Status);
-        Assert.Equal(Now, refreshToken.RevokedAt);
+        AssertTokenMarkedAsRevoked(refreshToken);
     }
 }
