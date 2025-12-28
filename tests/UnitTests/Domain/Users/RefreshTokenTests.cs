@@ -20,12 +20,16 @@ public static class RefreshTokenTestData
     public static readonly DateTimeOffset PastExpiration =
         new(year: 2024, month: 12, day: 25, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
 
-    public static RefreshToken CreateRefreshToken() =>
+    public static RefreshToken CreateRefreshToken(
+        string? tokenHash = null,
+        DateTimeOffset? expiresOnUtc = null,
+        Guid? userId = null,
+        string? deviceId = null) =>
         RefreshToken.Create(
-            tokenHash: TokenHash,
-            expiresOnUtc: FutureExpiration,
-            userId: UserId,
-            deviceId: DeviceId);
+            tokenHash: tokenHash ?? TokenHash,
+            expiresOnUtc: expiresOnUtc ?? FutureExpiration,
+            userId: userId ?? UserId,
+            deviceId: deviceId ?? DeviceId);
 }
 
 public class RefreshTokenTests : BaseTest
