@@ -9,7 +9,6 @@ namespace NetAuth.Domain.Users.DomainEvents;
 public sealed record RefreshTokenReuseDetectedDomainEvent(
     Guid RefreshTokenId,
     Guid UserId,
-    string DeviceId,
+    Guid DeviceId,
     RefreshTokenStatus PreviousStatus
 ) : IDomainEvent;
-

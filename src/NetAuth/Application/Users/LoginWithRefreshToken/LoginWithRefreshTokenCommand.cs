@@ -4,7 +4,7 @@ namespace NetAuth.Application.Users.LoginWithRefreshToken;
 
 public sealed record LoginWithRefreshTokenCommand(
     string RefreshToken,
-    string DeviceId
+    Guid DeviceId
 ) : ICommand<LoginWithRefreshTokenResult>;
 
 public sealed record LoginWithRefreshTokenResult(

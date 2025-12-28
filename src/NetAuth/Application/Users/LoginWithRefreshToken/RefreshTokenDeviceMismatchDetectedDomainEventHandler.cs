@@ -34,6 +34,6 @@ internal static partial class RefreshTokenDeviceMismatchDetectedDomainEventHandl
         ILogger logger,
         Guid userId,
         Guid tokenId,
-        string expectedDeviceId,
-        string actualDeviceId);
+        Guid expectedDeviceId,
+        Guid actualDeviceId);
 }

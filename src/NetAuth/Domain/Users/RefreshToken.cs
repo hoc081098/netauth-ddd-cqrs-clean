@@ -37,7 +37,7 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
     /// <summary>
     /// Gets the device identifier associated with this refresh token.
     /// </summary>
-    public string DeviceId { get; } = null!;
+    public Guid DeviceId { get; }
 
     /// <summary>
     /// The date and time when the refresh token was revoked, if applicable.
@@ -80,7 +80,7 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
         string tokenHash,
         DateTimeOffset expiresOnUtc,
         Guid userId,
-        string deviceId,
+        Guid deviceId,
         DateTimeOffset? revokedAt,
         RefreshTokenStatus status,
         Guid? replacedById
@@ -90,7 +90,7 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
         Guard.Against.NullOrWhiteSpace(tokenHash);
         Guard.Against.Default(expiresOnUtc);
         Guard.Against.Default(userId);
-        Guard.Against.NullOrWhiteSpace(deviceId);
+        Guard.Against.Default(deviceId);
 
         TokenHash = tokenHash;
         ExpiresOnUtc = expiresOnUtc;
@@ -124,7 +124,7 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
     /// <param name="deviceId">The device identifier associated with this token.</param>
     /// <returns>A new <see cref="RefreshToken"/> instance.</returns>
     [Pure]
-    public static RefreshToken Create(string tokenHash, DateTimeOffset expiresOnUtc, Guid userId, string deviceId)
+    public static RefreshToken Create(string tokenHash, DateTimeOffset expiresOnUtc, Guid userId, Guid deviceId)
     {
         var created = new RefreshToken(
             id: Guid.CreateVersion7(),
@@ -164,7 +164,7 @@ public sealed class RefreshToken : AggregateRoot<Guid>, IAuditableEntity
     /// </summary>
     /// <param name="revokedAt">The date and time when the device mismatch was detected.</param>
     /// <param name="actualDeviceId">The device ID that was provided in the request.</param>
-    public void MarkAsCompromisedDueToDeviceMismatch(DateTimeOffset revokedAt, string actualDeviceId)
+    public void MarkAsCompromisedDueToDeviceMismatch(DateTimeOffset revokedAt, Guid actualDeviceId)
     {
         MarkAsCompromisedInternal(revokedAt, raiseChainEvent: false);
 

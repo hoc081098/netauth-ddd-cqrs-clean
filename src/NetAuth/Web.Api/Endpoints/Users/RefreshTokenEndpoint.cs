@@ -12,7 +12,7 @@ internal sealed class RefreshTokenEndpoint : IEndpoint
     [SwaggerRequired]
     public sealed record Request(
         string RefreshToken,
-        string DeviceId);
+        Guid DeviceId);
 
     public sealed record Response(
         string AccessToken,

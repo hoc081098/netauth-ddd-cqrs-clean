@@ -21,7 +21,6 @@ internal sealed class RefreshTokenTypeConfiguration : IEntityTypeConfiguration<R
             .IsRequired();
 
         builder.Property(rt => rt.DeviceId)
-            .HasMaxLength(256)
             .IsRequired();
 
         builder.Property(rt => rt.RevokedAt);

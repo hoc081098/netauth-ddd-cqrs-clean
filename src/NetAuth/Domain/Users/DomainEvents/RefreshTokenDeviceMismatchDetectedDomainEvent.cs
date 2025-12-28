@@ -9,7 +9,6 @@ namespace NetAuth.Domain.Users.DomainEvents;
 public sealed record RefreshTokenDeviceMismatchDetectedDomainEvent(
     Guid RefreshTokenId,
     Guid UserId,
-    string ExpectedDeviceId,
-    string ActualDeviceId
+    Guid ExpectedDeviceId,
+    Guid ActualDeviceId
 ) : IDomainEvent;
-

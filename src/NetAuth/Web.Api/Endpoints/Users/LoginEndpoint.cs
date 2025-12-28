@@ -9,13 +9,15 @@ namespace NetAuth.Web.Api.Endpoints.Users;
 [UsedImplicitly]
 internal sealed class LoginEndpoint : IEndpoint
 {
+    [UsedImplicitly]
     [SwaggerRequired]
     public sealed record Request(
         string Email,
         string Password,
-        string DeviceId
+        Guid DeviceId
     );
 
+    [UsedImplicitly]
     public sealed record Response(
         string AccessToken,
         string RefreshToken);

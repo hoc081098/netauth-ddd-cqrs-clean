@@ -32,8 +32,9 @@ public class LoginWithRefreshTokenCommandHandlerTests
 
     // Test data
     private const string RefreshTokenRaw = "some-refresh-token";
-    private const string DeviceId = "device-123";
     private const string HashedRefreshToken = "hashed-refresh-token";
+
+    private static readonly Guid DeviceId = Guid.NewGuid();
 
     private static readonly LoginWithRefreshTokenCommand Command = new(
         RefreshToken: RefreshTokenRaw,

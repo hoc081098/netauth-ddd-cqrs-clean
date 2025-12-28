@@ -35,5 +35,5 @@ internal static partial class RefreshTokenRotatedDomainEventHandlerLoggers
         Guid userId,
         Guid oldTokenId,
         Guid newTokenId,
-        string deviceId);
+        Guid deviceId);
 }

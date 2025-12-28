@@ -9,6 +9,5 @@ public sealed record RefreshTokenRotatedDomainEvent(
     Guid OldRefreshTokenId,
     Guid NewRefreshTokenId,
     Guid UserId,
-    string DeviceId
+    Guid DeviceId
 ) : IDomainEvent;
-

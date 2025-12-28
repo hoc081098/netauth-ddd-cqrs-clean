@@ -64,12 +64,12 @@ internal sealed class LoginWithRefreshTokenCommandHandler(
         }
 
         // 5. Check Device Binding
-        var deviceId = Guid.Parse(refreshToken.DeviceId);
-        var actualDeviceId = Guid.Parse(command.DeviceId);
+        var deviceId = refreshToken.DeviceId;
+        var actualDeviceId = command.DeviceId;
         if (deviceId != actualDeviceId)
         {
             // Device ID mismatch - suspicious token theft detected, block immediately
-            refreshToken.MarkAsCompromisedDueToDeviceMismatch(utcNow, actualDeviceId: command.DeviceId);
+            refreshToken.MarkAsCompromisedDueToDeviceMismatch(utcNow, actualDeviceId);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);

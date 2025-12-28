@@ -35,6 +35,6 @@ internal static partial class RefreshTokenReuseDetectedDomainEventHandlerLoggers
         ILogger logger,
         Guid userId,
         Guid tokenId,
-        string deviceId,
+        Guid deviceId,
         RefreshTokenStatus previousStatus);
 }

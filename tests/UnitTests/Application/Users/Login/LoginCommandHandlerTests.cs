@@ -25,6 +25,7 @@ public class LoginCommandHandlerTests
     private readonly IUnitOfWork _unitOfWork;
 
     private static readonly DateTimeOffset Now = DateTimeOffset.Now;
+    private static readonly Guid DeviceId = Guid.NewGuid();
 
     public LoginCommandHandlerTests()
     {
@@ -53,7 +54,7 @@ public class LoginCommandHandlerTests
         var command = new LoginCommand(
             Email: "invalid-email",
             Password: UserTestData.PlainPassword,
-            DeviceId: "device-123");
+            DeviceId: DeviceId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -74,7 +75,7 @@ public class LoginCommandHandlerTests
         var command = new LoginCommand(
             Email: validEmail.Value,
             Password: UserTestData.PlainPassword,
-            DeviceId: "device-123");
+            DeviceId: DeviceId);
 
         _userRepository.GetByEmailAsync(
                 email: Arg.Any<Email>(),
@@ -108,7 +109,7 @@ public class LoginCommandHandlerTests
         var command = new LoginCommand(
             Email: email.Value,
             Password: UserTestData.PlainPassword,
-            DeviceId: "device-123");
+            DeviceId: DeviceId);
 
         _userRepository.GetByEmailAsync(
                 email: Arg.Any<Email>(),
@@ -148,7 +149,7 @@ public class LoginCommandHandlerTests
         var command = new LoginCommand(
             Email: email.Value,
             Password: UserTestData.PlainPassword,
-            DeviceId: "device-123");
+            DeviceId: DeviceId);
 
         const string expectedAccessToken = "access-token";
         const string expectedRawRefreshToken = "raw";

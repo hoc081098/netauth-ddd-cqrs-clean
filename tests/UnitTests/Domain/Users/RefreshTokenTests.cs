@@ -8,8 +8,10 @@ namespace NetAuth.UnitTests.Domain.Users;
 public static class RefreshTokenTestData
 {
     public static readonly Guid UserId = Guid.NewGuid();
+
+    public static readonly Guid DeviceId = Guid.NewGuid();
+
     public const string TokenHash = "hashed_token_value_12345";
-    public const string DeviceId = "device-12345-abcde";
 
     public static readonly DateTimeOffset CurrentUtc =
         new(year: 2025, month: 1, day: 1, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
@@ -24,12 +26,14 @@ public static class RefreshTokenTestData
         string? tokenHash = null,
         DateTimeOffset? expiresOnUtc = null,
         Guid? userId = null,
-        string? deviceId = null) =>
+        Guid? deviceId = null) =>
         RefreshToken.Create(
             tokenHash: tokenHash ?? TokenHash,
             expiresOnUtc: expiresOnUtc ?? FutureExpiration,
             userId: userId ?? UserId,
             deviceId: deviceId ?? DeviceId);
+
+    public static TheoryData<Guid> InvalidDeviceIds => [Guid.Empty];
 }
 
 public class RefreshTokenTests : BaseTest
@@ -88,11 +92,10 @@ public class RefreshTokenTests : BaseTest
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("   ")]
-    public void Create_WithInvalidDeviceId_ShouldThrowArgumentException(string? invalidDeviceId)
+    [MemberData(
+        memberName: nameof(RefreshTokenTestData.InvalidDeviceIds),
+        MemberType = typeof(RefreshTokenTestData))]
+    public void Create_WithInvalidDeviceId_ShouldThrowException(Guid invalidDeviceId)
     {
         // Arrange
         var tokenHash = RefreshTokenTestData.TokenHash;
@@ -105,7 +108,7 @@ public class RefreshTokenTests : BaseTest
                 tokenHash: tokenHash,
                 expiresOnUtc: expiresOnUtc,
                 userId: userId,
-                deviceId: invalidDeviceId!));
+                deviceId: invalidDeviceId));
     }
 
     [Fact]
@@ -290,7 +293,7 @@ public class RefreshTokenTests : BaseTest
         // Arrange
         var refreshToken = RefreshTokenTestData.CreateRefreshToken();
         var revokedAt = RefreshTokenTestData.CurrentUtc;
-        var actualDeviceId = "different-device-id";
+        var actualDeviceId = Guid.NewGuid();
 
         // Act
         refreshToken.MarkAsCompromisedDueToDeviceMismatch(revokedAt, actualDeviceId);
