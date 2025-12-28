@@ -30,6 +30,15 @@ public class LoginWithRefreshTokenCommandHandlerTests
     private readonly IUnitOfWork _unitOfWork;
     private readonly IDbContextTransaction _transaction;
 
+    // Test data
+    private const string RefreshTokenRaw = "some-refresh-token";
+    private const string DeviceId = "device-123";
+    private const string HashedRefreshToken = "hashed-refresh-token";
+
+    private static readonly LoginWithRefreshTokenCommand Command = new(
+        RefreshToken: RefreshTokenRaw,
+        DeviceId: DeviceId);
+
     public LoginWithRefreshTokenCommandHandlerTests()
     {
         // Set up
@@ -52,28 +61,19 @@ public class LoginWithRefreshTokenCommandHandlerTests
     public async Task Handle_WhenRefreshTokenDoesNotExist_ShouldReturnDomainError()
     {
         // Arrange
-        var refreshToken = "some-refresh-token";
-        var deviceId = "device-123";
-        var hashedRefreshToken = "hashed-refresh-token";
-
-        var command = new LoginWithRefreshTokenCommand(
-            RefreshToken: refreshToken,
-            DeviceId: deviceId
-        );
-
         _refreshTokenGenerator
-            .ComputeTokenHash(refreshToken)
-            .Returns(hashedRefreshToken);
+            .ComputeTokenHash(rawToken: Command.RefreshToken)
+            .Returns(HashedRefreshToken);
 
         _refreshTokenRepository
-            .GetByTokenHashAsync(hashedRefreshToken, Arg.Any<CancellationToken>())
+            .GetByTokenHashAsync(HashedRefreshToken, Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<RefreshToken?>(null));
 
         _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
             .Returns(_transaction);
 
         // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(Command, CancellationToken.None);
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Invalid, left));
@@ -82,7 +82,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
             .BeginTransactionAsync(Arg.Any<CancellationToken>());
 
         await _refreshTokenRepository.Received(1)
-            .GetByTokenHashAsync(hashedRefreshToken, Arg.Any<CancellationToken>());
+            .GetByTokenHashAsync(HashedRefreshToken, Arg.Any<CancellationToken>());
 
         await _transaction.DidNotReceiveWithAnyArgs()
             .CommitAsync(CancellationToken.None);
@@ -92,9 +92,6 @@ public class LoginWithRefreshTokenCommandHandlerTests
     public async Task Handle_WhenRefreshTokenStatusIsNotActive_ShouldReturnDomainError()
     {
         // Arrange
-        var rawRefreshToken = "some-refresh-token";
-        var deviceId = "device-123";
-
         var refreshToken = RefreshTokenTestData.CreateRefreshToken();
         refreshToken.MarkAsRevokedDueToExpiration(Now);
 
@@ -103,12 +100,8 @@ public class LoginWithRefreshTokenCommandHandlerTests
         var activeToken2 = RefreshTokenTestData.CreateRefreshToken(userId: refreshToken.UserId);
         var activeTokensInChain = new List<RefreshToken> { activeToken1, activeToken2 };
 
-        var command = new LoginWithRefreshTokenCommand(
-            RefreshToken: rawRefreshToken,
-            DeviceId: deviceId);
-
         _refreshTokenGenerator
-            .ComputeTokenHash(rawToken: rawRefreshToken)
+            .ComputeTokenHash(rawToken: Command.RefreshToken)
             .Returns(refreshToken.TokenHash);
 
         _refreshTokenRepository
@@ -130,7 +123,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
             .Returns(Task.CompletedTask);
 
         // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
+        var result = await _handler.Handle(Command, CancellationToken.None);
 
         // Assert
         result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Revoked, left));
