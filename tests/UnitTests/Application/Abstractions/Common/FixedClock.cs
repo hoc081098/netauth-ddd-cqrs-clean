@@ -7,10 +7,18 @@ public class FixedClock : IClock
     public required DateTimeOffset Now { get; init; }
     public required DateTimeOffset UtcNow { get; init; }
 
-    public static FixedClock Create(DateTimeOffset fixedTime) =>
-        new()
+    public static FixedClock CreateWithUtcNow(DateTimeOffset fixedTime)
+    {
+        // Check that the provided time is in UTC
+        if (fixedTime.Offset != TimeSpan.Zero)
         {
-            Now = fixedTime,
-            UtcNow = fixedTime.ToUniversalTime()
+            throw new ArgumentException("The fixed time must be in UTC.", nameof(fixedTime));
+        }
+
+        return new FixedClock
+        {
+            Now = fixedTime.ToLocalTime(),
+            UtcNow = fixedTime
         };
+    }
 }

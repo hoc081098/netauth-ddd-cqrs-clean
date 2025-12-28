@@ -16,7 +16,7 @@ namespace NetAuth.UnitTests.Application.Users.LoginWithRefreshToken;
 public class LoginWithRefreshTokenCommandHandlerTests
 {
     // Fixed point in time for consistent test results
-    private static readonly DateTimeOffset Now = DateTimeOffset.Now;
+    private static readonly DateTimeOffset UtcNow = DateTimeOffset.UtcNow;
 
     // Test data constants
     private const string RefreshTokenRaw = "some-refresh-token";
@@ -46,7 +46,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
         _unitOfWork = Substitute.For<IUnitOfWork>();
         _transaction = Substitute.For<IDbContextTransaction>();
 
-        var clock = FixedClock.Create(Now);
+        var clock = FixedClock.CreateWithUtcNow(UtcNow);
 
         _handler = new LoginWithRefreshTokenCommandHandler(
             _refreshTokenRepository,
@@ -102,7 +102,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
         }
         else
         {
-            unitOfWork.DidNotReceiveWithAnyArgs().SaveChangesAsync(Arg.Any<CancellationToken>());
+            unitOfWork.DidNotReceiveWithAnyArgs().SaveChangesAsync(CancellationToken.None);
             transaction.DidNotReceiveWithAnyArgs().CommitAsync(CancellationToken.None);
         }
     }
@@ -112,16 +112,16 @@ public class LoginWithRefreshTokenCommandHandlerTests
         Type expectedDomainEventType)
     {
         Assert.Equal(RefreshTokenStatus.Compromised, refreshToken.Status);
-        Assert.Equal(Now, refreshToken.RevokedAt);
+        Assert.Equal(UtcNow, refreshToken.RevokedAt);
 
-        var domainEvent = Assert.Single(refreshToken.DomainEvents, e => e.GetType() == expectedDomainEventType);
+        var domainEvent = Assert.Single(refreshToken.DomainEvents, expectedDomainEventType.IsInstanceOfType);
         Assert.NotNull(domainEvent);
     }
 
     private static void AssertTokenMarkedAsRevoked(RefreshToken refreshToken)
     {
         Assert.Equal(RefreshTokenStatus.Revoked, refreshToken.Status);
-        Assert.Equal(Now, refreshToken.RevokedAt);
+        Assert.Equal(UtcNow, refreshToken.RevokedAt);
     }
 
     [Fact]
@@ -147,7 +147,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
     {
         // Arrange
         var refreshToken = RefreshTokenTestData.CreateRefreshToken();
-        refreshToken.MarkAsRevokedDueToExpiration(Now);
+        refreshToken.MarkAsRevokedDueToExpiration(UtcNow);
 
         // Create additional active tokens that should be marked as compromised
         var activeToken1 = RefreshTokenTestData.CreateRefreshToken(userId: refreshToken.UserId);
@@ -159,7 +159,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
         _refreshTokenRepository
             .GetNonExpiredActiveTokensByUserIdAsync(
                 refreshToken.UserId,
-                Now,
+                UtcNow,
                 Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(activeTokensInChain));
 
@@ -175,14 +175,14 @@ public class LoginWithRefreshTokenCommandHandlerTests
         await _refreshTokenRepository.Received(1)
             .GetNonExpiredActiveTokensByUserIdAsync(
                 refreshToken.UserId,
-                Now,
+                UtcNow,
                 Arg.Any<CancellationToken>());
 
         AssertTransactionFlow(_unitOfWork, _transaction, shouldCommit: true);
 
         // Assert the reused token is marked as compromised with chain event
         Assert.Equal(RefreshTokenStatus.Compromised, refreshToken.Status);
-        Assert.Equal(Now, refreshToken.RevokedAt);
+        Assert.Equal(UtcNow, refreshToken.RevokedAt);
         Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenReuseDetectedDomainEvent>());
         Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenChainCompromisedDomainEvent>());
 
@@ -190,7 +190,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
         Assert.All(activeTokensInChain, static token =>
         {
             Assert.Equal(RefreshTokenStatus.Compromised, token.Status);
-            Assert.Equal(Now, token.RevokedAt);
+            Assert.Equal(UtcNow, token.RevokedAt);
             Assert.Single(token.DomainEvents.OfType<RefreshTokenReuseDetectedDomainEvent>());
             Assert.Empty(token.DomainEvents.OfType<RefreshTokenChainCompromisedDomainEvent>());
         });
@@ -201,9 +201,9 @@ public class LoginWithRefreshTokenCommandHandlerTests
     {
         // Arrange
         var refreshToken = RefreshTokenTestData.CreateRefreshToken(
-            expiresOnUtc: Now.AddMinutes(-100) // Already expired
+            expiresOnUtc: UtcNow.AddMinutes(-100) // Already expired
         );
-        Assert.True(refreshToken.IsExpired(Now));
+        Assert.True(refreshToken.IsExpired(UtcNow));
 
         SetupGetRefreshToken(refreshToken);
 
@@ -230,9 +230,9 @@ public class LoginWithRefreshTokenCommandHandlerTests
         var differentDeviceId = Guid.NewGuid();
         var refreshToken = RefreshTokenTestData.CreateRefreshToken(
             deviceId: differentDeviceId, // Token was issued to a different device
-            expiresOnUtc: Now.AddMinutes(100) // Ensure token is not expired
+            expiresOnUtc: UtcNow.AddMinutes(100) // Ensure token is not expired
         );
-        Assert.False(refreshToken.IsExpired(Now));
+        Assert.False(refreshToken.IsExpired(UtcNow));
 
         SetupGetRefreshToken(refreshToken);
 
@@ -262,9 +262,9 @@ public class LoginWithRefreshTokenCommandHandlerTests
         var refreshTokenExpiration = TimeSpan.FromDays(7);
         var refreshToken = RefreshTokenTestData.CreateRefreshToken(
             deviceId: DeviceId,
-            expiresOnUtc: Now.AddMinutes(100).ToUniversalTime() // Ensure token is not expired
+            expiresOnUtc: UtcNow.AddMinutes(100) // Ensure token is not expired
         );
-        Assert.False(refreshToken.IsExpired(Now));
+        Assert.False(refreshToken.IsExpired(UtcNow));
 
         SetupGetRefreshToken(refreshToken);
 
@@ -302,7 +302,7 @@ public class LoginWithRefreshTokenCommandHandlerTests
             .Insert(
                 Arg.Is<RefreshToken>(rt =>
                     rt.TokenHash == newRefreshTokenHash &&
-                    rt.ExpiresOnUtc == Now.Add(refreshTokenExpiration) &&
+                    rt.ExpiresOnUtc == UtcNow.Add(refreshTokenExpiration) &&
                     rt.UserId == refreshToken.UserId &&
                     rt.DeviceId == DeviceId &&
                     rt.Status == RefreshTokenStatus.Active));
