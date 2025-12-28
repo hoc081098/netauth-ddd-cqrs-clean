@@ -212,4 +212,58 @@ public class LoginWithRefreshTokenCommandHandlerTests
         Assert.Equal(Now, refreshToken.RevokedAt);
         Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenExpiredUsageDomainEvent>());
     }
+
+    [Fact]
+    public async Task Handle_WhenDeviceIdMismatch_ShouldReturnInvalidDeviceError()
+    {
+        // Arrange
+        var differentDeviceId = Guid.NewGuid();
+        var refreshToken = RefreshTokenTestData.CreateRefreshToken(
+            deviceId: differentDeviceId, // Token was issued to a different device
+            expiresOnUtc: Now.AddMinutes(100) // Ensure token is not expired
+        );
+        Assert.False(refreshToken.IsExpired(Now));
+
+        _refreshTokenGenerator
+            .ComputeTokenHash(rawToken: Command.RefreshToken)
+            .Returns(refreshToken.TokenHash);
+
+        _refreshTokenRepository
+            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
+                cancellationToken: Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<RefreshToken?>(refreshToken));
+
+        _unitOfWork.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(1));
+
+        _unitOfWork.BeginTransactionAsync(Arg.Any<CancellationToken>())
+            .Returns(_transaction);
+
+        _transaction.CommitAsync(Arg.Any<CancellationToken>())
+            .Returns(Task.CompletedTask);
+
+        // Act
+        var result = await _handler.Handle(Command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.InvalidDevice, left));
+
+        await _unitOfWork.Received(1)
+            .BeginTransactionAsync(Arg.Any<CancellationToken>());
+
+        await _refreshTokenRepository.Received(1)
+            .GetByTokenHashAsync(tokenHash: refreshToken.TokenHash,
+                Arg.Any<CancellationToken>());
+
+        await _unitOfWork.Received(1)
+            .SaveChangesAsync(Arg.Any<CancellationToken>());
+
+        await _transaction.Received(1)
+            .CommitAsync(Arg.Any<CancellationToken>());
+
+        // Assert the token is marked as compromised
+        Assert.Equal(RefreshTokenStatus.Compromised, refreshToken.Status);
+        Assert.Equal(Now, refreshToken.RevokedAt);
+        Assert.Single(refreshToken.DomainEvents.OfType<RefreshTokenDeviceMismatchDetectedDomainEvent>());
+    }
 }
