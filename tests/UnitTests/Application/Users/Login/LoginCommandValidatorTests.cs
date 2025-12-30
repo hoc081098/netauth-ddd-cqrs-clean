@@ -9,7 +9,7 @@ public class LoginCommandValidatorTests
     private readonly LoginCommandValidator _validator = new();
 
     [Fact]
-    public void Should_Have_Error_When_Email_Is_Empty()
+    public void ShouldHaveError_WhenEmailIsEmpty()
     {
         // Arrange
         var command = new LoginCommand(
@@ -27,7 +27,7 @@ public class LoginCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_Email_Is_Null()
+    public void ShouldHaveError_WhenEmailIsNull()
     {
         // Arrange
         var command = new LoginCommand(
@@ -45,7 +45,7 @@ public class LoginCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_Password_Is_Empty()
+    public void ShouldHaveError_WhenPasswordIsEmpty()
     {
         // Arrange
         var command = new LoginCommand(
@@ -63,7 +63,7 @@ public class LoginCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_Password_Is_Null()
+    public void ShouldHaveError_WhenPasswordIsNull()
     {
         // Arrange
         var command = new LoginCommand(
@@ -81,7 +81,7 @@ public class LoginCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_DeviceId_Is_Empty()
+    public void ShouldHaveError_WhenDeviceIdIsEmpty()
     {
         // Arrange
         var command = new LoginCommand(
@@ -99,7 +99,7 @@ public class LoginCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Multiple_Errors_When_All_Fields_Are_Invalid()
+    public void ShouldHaveMultipleErrors_WhenAllFieldsAreInvalid()
     {
         // Arrange
         var command = new LoginCommand(
@@ -120,7 +120,7 @@ public class LoginCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Not_Have_Error_When_All_Fields_Are_Valid()
+    public void ShouldNotHaveError_WhenAllFieldsAreValid()
     {
         // Arrange
         var command = new LoginCommand(
@@ -141,7 +141,7 @@ public class LoginCommandValidatorTests
     [InlineData("   ")] // Whitespace
     [InlineData("\t")]  // Tab
     [InlineData("\n")]  // Newline
-    public void Should_Have_Error_When_Email_Is_Whitespace(string email)
+    public void ShouldHaveError_WhenEmailIsWhitespace(string email)
     {
         // Arrange
         var command = new LoginCommand(
@@ -161,7 +161,7 @@ public class LoginCommandValidatorTests
     [InlineData("   ")] // Whitespace
     [InlineData("\t")]  // Tab
     [InlineData("\n")]  // Newline
-    public void Should_Have_Error_When_Password_Is_Whitespace(string password)
+    public void ShouldHaveError_WhenPasswordIsWhitespace(string password)
     {
         // Arrange
         var command = new LoginCommand(

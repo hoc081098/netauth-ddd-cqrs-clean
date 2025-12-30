@@ -10,7 +10,7 @@ public class SetUserRolesCommandValidatorTests
     private readonly SetUserRolesCommandValidator _validator = new();
 
     [Fact]
-    public void Should_Have_Error_When_UserId_Is_Empty()
+    public void ShouldHaveError_WhenUserIdIsEmpty()
     {
         // Arrange
         var command = new SetUserRolesCommand(
@@ -28,7 +28,7 @@ public class SetUserRolesCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_RoleIds_Is_Empty()
+    public void ShouldHaveError_WhenRoleIdsIsEmpty()
     {
         // Arrange
         var command = new SetUserRolesCommand(
@@ -46,7 +46,7 @@ public class SetUserRolesCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_RoleIds_Is_Null()
+    public void ShouldHaveError_WhenRoleIdsIsNull()
     {
         // Arrange
         var command = new SetUserRolesCommand(
@@ -64,7 +64,7 @@ public class SetUserRolesCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_RoleChangeActor_Is_Invalid()
+    public void ShouldHaveError_WhenRoleChangeActorIsInvalid()
     {
         // Arrange
         var command = new SetUserRolesCommand(
@@ -82,7 +82,7 @@ public class SetUserRolesCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Multiple_Errors_When_All_Fields_Are_Invalid()
+    public void ShouldHaveMultipleErrors_WhenAllFieldsAreInvalid()
     {
         // Arrange
         var command = new SetUserRolesCommand(
@@ -103,7 +103,7 @@ public class SetUserRolesCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Not_Have_Error_When_All_Fields_Are_Valid()
+    public void ShouldNotHaveError_WhenAllFieldsAreValid()
     {
         // Arrange
         var command = new SetUserRolesCommand(
@@ -124,7 +124,7 @@ public class SetUserRolesCommandValidatorTests
     [InlineData(RoleChangeActor.User)]
     [InlineData(RoleChangeActor.Privileged)]
     [InlineData(RoleChangeActor.System)]
-    public void Should_Not_Have_Error_When_RoleChangeActor_Is_Valid(RoleChangeActor roleChangeActor)
+    public void ShouldNotHaveError_WhenRoleChangeActorIsValid(RoleChangeActor roleChangeActor)
     {
         // Arrange
         var command = new SetUserRolesCommand(
@@ -140,7 +140,7 @@ public class SetUserRolesCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Not_Have_Error_When_RoleIds_Has_Single_Role()
+    public void ShouldNotHaveError_WhenRoleIdsHasSingleRole()
     {
         // Arrange
         var command = new SetUserRolesCommand(
@@ -156,7 +156,7 @@ public class SetUserRolesCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Not_Have_Error_When_RoleIds_Has_Multiple_Roles()
+    public void ShouldNotHaveError_WhenRoleIdsHasMultipleRoles()
     {
         // Arrange
         var command = new SetUserRolesCommand(

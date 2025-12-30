@@ -9,7 +9,7 @@ public class LoginWithRefreshTokenCommandValidatorTests
     private readonly LoginWithRefreshTokenCommandValidator _validator = new();
 
     [Fact]
-    public void Should_Have_Error_When_RefreshToken_Is_Empty()
+    public void ShouldHaveError_WhenRefreshTokenIsEmpty()
     {
         // Arrange
         var command = new LoginWithRefreshTokenCommand(
@@ -26,7 +26,7 @@ public class LoginWithRefreshTokenCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_RefreshToken_Is_Null()
+    public void ShouldHaveError_WhenRefreshTokenIsNull()
     {
         // Arrange
         var command = new LoginWithRefreshTokenCommand(
@@ -43,7 +43,7 @@ public class LoginWithRefreshTokenCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Error_When_DeviceId_Is_Empty()
+    public void ShouldHaveError_WhenDeviceIdIsEmpty()
     {
         // Arrange
         var command = new LoginWithRefreshTokenCommand(
@@ -60,7 +60,7 @@ public class LoginWithRefreshTokenCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Have_Multiple_Errors_When_All_Fields_Are_Invalid()
+    public void ShouldHaveMultipleErrors_WhenAllFieldsAreInvalid()
     {
         // Arrange
         var command = new LoginWithRefreshTokenCommand(
@@ -78,7 +78,7 @@ public class LoginWithRefreshTokenCommandValidatorTests
     }
 
     [Fact]
-    public void Should_Not_Have_Error_When_All_Fields_Are_Valid()
+    public void ShouldNotHaveError_WhenAllFieldsAreValid()
     {
         // Arrange
         var command = new LoginWithRefreshTokenCommand(
@@ -97,7 +97,7 @@ public class LoginWithRefreshTokenCommandValidatorTests
     [InlineData("   ")] // Whitespace
     [InlineData("\t")]  // Tab
     [InlineData("\n")]  // Newline
-    public void Should_Have_Error_When_RefreshToken_Is_Whitespace(string refreshToken)
+    public void ShouldHaveError_WhenRefreshTokenIsWhitespace(string refreshToken)
     {
         // Arrange
         var command = new LoginWithRefreshTokenCommand(
