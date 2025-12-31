@@ -6,40 +6,6 @@ using NetAuth.Domain.TodoItems.DomainEvents;
 
 namespace NetAuth.UnitTests.Domain.TodoItems;
 
-public static class TodoItemTestData
-{
-    public static readonly Guid UserId = Guid.NewGuid();
-
-    public static readonly TodoTitle Title = TodoTitle
-        .Create("Buy groceries")
-        .RightValueOrThrow();
-
-    public static readonly TodoDescription Description = TodoDescription
-        .Create("Get milk, eggs, and bread")
-        .RightValueOrThrow();
-
-    public static readonly IReadOnlyList<string> NonEmptyLabels = ["shopping", "urgent"];
-
-    public static readonly IReadOnlyList<string> EmptyLabels = [];
-
-    public static readonly DateTimeOffset CurrentUtc =
-        new(year: 2025, month: 1, day: 1, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
-
-    public static readonly DateTimeOffset FutureDueDate =
-        new(year: 2025, month: 1, day: 2, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
-
-    public static TodoItem CreateTodoItem() =>
-        TodoItem
-            .Create(
-                userId: UserId,
-                title: Title.Value,
-                description: Description.Value,
-                dueDateOnUtc: CurrentUtc.AddDays(1),
-                labels: NonEmptyLabels,
-                currentUtc: CurrentUtc
-            )
-            .RightValueOrThrow();
-}
 
 public class TodoItemTests : BaseTest
 {

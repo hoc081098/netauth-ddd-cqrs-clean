@@ -21,8 +21,8 @@ public class CreateTodoItemCommandHandlerTests
     private readonly IUnitOfWork _unitOfWork;
 
     // Test data
-    private readonly Guid _userId = TodoItemTestData.UserId;
-    private readonly DateTimeOffset _currentUtc = TodoItemTestData.CurrentUtc;
+    private static readonly Guid UserId = TodoItemTestData.UserId;
+    private static readonly DateTimeOffset CurrentUtc = TodoItemTestData.CurrentUtc;
 
     public CreateTodoItemCommandHandlerTests()
     {
@@ -30,13 +30,13 @@ public class CreateTodoItemCommandHandlerTests
         _unitOfWork = Substitute.For<IUnitOfWork>();
 
         var userContext = Substitute.For<IUserContext>();
-        userContext.UserId.Returns(_userId);
+        userContext.UserId.Returns(UserId);
 
         _handler = new CreateTodoItemCommandHandler(
             _todoItemRepository,
             userContext,
             _unitOfWork,
-            FixedClock.CreateWithUtcNow(_currentUtc));
+            FixedClock.CreateWithUtcNow(CurrentUtc));
     }
 
     private async Task AssertInsertIsNotCalled()
@@ -173,7 +173,7 @@ public class CreateTodoItemCommandHandlerTests
         var command = new CreateTodoItemCommand(
             Title: TodoItemTestData.Title.Value,
             Description: TodoItemTestData.Description.Value,
-            DueDate: _currentUtc.AddDays(-1),
+            DueDate: CurrentUtc.AddDays(-1),
             Labels: TodoItemTestData.NonEmptyLabels);
 
         // Act
