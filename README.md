@@ -22,7 +22,7 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 - ✅ **Device Binding** for enhanced security
 - ✅ **Permission-Based Authorization** (RBAC with fine-grained permissions)
 - ✅ **Audit Logging** via domain events
-- ✅ **Outbox Pattern** for reliable event processing
+- ✅ **Outbox Pattern** for reliable event processing (batching, SKIP LOCKED, retry with max attempts)
 - ✅ **Rate Limiting** on authentication endpoints
 - ✅ **Health Checks** for database and Redis
 - ✅ **OpenAPI/Swagger** documentation
@@ -38,6 +38,7 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 - **MediatR** for CQRS
 - **FluentValidation** for validation
 - **LanguageExt** for functional programming (Either, Option)
+- **Serilog** for structured logging (Console/File/Seq)
 
 ### Security
 - **JWT Bearer Authentication**
@@ -62,8 +63,8 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 ### Running with Docker Compose
 
 ```bash
-# Start PostgreSQL and Redis
-docker-compose up -d
+# Start PostgreSQL and Redis (compose.yaml)
+docker compose up -d
 
 # Apply database migrations
 dotnet ef database update --project src/NetAuth/NetAuth.csproj --startup-project src/NetAuth
@@ -82,9 +83,9 @@ dotnet run --project src/NetAuth/NetAuth.csproj
 ```
 
 The API will be available at:
-- HTTPS: `https://localhost:5001`
-- HTTP: `http://localhost:5000`
-- Swagger UI: `https://localhost:5001/swagger`
+- HTTPS: `https://localhost:7169`
+- HTTP: `http://localhost:5215`
+- Swagger UI: `https://localhost:7169/swagger`
 
 ## 📁 Project Structure
 
@@ -175,9 +176,9 @@ NetAuth/
 ### Outbox Pattern
 Ensures reliable event processing:
 1. Domain events saved as `OutboxMessage` in same transaction
-2. Background job processes messages in batches
-3. Automatic retry with exponential backoff
-4. Parallel processing with configurable concurrency
+2. Quartz job processes messages on an interval (`Outbox:Interval`) with batch size and max attempts
+3. Uses `FOR UPDATE SKIP LOCKED` to avoid double processing
+4. Parallel publish with a capped degree of parallelism and bulk update of processed rows
 
 ## 🔒 Security Features
 
@@ -190,7 +191,7 @@ Ensures reliable event processing:
 - **Token Rotation**: New token issued on every refresh
 - **Reuse Detection**: Automatic chain revocation on suspicious activity
 - **Device Binding**: Tokens bound to specific devices
-- **Expiration**: Configurable token lifetime (default: 7 days)
+- **Expiration**: Configurable token lifetime (default config 7 days; development config shorter)
 - **Audit Trail**: Complete history via domain events
 
 ### Authorization
@@ -220,14 +221,11 @@ public static class UsersDomainErrors
 ```
 
 **Benefits:**
-- 🚀 ~10-15% performance improvement in validation hot paths
-- 💾 100% reduction in error allocation overhead
-- ♻️ ~15% reduction in Gen0 garbage collections
-- 🧵 Thread-safe by CLR static initialization guarantee
+- Single allocation per error, no per-call allocations
+- Thread-safe by CLR static initialization guarantee
+- Clear, centralized error catalog
 
 ## 🧪 Testing
-
-**Current Coverage: 465 tests (459 Unit + 6 Architecture)**
 
 ### Test Structure
 
@@ -305,7 +303,7 @@ set Jwt__SecretKey=your-super-secret-key-here-minimum-32-characters-long
 
 #### Option 3: Using Docker Compose
 
-Add to your `docker-compose.yml`:
+Add to your compose file (e.g., `compose.yaml`):
 
 ```yaml
 services:
@@ -318,7 +316,7 @@ Then set the environment variable before running Docker Compose:
 
 ```bash
 export JWT_SECRET_KEY="your-super-secret-key-here-minimum-32-characters-long"
-docker-compose up -d
+docker compose up -d
 ```
 
 > ⚠️ **Security Notes:**
@@ -334,10 +332,10 @@ Key configuration sections in `appsettings.json`:
 ```json
 {
   "Jwt": {
-    "SecretKey": "your-secret-key-here",
-    "Issuer": "NetAuth",
-    "Audience": "NetAuthClients",
-    "Expiration": "00:15:00",
+    "SecretKey": "",
+    "Issuer": "hoc081098",
+    "Audience": "MyAppClients",
+    "Expiration": "00:10:00",
     "RefreshTokenExpiration": "7.00:00:00"
   },
   "Outbox": {
@@ -349,32 +347,35 @@ Key configuration sections in `appsettings.json`:
   }
 }
 ```
+> Development settings override JWT expirations (access: 1 hour, refresh: 2 hours) and include localhost connection strings for PostgreSQL and Redis.
 
 ## 📚 API Documentation
 
 Visit `/swagger` for interactive API documentation.
+> Available in Development environment (enabled when `ASPNETCORE_ENVIRONMENT=Development`).
 
-### Key Endpoints
+### Key Endpoints (versioned)
 
 #### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login with email/password
-- `POST /api/auth/refresh` - Refresh access token
+- `POST /v1/auth/register` - Register new user
+- `POST /v1/auth/login` - Login with email/password
+- `POST /v1/auth/refresh` - Refresh access token
+> Replace `v1` with `v2` for the alternate API version.
 
 ### Rate Limiting
 
 Authentication endpoints are protected with rate limiting:
-- **Fixed Window**: 5 requests per minute per user
-- **Sliding Window**: 10 requests per hour per IP
+- **/auth/login**: Sliding window 5 requests per 20s per IP
+- **/auth/register**: Sliding window 3 requests per minute per IP
+- **/auth/refresh**: Sliding window 20 requests per minute per IP
+- **Global**: Sliding window 100 requests per minute per IP for all other endpoints
 
-## 🎯 Performance Optimizations
+## 🎯 Performance Considerations
 
-- ✅ Static readonly domain errors (zero allocation)
-- ✅ Compiled queries for hot paths
-- ✅ Connection pooling with Npgsql
-- ✅ Efficient bulk updates in Outbox processor
-- ✅ Parallel event processing
-- ✅ Permission caching
+- Static readonly domain errors (zero allocation per access)
+- Outbox processor uses SKIP LOCKED + bulk updates + limited parallel publish
+- Permission caching via HybridCache (memory + Redis)
+- Rate limiting on auth endpoints and global limiter
 
 ## 📊 Observability
 
@@ -382,6 +383,7 @@ Authentication endpoints are protected with rate limiting:
 - PostgreSQL database connectivity
 - Redis connectivity
 - DbContext health
+- Outbox backlog/processing health
 
 ### Logging
 - Structured logging with Serilog
@@ -389,20 +391,15 @@ Authentication endpoints are protected with rate limiting:
 - Audit logging via domain events
 - Request/response logging with timing
 
-### Request Tracing
-Every request is assigned a correlation ID that:
-- Is propagated through all log entries
-- Is returned in the response header (`X-Correlation-Id`)
-- Can be passed from client via request header for distributed tracing
-
 ## 🛣️ Roadmap
 
 ### ✅ Completed
-- [x] Comprehensive test coverage (465 tests: 459 Unit + 6 Architecture)
+- [x] Unit tests and architecture tests in place (465 tests: 459 Unit + 6 Architecture)
 - [x] CI/CD pipeline with GitHub Actions
 - [x] Correlation ID logging for request tracing
 - [x] JWT SecretKey configuration with documentation
 - [x] XML documentation for complex business logic
+- [x] API versioning (v1, v2)
 
 ### 🔄 In Progress / Planned
 - [ ] Integration tests for critical flows
@@ -412,7 +409,6 @@ Every request is assigned a correlation ID that:
 - [ ] Add account lockout after failed attempts
 - [ ] Implement MFA (Multi-Factor Authentication)
 - [ ] Add distributed tracing with OpenTelemetry
-- [ ] Implement API versioning
 - [ ] Add GraphQL endpoint
 - [ ] Add response compression and caching
 - [ ] Implement pagination and sorting
