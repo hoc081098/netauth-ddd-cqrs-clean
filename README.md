@@ -235,6 +235,62 @@ public static class UsersDomainErrors
 
 ## 🔧 Configuration
 
+### First-Time Setup (Required)
+
+Before running the application, you must configure the JWT Secret Key. This key is required for generating and validating JWT tokens.
+
+#### Option 1: Using User Secrets (Recommended for Development)
+
+```bash
+# Navigate to the project directory
+cd src/NetAuth
+
+# Initialize user secrets (if not already done)
+dotnet user-secrets init
+
+# Set the JWT Secret Key (minimum 32 characters)
+dotnet user-secrets set "Jwt:SecretKey" "your-super-secret-key-here-minimum-32-characters-long"
+```
+
+#### Option 2: Using Environment Variables (Recommended for Production)
+
+```bash
+# Linux/macOS
+export Jwt__SecretKey="your-super-secret-key-here-minimum-32-characters-long"
+
+# Windows (PowerShell)
+$env:Jwt__SecretKey="your-super-secret-key-here-minimum-32-characters-long"
+
+# Windows (Command Prompt)
+set Jwt__SecretKey=your-super-secret-key-here-minimum-32-characters-long
+```
+
+#### Option 3: Using Docker Compose
+
+Add to your `docker-compose.yml`:
+
+```yaml
+services:
+  netauth:
+    environment:
+      - Jwt__SecretKey=${JWT_SECRET_KEY}
+```
+
+Then set the environment variable before running Docker Compose:
+
+```bash
+export JWT_SECRET_KEY="your-super-secret-key-here-minimum-32-characters-long"
+docker-compose up -d
+```
+
+> ⚠️ **Security Notes:**
+> - Never commit the actual secret key to source control
+> - Use a cryptographically secure random key (minimum 32 bytes / 256 bits for HS256)
+> - Rotate keys periodically in production
+> - Use different keys for each environment (dev, staging, production)
+
+### Configuration Reference
+
 Key configuration sections in `appsettings.json`:
 
 ```json
