@@ -89,30 +89,46 @@ The API will be available at:
 NetAuth/
 ├── Domain/                    # Core business logic
 │   ├── Core/                 # Base classes and abstractions
-│   │   ├── Abstractions/     # Interfaces
+│   │   ├── Abstractions/     # Interfaces (IAuditableEntity, ISoftDeletableEntity)
 │   │   ├── Events/           # Domain event base classes
 │   │   └── Primitives/       # Entity, AggregateRoot, ValueObject, DomainError
-│   └── Users/                # User aggregate
-│       ├── User.cs           # User aggregate root
-│       ├── Email.cs          # Email value object
-│       ├── Username.cs       # Username value object
-│       ├── Password.cs       # Password value object
-│       ├── RefreshToken.cs   # Refresh token entity
-│       └── UsersDomainErrors.cs  # Domain errors (static readonly fields)
+│   ├── Users/                # User bounded context
+│   │   ├── User.cs           # User aggregate root
+│   │   ├── Email.cs          # Email value object
+│   │   ├── Username.cs       # Username value object
+│   │   ├── Password.cs       # Password value object
+│   │   ├── RefreshToken.cs   # Refresh token entity
+│   │   ├── Role.cs           # Role entity with permissions
+│   │   └── UsersDomainErrors.cs  # Domain errors (static readonly fields)
+│   └── TodoItems/            # TodoItem bounded context
+│       ├── TodoItem.cs       # TodoItem aggregate root
+│       ├── TodoTitle.cs      # TodoTitle value object
+│       ├── TodoDescription.cs # TodoDescription value object
+│       └── TodoItemDomainErrors.cs  # Domain errors
 ├── Application/              # Use cases and workflows
 │   ├── Abstractions/         # Application interfaces
-│   │   ├── Authentication/   # Auth abstractions
+│   │   ├── Authentication/   # Auth abstractions (IJwtProvider, IUserContext)
+│   │   ├── Common/           # Common abstractions (IClock)
 │   │   ├── Cryptography/     # Password hashing
 │   │   ├── Data/             # Repository, UnitOfWork
-│   │   └── Messaging/        # CQRS abstractions
+│   │   └── Messaging/        # CQRS abstractions (ICommand, IQuery)
 │   ├── Core/
-│   │   ├── Behaviors/        # MediatR pipeline behaviors
-│   │   └── Exceptions/       # Application exceptions
-│   └── Users/                # User feature slices
-│       ├── Login/            # Login command, handler, validator
-│       ├── LoginWithRefreshToken/
-│       ├── Register/         # Registration command, handler, validator
-│       └── UsersValidationErrors.cs  # Validation errors (static readonly fields)
+│   │   ├── Behaviors/        # MediatR pipeline behaviors (Validation, Logging)
+│   │   ├── Exceptions/       # Application exceptions
+│   │   └── Extensions/       # Extension methods
+│   ├── Users/                # User feature slices
+│   │   ├── Login/            # Login command, handler, validator
+│   │   ├── LoginWithRefreshToken/
+│   │   ├── Register/         # Registration command, handler, validator
+│   │   ├── SetUserRoles/     # Role management
+│   │   ├── GetRoles/         # Query all roles
+│   │   └── GetUserRoles/     # Query user's roles
+│   └── TodoItems/            # TodoItem feature slices
+│       ├── Create/           # Create todo item
+│       ├── Update/           # Update todo item
+│       ├── Complete/         # Mark as completed
+│       ├── MarkAsIncomplete/ # Undo completion
+│       └── Get/              # Query todo items
 ├── Infrastructure/           # Technical implementations
 │   ├── Authentication/       # JWT provider, refresh token generator
 │   ├── Authorization/        # Permission service, policies
@@ -216,22 +232,51 @@ public static class UsersDomainErrors
 - ♻️ ~15% reduction in Gen0 garbage collections
 - 🧵 Thread-safe by CLR static initialization guarantee
 
-## 🧪 Testing Strategy
+## 🧪 Testing
+
+**Current Coverage: 465 tests (459 Unit + 6 Architecture)**
+
+### Test Structure
+
+```
+tests/
+├── UnitTests/                    # 459 tests
+│   ├── Domain/
+│   │   ├── Core/Primitives/     # ValueObject, Entity, AggregateRoot, DomainError tests
+│   │   ├── Users/               # Email, Username, Password, User, RefreshToken tests
+│   │   └── TodoItems/           # TodoItem, TodoTitle, TodoDescription tests
+│   └── Application/
+│       ├── Core/                # ValidationError, DateTimeExtensions tests
+│       ├── Users/               # Login, Register, RefreshToken handlers & validators
+│       └── TodoItems/           # Create, Update, Complete, MarkAsIncomplete handlers & validators
+│
+└── ArchitectureTests/           # 6 tests
+    └── LayerTest.cs             # Domain, Application, Infrastructure, WebApi layer rules
+```
 
 ### Unit Tests
 - Domain logic (value objects, entities, aggregates)
-- Command/query handlers with mocked dependencies
-- Validators with various input scenarios
-
-### Integration Tests
-- API endpoints with WebApplicationFactory
-- Database operations with test containers
-- Authorization policies
+- Command/query handlers with mocked dependencies (NSubstitute)
+- Validators with FluentValidation test helpers
+- Uses xUnit and LanguageExt.UnitTesting
 
 ### Architecture Tests
-- Dependency rules enforcement
+- Dependency rules enforcement (NetArchTest)
+- Layer isolation verification
 - Naming conventions
-- Layer isolation
+
+### Running Tests
+
+```bash
+# Run all tests
+dotnet test
+
+# Run with coverage
+dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+
+# Run specific test category
+dotnet test --filter "FullyQualifiedName~UnitTests.Domain"
+```
 
 ## 🔧 Configuration
 
@@ -347,12 +392,27 @@ Authentication endpoints are protected with rate limiting:
 
 ### Logging
 - Structured logging with Serilog
+- **Correlation ID tracking** for request tracing (X-Correlation-Id header)
 - Audit logging via domain events
-- Request/response logging
+- Request/response logging with timing
+
+### Request Tracing
+Every request is assigned a correlation ID that:
+- Is propagated through all log entries
+- Is returned in the response header (`X-Correlation-Id`)
+- Can be passed from client via request header for distributed tracing
 
 ## 🛣️ Roadmap
 
-- [ ] Add comprehensive test coverage (Unit, Integration, Architecture)
+### ✅ Completed
+- [x] Comprehensive test coverage (465 tests: 459 Unit + 6 Architecture)
+- [x] CI/CD pipeline with GitHub Actions
+- [x] Correlation ID logging for request tracing
+- [x] JWT SecretKey configuration with documentation
+- [x] XML documentation for complex business logic
+
+### 🔄 In Progress / Planned
+- [ ] Integration tests for critical flows
 - [ ] Implement user profile management
 - [ ] Add email verification
 - [ ] Implement password reset flow
@@ -361,6 +421,8 @@ Authentication endpoints are protected with rate limiting:
 - [ ] Add distributed tracing with OpenTelemetry
 - [ ] Implement API versioning
 - [ ] Add GraphQL endpoint
+- [ ] Add response compression and caching
+- [ ] Implement pagination and sorting
 
 ## 📖 Additional Documentation
 
