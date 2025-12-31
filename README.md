@@ -1,6 +1,6 @@
 # NetAuth - ASP.NET Core Authentication Service
 
-A production-ready authentication service built with .NET 10, implementing Domain-Driven Design (DDD), CQRS, Clean Architecture, and Vertical Slice Architecture.
+A production-ready authentication service built with .NET 10, implementing Domain-Driven Design (DDD), CQRS, Clean Architecture.
 
 [![Build & Test 🧪](https://github.com/hoc081098/NetAuth/actions/workflows/build.yml/badge.svg)](https://github.com/hoc081098/NetAuth/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/hoc081098/NetAuth/branch/main/graph/badge.svg?token=MNmihx6Pxl)](https://codecov.io/gh/hoc081098/NetAuth)
@@ -163,16 +163,6 @@ NetAuth/
 - **Dependency Rule**: Dependencies point inward (Infrastructure → Application → Domain)
 - **Framework Independence**: Domain layer has no external dependencies
 - **Testability**: Clear boundaries enable easy unit testing
-
-### Vertical Slice Architecture
-Each feature is a complete vertical slice:
-```
-Login/
-├── LoginCommand.cs
-├── LoginCommandHandler.cs
-├── LoginCommandValidator.cs
-└── LoginEndpoint.cs
-```
 
 ### Functional Programming
 - **Railway-Oriented Programming**: Using `Either<DomainError, T>` for operations that can fail
@@ -431,22 +421,9 @@ Every request is assigned a correlation ID that:
 - [Improvement Roadmap](./Note/CODE_REVIEW_IMPROVEMENTS.md) - Planned enhancements
 - [Domain Errors Implementation](./Note/DOMAIN_ERRORS_IMPROVEMENT_SUMMARY.md) - Performance optimization details
 
-## 🤝 Contributing
-
-Contributions are welcome! Please follow the coding guidelines in `.github/copilot-instructions.md`.
-
-### Key Guidelines
-
-1. **Domain Errors**: Always use `static readonly` fields
-2. **Value Objects**: Validate in factory methods with `Either<DomainError, T>`
-3. **Commands**: Return `Either<DomainError, TResult>`
-4. **Nullable Types**: Wrap in `Option<T>`, never use with `Either<L, R>`
-5. **Vertical Slices**: Keep feature components together
-6. **Tests**: Add unit and integration tests for new features
-
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
