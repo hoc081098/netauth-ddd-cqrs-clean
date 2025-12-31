@@ -1,7 +1,7 @@
 using Ardalis.GuardClauses;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
-using NetAuth.Application.Core.Exceptions;
+using NetAuth.Application.Core.Errors;
 using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Web.Api.Contracts;

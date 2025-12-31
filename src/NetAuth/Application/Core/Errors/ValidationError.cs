@@ -2,7 +2,7 @@ using Ardalis.GuardClauses;
 using FluentValidation.Results;
 using NetAuth.Domain.Core.Primitives;
 
-namespace NetAuth.Application.Core.Exceptions;
+namespace NetAuth.Application.Core.Errors;
 
 public sealed class ValidationError(
     IEnumerable<ValidationFailure> failures

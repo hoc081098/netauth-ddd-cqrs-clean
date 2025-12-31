@@ -5,7 +5,7 @@ using FluentValidation;
 using FluentValidation.Results;
 using LanguageExt;
 using MediatR;
-using NetAuth.Application.Core.Exceptions;
+using NetAuth.Application.Core.Errors;
 using NetAuth.Domain.Core.Primitives;
 
 namespace NetAuth.Application.Core.Behaviors;
