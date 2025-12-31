@@ -16,3 +16,4 @@
 /sqldialects.xml
 # Editor-based HTTP Client requests
 /httpRequests/
+copilot.data.**.xml
