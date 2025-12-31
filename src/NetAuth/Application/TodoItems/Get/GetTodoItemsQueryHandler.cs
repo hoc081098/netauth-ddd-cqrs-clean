@@ -28,7 +28,7 @@ internal sealed class GetTodoItemsQueryHandler(
         new(
             Id: todoItem.Id,
             Title: todoItem.Title,
-            Description: todoItem.Description ?? string.Empty,
+            Description: todoItem.Description?.Value,
             IsCompleted: todoItem.IsCompleted,
             CompletedOnUtc: todoItem.CompletedOnUtc,
             DueDateOnUtc: todoItem.DueDateOnUtc,

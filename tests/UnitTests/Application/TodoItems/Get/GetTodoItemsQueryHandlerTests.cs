@@ -4,6 +4,7 @@ using NetAuth.Application.TodoItems.Get;
 using NetAuth.Domain.TodoItems;
 using NetAuth.UnitTests.Domain.TodoItems;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 
@@ -207,6 +208,21 @@ public class GetTodoItemsQueryHandlerTests
             Assert.Single(right.TodoItems);
             Assert.Null(right.TodoItems[0].Description);
         });
+
+        await _todoItemRepository.Received(1)
+            .GetTodoItemsByUserId(_userId, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_ShouldThrowException_WhenCallToRepositoryFails()
+    {
+        // Arrange
+        _todoItemRepository.GetTodoItemsByUserId(_userId, Arg.Any<CancellationToken>())
+            .ThrowsAsync(new Exception("Database error"));
+
+        // Act & Assert
+        await Assert.ThrowsAsync<Exception>(() =>
+            _handler.Handle(Query, CancellationToken.None));
 
         await _todoItemRepository.Received(1)
             .GetTodoItemsByUserId(_userId, Arg.Any<CancellationToken>());
