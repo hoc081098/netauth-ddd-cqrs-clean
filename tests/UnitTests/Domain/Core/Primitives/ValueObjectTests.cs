@@ -9,6 +9,7 @@ namespace NetAuth.UnitTests.Domain.Core.Primitives;
 [SuppressMessage("ReSharper", "VariableCanBeNotNullable")]
 [SuppressMessage("ReSharper", "UseObjectOrCollectionInitializer")]
 [SuppressMessage("ReSharper", "AppendToCollectionExpression")]
+[SuppressMessage("Assertions", "xUnit2003:Do not use equality check to test for null value")]
 public class ValueObjectTests
 {
     #region Test Value Objects
@@ -52,6 +53,7 @@ public class ValueObjectTests
         Assert.True(address1.Equals(address2));
         Assert.True(address1 == address2);
         Assert.False(address1 != address2);
+        Assert.Equal(address1, address2);
     }
 
     [Fact]
@@ -65,6 +67,7 @@ public class ValueObjectTests
         Assert.False(address1.Equals(address2));
         Assert.False(address1 == address2);
         Assert.True(address1 != address2);
+        Assert.NotEqual(address1, address2);
     }
 
     [Fact]
@@ -76,6 +79,7 @@ public class ValueObjectTests
 
         // Act & Assert
         Assert.False(address1.Equals(address2));
+        Assert.NotEqual(address1, address2);
     }
 
     [Fact]
@@ -89,6 +93,7 @@ public class ValueObjectTests
         Assert.False(address == null);
         Assert.False(null == address);
         Assert.True(address != null);
+        Assert.NotEqual(null, address);
     }
 
     [Fact]
@@ -100,6 +105,7 @@ public class ValueObjectTests
         // Act & Assert
         Assert.True(address.Equals(address));
         Assert.True(ReferenceEquals(address, address));
+        Assert.Equal(address, address);
     }
 
     [Fact]
@@ -113,6 +119,7 @@ public class ValueObjectTests
         Assert.False(address.Equals(money));
         Assert.False(address == money);
         Assert.True(address != money);
+        Assert.NotEqual<object>(address, money);
     }
 
     [Fact]
@@ -127,6 +134,8 @@ public class ValueObjectTests
         Assert.True(address1.Equals(address2));
         Assert.False(address1.Equals(differentAddress));
         Assert.False(address1.Equals("not an address"));
+        Assert.Equal(address1, address2);
+        Assert.NotEqual(address1, differentAddress);
     }
 
     [Fact]
@@ -138,6 +147,7 @@ public class ValueObjectTests
 
         // Act & Assert
         Assert.True(address1 == address2);
+        Assert.Equal(address1, address2);
     }
 
     #endregion
