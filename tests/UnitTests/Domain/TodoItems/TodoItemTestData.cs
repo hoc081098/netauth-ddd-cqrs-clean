@@ -1,5 +1,3 @@
-// filepath: /Users/hoc.nguyen/Desktop/My/NetAuth/tests/UnitTests/Domain/TodoItems/TodoItemTestData.cs
-
 using LanguageExt;
 using static LanguageExt.Prelude;
 using LanguageExt.UnitTesting;

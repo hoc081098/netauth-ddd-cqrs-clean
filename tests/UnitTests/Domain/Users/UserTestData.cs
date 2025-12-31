@@ -1,5 +1,3 @@
-// filepath: /Users/hoc.nguyen/Desktop/My/NetAuth/tests/UnitTests/Domain/Users/UserTestData.cs
-
 using NetAuth.Domain.Users;
 
 namespace NetAuth.UnitTests.Domain.Users;
@@ -35,23 +33,9 @@ public static class UserTestData
 
     #endregion
 
-    #region RefreshToken Data
-
-    public static readonly Guid UserId = Guid.NewGuid();
-    public static readonly Guid DeviceId = Guid.NewGuid();
-
-    public const string TokenHash = "hashed_token_value_12345";
-    public const string RawRefreshToken = "raw-refresh-token-value";
-
-    public static readonly DateTimeOffset FutureExpiration = CurrentUtc.AddDays(7);
-    public static readonly DateTimeOffset PastExpiration = CurrentUtc.AddDays(-7);
-
-    #endregion
-
     #region Theory Data
 
     public static TheoryData<IReadOnlyList<Role>?> InvalidRoles => [null, []];
-    public static TheoryData<Guid> InvalidDeviceIds => [Guid.Empty];
 
     #endregion
 
@@ -65,17 +49,6 @@ public static class UserTestData
             email: email ?? ValidEmail,
             username: username ?? ValidUsername,
             passwordHash: passwordHash ?? PlainPassword);
-
-    public static RefreshToken CreateRefreshToken(
-        string? tokenHash = null,
-        DateTimeOffset? expiresOnUtc = null,
-        Guid? userId = null,
-        Guid? deviceId = null) =>
-        RefreshToken.Create(
-            tokenHash: tokenHash ?? TokenHash,
-            expiresOnUtc: expiresOnUtc ?? FutureExpiration,
-            userId: userId ?? UserId,
-            deviceId: deviceId ?? DeviceId);
 
     #endregion
 }
