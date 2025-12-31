@@ -1,4 +1,5 @@
 // filepath: /Users/hoc.nguyen/Desktop/My/NetAuth/tests/UnitTests/Domain/Users/RefreshTokenTestData.cs
+
 using NetAuth.Domain.Users;
 
 namespace NetAuth.UnitTests.Domain.Users;
@@ -15,7 +16,7 @@ public static class RefreshTokenTestData
 
     public static Guid DeviceId => UserTestData.DeviceId;
 
-    public const string TokenHash = UserTestData.TokenHash;
+    public static string TokenHash => UserTestData.TokenHash;
 
     public static DateTimeOffset CurrentUtc => UserTestData.CurrentUtc;
 
@@ -38,8 +39,11 @@ public static class RefreshTokenTestData
         DateTimeOffset? expiresOnUtc = null,
         Guid? userId = null,
         Guid? deviceId = null) =>
-        UserTestData.CreateRefreshToken(tokenHash, expiresOnUtc, userId, deviceId);
+        UserTestData.CreateRefreshToken(
+            tokenHash: tokenHash,
+            expiresOnUtc: expiresOnUtc,
+            userId: userId,
+            deviceId: deviceId);
 
     #endregion
 }
-

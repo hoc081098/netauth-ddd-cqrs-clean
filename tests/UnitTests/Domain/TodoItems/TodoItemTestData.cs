@@ -1,4 +1,6 @@
 // filepath: /Users/hoc.nguyen/Desktop/My/NetAuth/tests/UnitTests/Domain/TodoItems/TodoItemTestData.cs
+
+using LanguageExt.UnitTesting;
 using NetAuth.Domain.TodoItems;
 
 namespace NetAuth.UnitTests.Domain.TodoItems;
@@ -36,7 +38,13 @@ public static class TodoItemTestData
     /// Fixed point in time for consistent test results across all TodoItem tests.
     /// </summary>
     public static readonly DateTimeOffset CurrentUtc =
-        new(year: 2025, month: 1, day: 1, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
+        new(year: 2025,
+            month: 1,
+            day: 1,
+            hour: 12,
+            minute: 0,
+            second: 0,
+            offset: TimeSpan.Zero);
 
     public static readonly DateTimeOffset FutureDueDate = CurrentUtc.AddDays(1);
 
@@ -69,10 +77,9 @@ public static class TodoItemTestData
         DateTimeOffset? completedOnUtc = null)
     {
         var todoItem = CreateTodoItem(userId: userId);
-        todoItem.MarkAsCompleted(completedOnUtc ?? CurrentUtc);
+        todoItem.MarkAsCompleted(completedOnUtc ?? CurrentUtc).ShouldBeRight();
         return todoItem;
     }
 
     #endregion
 }
-

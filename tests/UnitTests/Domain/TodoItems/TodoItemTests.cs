@@ -6,7 +6,6 @@ using NetAuth.Domain.TodoItems.DomainEvents;
 
 namespace NetAuth.UnitTests.Domain.TodoItems;
 
-
 public class TodoItemTests : BaseTest
 {
     [Fact]
@@ -177,8 +176,7 @@ public class TodoItemTests : BaseTest
     {
         // Arrange
         var currentUtc = TodoItemTestData.CurrentUtc;
-        var todoItem = TodoItemTestData.CreateTodoItem();
-        todoItem.MarkAsCompleted(currentUtc).ShouldBeRight();
+        var todoItem = TodoItemTestData.CreateCompletedTodoItem();
 
         var newTitle = TodoTitle.Create("Updated title").RightValueOrThrow();
         var newDescription = TodoDescription.Create("Updated description").RightValueOrThrow();
@@ -247,8 +245,7 @@ public class TodoItemTests : BaseTest
     {
         // Arrange
         var currentUtc = TodoItemTestData.CurrentUtc;
-        var todoItem = TodoItemTestData.CreateTodoItem();
-        todoItem.MarkAsCompleted(currentUtc).ShouldBeRight();
+        var todoItem = TodoItemTestData.CreateCompletedTodoItem();
 
         // Act
         var result = todoItem.MarkAsCompleted(currentUtc.AddHours(1));
@@ -262,8 +259,7 @@ public class TodoItemTests : BaseTest
     {
         // Arrange
         var currentUtc = TodoItemTestData.CurrentUtc;
-        var todoItem = TodoItemTestData.CreateTodoItem();
-        todoItem.MarkAsCompleted(currentUtc).ShouldBeRight();
+        var todoItem = TodoItemTestData.CreateCompletedTodoItem();
 
         // Act
         var result = todoItem.MarkAsIncomplete();
