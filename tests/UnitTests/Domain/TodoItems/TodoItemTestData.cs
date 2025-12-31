@@ -1,5 +1,7 @@
 // filepath: /Users/hoc.nguyen/Desktop/My/NetAuth/tests/UnitTests/Domain/TodoItems/TodoItemTestData.cs
 
+using LanguageExt;
+using static LanguageExt.Prelude;
 using LanguageExt.UnitTesting;
 using NetAuth.Domain.TodoItems;
 
@@ -57,7 +59,7 @@ public static class TodoItemTestData
     public static TodoItem CreateTodoItem(
         Guid? userId = null,
         string? title = null,
-        string? description = null,
+        Option<string>? description = null,
         DateTimeOffset? dueDateOnUtc = null,
         IReadOnlyList<string>? labels = null,
         DateTimeOffset? currentUtc = null) =>
@@ -65,7 +67,9 @@ public static class TodoItemTestData
             .Create(
                 userId: userId ?? UserId,
                 title: title ?? Title.Value,
-                description: description ?? Description.Value,
+                description: description is null 
+                    ? Description.Value
+                    : description.Value.MatchUnsafe(Some: identity, None: () => null),
                 dueDateOnUtc: dueDateOnUtc ?? FutureDueDate,
                 labels: labels ?? NonEmptyLabels,
                 currentUtc: currentUtc ?? CurrentUtc
