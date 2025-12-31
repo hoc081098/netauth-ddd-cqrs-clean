@@ -4,14 +4,6 @@ using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.UnitTests.Domain.Users;
 
-public static class UserTestData
-{
-    public static readonly Username ValidUsername = Username.Create("valid-user").RightValueOrThrow();
-    public static readonly Email ValidEmail = Email.Create("valid-user@gmail.com").RightValueOrThrow();
-    public const string PlainPassword = "ValidPassword123@";
-
-    public static TheoryData<IReadOnlyList<Role>?> InvalidRoles => [null, []];
-}
 
 public class UserTests : BaseTest
 {

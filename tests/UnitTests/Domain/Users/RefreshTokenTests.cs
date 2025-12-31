@@ -5,36 +5,6 @@ using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.UnitTests.Domain.Users;
 
-public static class RefreshTokenTestData
-{
-    public static readonly Guid UserId = Guid.NewGuid();
-
-    public static readonly Guid DeviceId = Guid.NewGuid();
-
-    public const string TokenHash = "hashed_token_value_12345";
-
-    public static readonly DateTimeOffset CurrentUtc =
-        new(year: 2025, month: 1, day: 1, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
-
-    public static readonly DateTimeOffset FutureExpiration =
-        new(year: 2025, month: 1, day: 8, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
-
-    public static readonly DateTimeOffset PastExpiration =
-        new(year: 2024, month: 12, day: 25, hour: 12, minute: 0, second: 0, offset: TimeSpan.Zero);
-
-    public static RefreshToken CreateRefreshToken(
-        string? tokenHash = null,
-        DateTimeOffset? expiresOnUtc = null,
-        Guid? userId = null,
-        Guid? deviceId = null) =>
-        RefreshToken.Create(
-            tokenHash: tokenHash ?? TokenHash,
-            expiresOnUtc: expiresOnUtc ?? FutureExpiration,
-            userId: userId ?? UserId,
-            deviceId: deviceId ?? DeviceId);
-
-    public static TheoryData<Guid> InvalidDeviceIds => [Guid.Empty];
-}
 
 public class RefreshTokenTests : BaseTest
 {
