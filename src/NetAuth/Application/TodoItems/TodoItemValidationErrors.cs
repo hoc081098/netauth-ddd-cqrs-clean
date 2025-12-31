@@ -37,7 +37,7 @@ public static class TodoItemValidationErrors
             message: "Labels is required.",
             type: DomainError.ErrorType.Validation);
     }
-    
+
     public static class UpdateTodoItem
     {
         public static readonly DomainError TitleIsRequired = new(
@@ -68,6 +68,22 @@ public static class TodoItemValidationErrors
         public static readonly DomainError LabelsIsRequired = new(
             code: "UpdateTodoItem.LabelsIsRequired",
             message: "Labels is required.",
+            type: DomainError.ErrorType.Validation);
+    }
+
+    public static class CompleteTodoItem
+    {
+        public static readonly DomainError IdIsRequired = new(
+            code: "CompleteTodoItem.IdIsRequired",
+            message: "Todo item ID is required.",
+            type: DomainError.ErrorType.Validation);
+    }
+
+    public static class MarkAsIncompleteTodoItem
+    {
+        public static readonly DomainError IdIsRequired = new(
+            code: "MarkAsIncompleteTodoItem.IdIsRequired",
+            message: "Todo item ID is required.",
             type: DomainError.ErrorType.Validation);
     }
 }
