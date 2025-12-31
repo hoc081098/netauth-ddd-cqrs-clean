@@ -89,6 +89,7 @@ public class ValueObjectTests
         var address = new Address("123 Main St", "New York", "10001");
 
         // Act & Assert
+        Assert.False(address.Equals((object?)null));
         Assert.False(address.Equals(null));
         Assert.False(address == null);
         Assert.False(null == address);
