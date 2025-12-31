@@ -54,6 +54,9 @@ public class SetUserRolesCommandHandlerTests
 
         await _userRepository.Received(1)
             .GetByIdAsyncWithRoles(userId, Arg.Any<CancellationToken>());
+
+        await _unitOfWork.DidNotReceiveWithAnyArgs()
+            .SaveChangesAsync(CancellationToken.None);
     }
 
     [Fact]
@@ -95,6 +98,9 @@ public class SetUserRolesCommandHandlerTests
             .GetRolesByIdsAsync(
                 Arg.Is<IReadOnlySet<RoleId>>(actualRoleIds => actualRoleIds.SetEquals(roleIds)),
                 Arg.Any<CancellationToken>());
+
+        await _unitOfWork.DidNotReceiveWithAnyArgs()
+            .SaveChangesAsync(CancellationToken.None);
     }
 
     [Fact]
@@ -148,7 +154,7 @@ public class SetUserRolesCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WhenAllInputsAreValidAndSetRolesFails_ShouldReturnDomainError()
+    public async Task Handle_WhenUserIsNotAllowedToGrantAdminRole_ShouldReturnDomainError()
     {
         // Arrange
         IReadOnlySet<RoleId> newRoleIds = new HashSet<RoleId> { RoleId.AdministratorId };
@@ -192,5 +198,8 @@ public class SetUserRolesCommandHandlerTests
             .GetRolesByIdsAsync(
                 Arg.Is<IReadOnlySet<RoleId>>(actualRoleIds => actualRoleIds.SetEquals(newRoleIds)),
                 Arg.Any<CancellationToken>());
+
+        await _unitOfWork.DidNotReceiveWithAnyArgs()
+            .SaveChangesAsync(CancellationToken.None);
     }
 }
