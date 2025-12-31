@@ -99,42 +99,6 @@ public class UpdateTodoItemCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_WithPastDueDate_ShouldReturnDomainError()
-    {
-        // Arrange
-        var todoItem = TodoItem.Create(
-            userId: UserId,
-            title: TodoItemTestData.Title.Value,
-            description: TodoItemTestData.Description.Value,
-            dueDateOnUtc: TodoItemTestData.FutureDueDate,
-            labels: TodoItemTestData.NonEmptyLabels,
-            currentUtc: CurrentUtc
-        ).RightValueOrThrow();
-
-        var command = new UpdateTodoItemCommand(
-            TodoItemId: todoItem.Id,
-            Title: "Updated Title",
-            Description: "Updated Description",
-            DueDate: CurrentUtc.AddDays(-1),
-            Labels: TodoItemTestData.NonEmptyLabels);
-
-        _todoItemRepository.GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<TodoItem?>(todoItem));
-
-        // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.ShouldBeLeft(left =>
-            Assert.Equal(TodoItemDomainErrors.TodoItem.DueDateInPast, left));
-
-        await _todoItemRepository.Received(1)
-            .GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>());
-        await _unitOfWork.DidNotReceiveWithAnyArgs()
-            .SaveChangesAsync(CancellationToken.None);
-    }
-
-    [Fact]
     public async Task Handle_WhenTodoItemIsNotOwnedByUser_ShouldReturnNotOwnedByUserError()
     {
         // Arrange
@@ -164,6 +128,81 @@ public class UpdateTodoItemCommandHandlerTests
         // Assert
         result.ShouldBeLeft(left =>
             Assert.Equal(TodoItemDomainErrors.TodoItem.NotOwnedByUser, left));
+
+        await _todoItemRepository.Received(1)
+            .GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>());
+        await _unitOfWork.DidNotReceiveWithAnyArgs()
+            .SaveChangesAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task Handle_WhenTodoItemIsCompleted_ShouldReturnCannotUpdateCompletedItemError()
+    {
+        // Arrange
+        var todoItem = TodoItem.Create(
+            userId: UserId,
+            title: TodoItemTestData.Title.Value,
+            description: TodoItemTestData.Description.Value,
+            dueDateOnUtc: TodoItemTestData.FutureDueDate,
+            labels: TodoItemTestData.NonEmptyLabels,
+            currentUtc: CurrentUtc
+        ).RightValueOrThrow();
+
+        // Mark as completed
+        todoItem.MarkAsCompleted(CurrentUtc);
+
+        var command = new UpdateTodoItemCommand(
+            TodoItemId: todoItem.Id,
+            Title: "Updated Title",
+            Description: "Updated Description",
+            DueDate: TodoItemTestData.FutureDueDate,
+            Labels: TodoItemTestData.NonEmptyLabels);
+
+        _todoItemRepository.GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<TodoItem?>(todoItem));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(TodoItemDomainErrors.TodoItem.CannotUpdateCompletedItem, left));
+
+        await _todoItemRepository.Received(1)
+            .GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>());
+        await _unitOfWork.DidNotReceiveWithAnyArgs()
+            .SaveChangesAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task Handle_WithPastDueDate_ShouldReturnDomainError()
+    {
+        // Arrange
+        var todoItem = TodoItem.Create(
+            userId: UserId,
+            title: TodoItemTestData.Title.Value,
+            description: TodoItemTestData.Description.Value,
+            dueDateOnUtc: TodoItemTestData.FutureDueDate,
+            labels: TodoItemTestData.NonEmptyLabels,
+            currentUtc: CurrentUtc
+        ).RightValueOrThrow();
+
+        var command = new UpdateTodoItemCommand(
+            TodoItemId: todoItem.Id,
+            Title: "Updated Title",
+            Description: "Updated Description",
+            DueDate: CurrentUtc.AddDays(-1),
+            Labels: TodoItemTestData.NonEmptyLabels);
+
+        _todoItemRepository.GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult<TodoItem?>(todoItem));
+
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(TodoItemDomainErrors.TodoItem.DueDateInPast, left));
 
         await _todoItemRepository.Received(1)
             .GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>());
@@ -249,44 +288,5 @@ public class UpdateTodoItemCommandHandlerTests
             .GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>());
         await _unitOfWork.Received(1)
             .SaveChangesAsync(Arg.Any<CancellationToken>());
-    }
-
-    [Fact]
-    public async Task Handle_WhenTodoItemIsCompleted_ShouldReturnCannotUpdateCompletedItemError()
-    {
-        // Arrange
-        var todoItem = TodoItem.Create(
-            userId: UserId,
-            title: TodoItemTestData.Title.Value,
-            description: TodoItemTestData.Description.Value,
-            dueDateOnUtc: TodoItemTestData.FutureDueDate,
-            labels: TodoItemTestData.NonEmptyLabels,
-            currentUtc: CurrentUtc
-        ).RightValueOrThrow();
-
-        // Mark as completed
-        todoItem.MarkAsCompleted(CurrentUtc);
-
-        var command = new UpdateTodoItemCommand(
-            TodoItemId: todoItem.Id,
-            Title: "Updated Title",
-            Description: "Updated Description",
-            DueDate: TodoItemTestData.FutureDueDate,
-            Labels: TodoItemTestData.NonEmptyLabels);
-
-        _todoItemRepository.GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>())
-            .Returns(Task.FromResult<TodoItem?>(todoItem));
-
-        // Act
-        var result = await _handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.ShouldBeLeft(left =>
-            Assert.Equal(TodoItemDomainErrors.TodoItem.CannotUpdateCompletedItem, left));
-
-        await _todoItemRepository.Received(1)
-            .GetByIdAsync(todoItem.Id, Arg.Any<CancellationToken>());
-        await _unitOfWork.DidNotReceiveWithAnyArgs()
-            .SaveChangesAsync(CancellationToken.None);
     }
 }
