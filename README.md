@@ -26,6 +26,8 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 - ✅ **Rate Limiting** on authentication endpoints
 - ✅ **Health Checks** for database and Redis
 - ✅ **OpenAPI/Swagger** documentation
+- ✅ **Hybrid Cache** for permission lookups (memory + Redis)
+- ✅ **API Versioning** (v1, v2) with grouped endpoints
 
 ## 🛠️ Technology Stack
 
@@ -64,18 +66,19 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 docker-compose up -d
 
 # Apply database migrations
-dotnet ef database update --project NetAuth
+dotnet ef database update --project src/NetAuth/NetAuth.csproj --startup-project src/NetAuth
 
 # Run the application
-dotnet run --project NetAuth
+dotnet run --project src/NetAuth/NetAuth.csproj
 ```
 
 ### Running Locally
 
 ```bash
 # Update connection strings in appsettings.Development.json
+# Or copy .env.example to .env and fill Jwt__SecretKey, connection strings, Seq URL, etc.
 # Then run:
-dotnet run --project NetAuth
+dotnet run --project src/NetAuth/NetAuth.csproj
 ```
 
 The API will be available at:
@@ -150,7 +153,7 @@ NetAuth/
 ### Domain-Driven Design (DDD)
 - **Aggregates**: User is the aggregate root managing RefreshTokens
 - **Value Objects**: Email, Username, Password with validation
-- **Domain Events**: UserRegisteredDomainEvent, RefreshTokenUsedDomainEvent, etc.
+- **Domain Events**: UserCreatedDomainEvent, UserRolesChangedDomainEvent, RefreshTokenCreated/Rotated/ReuseDetected/DeviceMismatchDetected/ExpiredUsage/ChainCompromised
 - **Domain Errors**: Immutable error types using `static readonly` fields for performance
 
 ### CQRS (Command Query Responsibility Segregation)
@@ -179,9 +182,9 @@ Ensures reliable event processing:
 ## 🔒 Security Features
 
 ### Password Security
-- **PBKDF2** algorithm with 600,000 iterations
+- **PBKDF2** algorithm with 80,000 iterations (v1, salted, constant-time verify)
 - **Unique random salt** per password
-- **Secure storage format**: `pbkdf2.600000.{salt}.{hash}`
+- **Versioned storage format**: `v1.{iterations}.{salt}.{hash}`
 
 ### Refresh Token Security
 - **Token Rotation**: New token issued on every refresh
