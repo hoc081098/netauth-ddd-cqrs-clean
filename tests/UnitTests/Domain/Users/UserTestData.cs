@@ -37,7 +37,7 @@ public static class UserTestData
 
     #region RefreshToken Data
 
-    public static readonly Guid RefreshTokenUserId = Guid.NewGuid();
+    public static readonly Guid UserId = Guid.NewGuid();
     public static readonly Guid DeviceId = Guid.NewGuid();
 
     public const string TokenHash = "hashed_token_value_12345";
@@ -74,7 +74,7 @@ public static class UserTestData
         RefreshToken.Create(
             tokenHash: tokenHash ?? TokenHash,
             expiresOnUtc: expiresOnUtc ?? FutureExpiration,
-            userId: userId ?? RefreshTokenUserId,
+            userId: userId ?? UserId,
             deviceId: deviceId ?? DeviceId);
 
     #endregion

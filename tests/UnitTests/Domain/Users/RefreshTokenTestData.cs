@@ -12,7 +12,7 @@ public static class RefreshTokenTestData
 {
     #region Delegated from UserTestData
 
-    public static Guid UserId => UserTestData.RefreshTokenUserId;
+    public static Guid UserId => UserTestData.UserId;
 
     public static Guid DeviceId => UserTestData.DeviceId;
 
