@@ -29,17 +29,16 @@ public record JwtConfig
 
     public required TimeSpan RefreshTokenExpiration { get; init; }
 
-    [JsonIgnore] private SecurityKey? _issuerSigningKey;
-
     [JsonIgnore]
+    [field: JsonIgnore]
     public SecurityKey IssuerSigningKey
     {
         get
         {
-            if (_issuerSigningKey is not null) return _issuerSigningKey;
+            if (field is not null) return field;
             lock (_lock)
             {
-                return _issuerSigningKey
+                return field
                     ??= new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecretKey));
             }
         }

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -7,6 +7,7 @@
         <WarningsAsErrors>Nullable</WarningsAsErrors>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
         <LangVersion>14</LangVersion>
+        <UserSecretsId>f7c1a513-e3bf-4c36-9c2b-c7e6657ef3a5</UserSecretsId>
     </PropertyGroup>
 
     <ItemGroup>
