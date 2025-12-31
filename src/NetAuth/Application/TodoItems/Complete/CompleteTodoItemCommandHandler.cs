@@ -30,12 +30,11 @@ internal sealed class CompleteTodoItemCommandHandler(
             return TodoItemDomainErrors.TodoItem.NotOwnedByUser;
         }
 
-        var result = item.MarkAsCompleted(clock.UtcNow);
-
-        return await result.MapAsync(async _ =>
-        {
-            await unitOfWork.SaveChangesAsync(cancellationToken);
-            return Unit.Value;
-        });
+        return await item.MarkAsCompleted(clock.UtcNow)
+            .MapAsync(async _ =>
+            {
+                await unitOfWork.SaveChangesAsync(cancellationToken);
+                return Unit.Value;
+            });
     }
 }
