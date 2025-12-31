@@ -5,9 +5,9 @@ name: Build & Test 🧪
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "main" ]
 
 env:
   DOTNET_VERSION: '10.0.x'
