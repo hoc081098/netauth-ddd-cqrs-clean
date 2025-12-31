@@ -1,5 +1,3 @@
-// filepath: /Users/hoc.nguyen/Desktop/My/NetAuth/tests/UnitTests/Domain/Core/Primitives/EntityTests.cs
-
 using System.Diagnostics.CodeAnalysis;
 using NetAuth.Domain.Core.Primitives;
 
