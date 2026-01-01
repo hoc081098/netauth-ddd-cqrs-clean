@@ -10,6 +10,7 @@ namespace NetAuth.UnitTests.Domain.Core.Primitives;
 [SuppressMessage("ReSharper", "UseObjectOrCollectionInitializer")]
 [SuppressMessage("ReSharper", "AppendToCollectionExpression")]
 [SuppressMessage("Assertions", "xUnit2003:Do not use equality check to test for null value")]
+[SuppressMessage("Maintainability", "CA1508:Avoid dead conditional code")]
 public class ValueObjectTests
 {
     #region Test Value Objects

@@ -258,7 +258,6 @@ public class TodoItemTests : BaseTest
     public void MarkAsIncomplete_WithCompletedTodoItem_ShouldReturnSuccess()
     {
         // Arrange
-        var currentUtc = TodoItemTestData.CurrentUtc;
         var todoItem = TodoItemTestData.CreateCompletedTodoItem();
 
         // Act

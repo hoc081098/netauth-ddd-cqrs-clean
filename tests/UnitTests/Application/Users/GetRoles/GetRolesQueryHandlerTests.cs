@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using LanguageExt.UnitTesting;
 using NetAuth.Application.Users.GetRoles;
 using NetAuth.Domain.Users;
@@ -7,6 +8,7 @@ using NSubstitute;
 
 namespace NetAuth.UnitTests.Application.Users.GetRoles;
 
+[SuppressMessage("Usage", "CA2201:Do not raise reserved exception types")]
 public class GetRolesQueryHandlerTests
 {
     // Subject under test (SUT)

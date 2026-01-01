@@ -4,6 +4,8 @@ using NetAuth.Domain.Core.Primitives;
 namespace NetAuth.UnitTests.Domain.Core.Primitives;
 
 [SuppressMessage("ReSharper", "AppendToCollectionExpression")]
+[SuppressMessage("Globalization", "CA1307:Specify StringComparison for clarity")]
+[SuppressMessage("Maintainability", "CA1508:Avoid dead conditional code")]
 public class DomainErrorTests
 {
     #region Constructor Tests

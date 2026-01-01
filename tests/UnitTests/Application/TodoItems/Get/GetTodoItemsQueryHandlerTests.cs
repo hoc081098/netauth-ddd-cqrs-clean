@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using LanguageExt.UnitTesting;
 using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.TodoItems.Get;
@@ -10,6 +11,7 @@ using NSubstitute.ExceptionExtensions;
 
 namespace NetAuth.UnitTests.Application.TodoItems.Get;
 
+[SuppressMessage("Usage", "CA2201:Do not raise reserved exception types")]
 public class GetTodoItemsQueryHandlerTests
 {
     // Subject under test (SUT)

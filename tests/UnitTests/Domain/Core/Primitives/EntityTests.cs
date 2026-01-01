@@ -12,6 +12,7 @@ namespace NetAuth.UnitTests.Domain.Core.Primitives;
 [SuppressMessage("ReSharper", "VariableCanBeNotNullable")]
 [SuppressMessage("ReSharper", "UseObjectOrCollectionInitializer")]
 [SuppressMessage("ReSharper", "AppendToCollectionExpression")]
+[SuppressMessage("Maintainability", "CA1508:Avoid dead conditional code")]
 public class EntityTests
 {
     #region Test Entities

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using LanguageExt.UnitTesting;
 using NetAuth.Application.Abstractions.Cryptography;
 using NetAuth.Application.Abstractions.Data;
@@ -8,6 +9,7 @@ using NSubstitute;
 
 namespace NetAuth.UnitTests.Application.Users.Register;
 
+[SuppressMessage("Major Code Smell", "S125:Sections of code should not be commented out")]
 public class RegisterCommandHandlerTests
 {
     private readonly RegisterCommandHandler _handler;
