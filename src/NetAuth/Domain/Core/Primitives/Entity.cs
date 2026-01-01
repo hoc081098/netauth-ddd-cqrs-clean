@@ -26,7 +26,10 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
         return obj.GetType() == GetType() && Equals((Entity<TId>)obj);
     }
 
-    [SuppressMessage("Major Code Smell", "S1066:Mergeable \"if\" statements should be combined")]
+    [SuppressMessage(
+        "Major Code Smell",
+        "S1066:Mergeable \"if\" statements should be combined",
+        Justification = "Nested if improves readability for transient Guid entity equality check.")]
     public bool Equals(Entity<TId>? other)
     {
         if (other is null) return false;
