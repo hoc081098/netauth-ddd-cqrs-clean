@@ -21,6 +21,7 @@ NetAuth is an ASP.NET Core authentication service built with .NET 10, implementi
 - **Domain Events**: Implement `IDomainEvent` and use `AddDomainEvent()` in aggregates
 - **Factory Methods**: Use static `Create()` methods with `Either<DomainError, T>` return type
 - **Validation**: Validate in factory methods using switch expressions with pattern matching
+- **Enums**: Use for business concepts like `RoleChangeActor` to distinguish privilege levels
 
 #### Patterns:
 ```csharp
@@ -118,7 +119,7 @@ Application/
 public sealed record LoginCommand(
     string Email,
     string Password,
-    string DeviceId
+    Guid DeviceId
 ) : ICommand<LoginResult>;
 
 public sealed record LoginResult(
@@ -183,11 +184,15 @@ internal sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
     {
         RuleFor(x => x.Email)
             .NotEmpty()
-            .EmailAddress();
+            .WithDomainError(UsersValidationErrors.Login.EmailIsRequired);
         
         RuleFor(x => x.Password)
             .NotEmpty()
-            .MinimumLength(8);
+            .WithDomainError(UsersValidationErrors.Login.PasswordIsRequired);
+            
+        RuleFor(x => x.DeviceId)
+            .NotEmpty()
+            .WithDomainError(UsersValidationErrors.Login.DeviceIdIsRequired);
     }
 }
 ```
@@ -202,6 +207,7 @@ internal sealed class LoginCommandValidator : AbstractValidator<LoginCommand>
 - **Authentication**: JWT-based with claims transformation for permissions
 - **Authorization**: Permission-based using `AuthorizationHandler<PermissionRequirement>`
 - **Outbox Pattern**: Process domain events asynchronously with retry logic
+- **Caching**: Use `HybridCache` for permission lookups with distributed and local cache tiers
 
 #### Patterns:
 ```csharp
@@ -256,6 +262,33 @@ internal sealed class PermissionAuthorizationHandler : AuthorizationHandler<Perm
         return Task.CompletedTask;
     }
 }
+
+// Permission Service with HybridCache
+internal sealed class PermissionService(
+    AppDbContext dbContext,
+    HybridCache cache
+) : IPermissionService
+{
+    private const string CacheKeyPrefix = "auth:permissions:user:";
+    
+    private static readonly HybridCacheEntryOptions HybridCacheEntryOptions = new()
+    {
+        Expiration = TimeSpan.FromMinutes(30),
+        LocalCacheExpiration = TimeSpan.FromMinutes(5)
+    };
+    
+    public async Task<IReadOnlySet<string>> GetUserPermissionsAsync(
+        Guid userId,
+        CancellationToken cancellationToken = default) =>
+        // NOTE: Must use `HashSet<string>` type argument here to ensure correct deserialization from cache.
+        // Using interface type `IReadOnlySet<string>` will cause deserialization to fail.
+        await cache.GetOrCreateAsync<HashSet<string>>(
+            key: $"{CacheKeyPrefix}{userId:N}",
+            factory: async token => await QueryPermissionsAsync(userId, token),
+            options: HybridCacheEntryOptions,
+            cancellationToken: cancellationToken
+        );
+}
 ```
 
 ### 4. Web.Api Layer (`/Web.Api`)
@@ -276,13 +309,16 @@ Web.Api/
 - **Error Handling**: Map `DomainError` to proper HTTP status codes via `CustomResults.Err()`
 - **OpenAPI**: Add `.WithName()`, `.WithSummary()`, `.WithDescription()`, `.Produces<T>()`, `.ProducesProblem()`
 - **Authorization**: Use `.RequireAuthorization("permission:resource:action")`
+- **Rate Limiting**: Use `.RequireRateLimiting()` for sensitive endpoints
+- **Swagger**: Use `[SwaggerRequired]` attribute on request records for required properties
 
 #### Patterns:
 ```csharp
 internal sealed class LoginEndpoint : IEndpoint
 {
-    public sealed record Request(string Email, string Password);
-    public sealed record Response(string AccessToken);
+    [SwaggerRequired]
+    public sealed record Request(string Email, string Password, Guid DeviceId);
+    public sealed record Response(string AccessToken, string RefreshToken);
     
     public void MapEndpoint(IEndpointRouteBuilder app)
     {
@@ -293,20 +329,25 @@ internal sealed class LoginEndpoint : IEndpoint
             {
                 var command = new LoginCommand(
                     Email: request.Email,
-                    Password: request.Password);
+                    Password: request.Password,
+                    DeviceId: request.DeviceId);
                 
                 var result = await sender.Send(command, cancellationToken);
                 
                 return result
-                    .Select(r => new Response(AccessToken: r.AccessToken))
+                    .Select(r => new Response(
+                        AccessToken: r.AccessToken,
+                        RefreshToken: r.RefreshToken))
                     .Match(Right: Results.Ok, Left: CustomResults.Err);
             })
             .WithName("Login")
             .WithSummary("Authenticate user with email & password.")
-            .WithDescription("Returns JWT access token when credentials are valid.")
+            .WithDescription("Returns JWT access token and refresh token when credentials are valid.")
             .Produces<Response>()
             .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .ProducesProblem(StatusCodes.Status400BadRequest);
+            .ProducesProblem(StatusCodes.Status400BadRequest)
+            .WithTags(Tags.Authentication)
+            .RequireRateLimiting(RateLimiterPolicyNames.LoginLimiter);
     }
 }
 ```
@@ -320,6 +361,7 @@ internal sealed class LoginEndpoint : IEndpoint
 - **MediatR** for CQRS
 - **FluentValidation** for validation
 - **LanguageExt** for functional programming (Either, Option)
+- **Ardalis.GuardClauses** for guard clauses
 
 ### Security
 - **JWT Bearer Authentication**
@@ -330,6 +372,14 @@ internal sealed class LoginEndpoint : IEndpoint
 - **Dapper** for raw SQL queries (Outbox)
 - **Npgsql** for PostgreSQL
 - **Quartz.NET** for background jobs (Outbox processing)
+- **HybridCache** for distributed caching with local cache fallback
+- **Serilog** for structured logging
+
+### Infrastructure
+- **Dapper** for raw SQL queries (Outbox)
+- **Npgsql** for PostgreSQL
+- **Quartz.NET** for background jobs (Outbox processing)
+- **HybridCache** for distributed caching with local cache fallback
 
 ## Coding Standards
 
@@ -341,6 +391,7 @@ internal sealed class LoginEndpoint : IEndpoint
 - Prefer **expression-bodied members** for simple methods
 - Use **implicit usings** where appropriate
 - Add XML doc comments for public APIs
+- Use `[UsedImplicitly]` for classes resolved by DI to avoid ReSharper warnings
 
 ### Naming Conventions
 - **Commands**: `{Action}Command` (e.g., `LoginCommand`, `RegisterCommand`)
@@ -363,14 +414,15 @@ internal sealed class LoginEndpoint : IEndpoint
   - `Failure` → 500 Internal Server Error
 
 ### Service Lifetimes
-- **Scoped**: DbContext, Repositories, UnitOfWork
-- **Singleton**: Configuration, Clock, Validators, PasswordHasher, JwtProvider
+- **Scoped**: DbContext, Repositories, UnitOfWork, PermissionService
+- **Singleton**: Configuration, Clock, Validators, PasswordHasher, JwtProvider, HybridCache
 - **Transient**: Default for handlers (managed by MediatR)
 
 ### Validation
 - **Domain validation**: In entity factory methods using `Either<DomainError, T>`
-- **Application validation**: FluentValidation in command validators
+- **Application validation**: FluentValidation in command validators using `WithDomainError()` extension
 - **Pipeline**: `ValidationBehavior` intercepts and validates before handler execution
+- **Validation Errors**: Use dedicated `{Feature}ValidationErrors` classes for application-level validation messages
 
 ## Outbox Pattern
 
@@ -418,6 +470,22 @@ Ensures reliable processing of domain events using transactional outbox pattern.
 
 ## Common Patterns
 
+### Rate Limiting
+Use predefined rate limiter policies for sensitive endpoints:
+
+```csharp
+// Rate Limiter Policy Names
+internal static class RateLimiterPolicyNames
+{
+    internal const string LoginLimiter = "login-limiter";
+    internal const string RegisterLimiter = "register-limiter";
+    internal const string RefreshTokenLimiter = "refresh-token-limiter";
+}
+
+// Usage in endpoints
+.RequireRateLimiting(RateLimiterPolicyNames.LoginLimiter);
+```
+
 ### Railway-Oriented Programming
 Use `Either<L, R>` for chaining operations that can fail:
 
@@ -449,6 +517,25 @@ public Option<User> FindUser(Guid id) =>
     users.TryGetValue(id, out var user) ? user : Option<User>.None;
 ```
 
+### FluentValidation Extensions
+Use the `WithDomainError()` extension method for consistent validation messages:
+
+```csharp
+public static class FluentValidationExtensions
+{
+    public static IRuleBuilderOptions<T, TProperty> WithDomainError<T, TProperty>(
+        this IRuleBuilderOptions<T, TProperty> rule,
+        DomainError error) =>
+        rule.WithErrorCode(error.Code)
+            .WithMessage(error.Message);
+}
+
+// Usage
+RuleFor(x => x.Email)
+    .NotEmpty()
+    .WithDomainError(UsersValidationErrors.Login.EmailIsRequired);
+```
+
 ### Primary Constructors with Dependency Injection
 ```csharp
 internal sealed class LoginCommandHandler(
@@ -458,6 +545,18 @@ internal sealed class LoginCommandHandler(
 {
     // Dependencies are available as fields
 }
+```
+
+### Swagger Documentation
+Use `[SwaggerRequired]` attribute for required request properties:
+
+```csharp
+[SwaggerRequired]
+public sealed record Request(
+    string Email,
+    string Password,
+    Guid DeviceId
+);
 ```
 
 ### Switch Expressions for Validation
@@ -503,9 +602,9 @@ public static Either<DomainError, Email> Create(string email) =>
 - Use compiled queries for hot paths
 
 ### Caching
-- Cache permission lookups
+- Cache permission lookups with `HybridCache`
 - Cache JWT validation keys
-- Use distributed cache for scaled environments
+- Use distributed cache for scaled environments with local cache fallback
 
 ### Outbox Processing
 - Tune `BatchSize` and `MaxDegreeOfParallelism` based on load
@@ -552,12 +651,14 @@ When generating code for this project:
 2. **Use existing patterns** - look at similar features before creating new ones
 3. **Implement complete vertical slices** - include command, handler, validator, endpoint
 4. **Return Either<DomainError, T>** for failable operations
-5. **Add proper validation** at both domain and application levels
-6. **Include OpenAPI documentation** for all endpoints
+5. **Add proper validation** at both domain and application levels using `WithDomainError()` extension
+6. **Include OpenAPI documentation** for all endpoints with `[SwaggerRequired]` for request records
 7. **Use primary constructors** for dependency injection
 8. **Follow naming conventions** consistently
 9. **Add XML comments** for public APIs
 10. **Consider security implications** for all authentication/authorization code
+11. **Use rate limiting** for sensitive endpoints with predefined policy names
+12. **Use HybridCache** for performance-critical cached operations
 
 ## Example: Adding a New Feature
 
@@ -571,12 +672,14 @@ To add a "ChangePassword" feature:
      ├── ChangePasswordCommandHandler.cs
      └── ChangePasswordCommandValidator.cs
    ```
-3. **Endpoint** - Create endpoint class:
+3. **Validation Errors** - Add to `UsersValidationErrors.cs` if needed
+4. **Endpoint** - Create endpoint class with `[SwaggerRequired]`:
    ```
    Web.Api/Endpoints/Users/ChangePasswordEndpoint.cs
    ```
-4. **Authorization** - Add permission requirement if needed
-5. **Tests** - Add unit and integration tests
+5. **Authorization** - Add permission requirement if needed
+6. **Rate Limiting** - Add rate limiting policy if needed
+7. **Tests** - Add unit and integration tests
 
 ---
 
