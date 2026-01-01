@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace NetAuth.Domain.Core.Primitives;
 
+[SuppressMessage("Major Code Smell", "S4035:Classes implementing \"IEquatable<T>\" should be sealed")]
 public abstract class ValueObject : IEquatable<ValueObject>
 {
     /// <summary>
@@ -15,6 +18,12 @@ public abstract class ValueObject : IEquatable<ValueObject>
         return obj.GetType() == GetType() && Equals((ValueObject)obj);
     }
 
+    public bool Equals(ValueObject? other)
+    {
+        if (other is null) return false;
+        return ReferenceEquals(this, other) || GetAtomicValues().SequenceEqual(other.GetAtomicValues());
+    }
+
     public override int GetHashCode()
     {
         HashCode hashCode = default;
@@ -24,12 +33,6 @@ public abstract class ValueObject : IEquatable<ValueObject>
         }
 
         return hashCode.ToHashCode();
-    }
-
-    public bool Equals(ValueObject? other)
-    {
-        if (other is null) return false;
-        return ReferenceEquals(this, other) || GetAtomicValues().SequenceEqual(other.GetAtomicValues());
     }
 
     public static bool operator ==(ValueObject? left, ValueObject? right) => Equals(left, right);

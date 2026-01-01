@@ -24,7 +24,7 @@ internal sealed class RegisterCommandHandler(
         return userInfoEither.BindAsync(info => CheckUniquenessAndInsertAsync(info, cancellationToken));
     }
 
-    private record UserInfo(Email Email, Username Username, Password Password);
+    private sealed record UserInfo(Email Email, Username Username, Password Password);
 
     private async Task<Either<DomainError, RegisterResult>> CheckUniquenessAndInsertAsync(
         UserInfo userInfo,

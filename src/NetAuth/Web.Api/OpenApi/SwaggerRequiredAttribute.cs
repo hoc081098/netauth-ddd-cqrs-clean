@@ -8,7 +8,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 namespace NetAuth.Web.Api.OpenApi;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Class)]
-public class SwaggerRequiredAttribute : Attribute;
+public sealed class SwaggerRequiredAttribute : Attribute;
 
 [UsedImplicitly]
 internal sealed class AddSwaggerRequiredSchemaFilter : ISchemaFilter

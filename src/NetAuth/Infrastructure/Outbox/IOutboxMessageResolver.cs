@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Ardalis.GuardClauses;
 using LanguageExt;
@@ -14,6 +15,7 @@ internal sealed class OutboxMessageResolver : IOutboxMessageResolver
 {
     private static readonly ConcurrentDictionary<string, Type> TypeCache = new();
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
     public Fin<object> DeserializeEvent(string type, string content)
     {
         try

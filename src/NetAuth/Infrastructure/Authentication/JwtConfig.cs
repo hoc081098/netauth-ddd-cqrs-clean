@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -31,6 +32,7 @@ public record JwtConfig
 
     [JsonIgnore]
     [field: JsonIgnore]
+    [SuppressMessage("Maintainability", "CA1508:Avoid dead conditional code")]
     public SecurityKey IssuerSigningKey
     {
         get

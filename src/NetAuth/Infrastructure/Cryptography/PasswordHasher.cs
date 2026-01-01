@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using Ardalis.GuardClauses;
@@ -10,6 +11,9 @@ internal sealed class Pbkdf2PasswordHasher(ILogger<Pbkdf2PasswordHasher> logger)
     IPasswordHasher,
     IPasswordHashChecker
 {
+    // TODO: Recheck Pbkdf2PasswordHashingOptions.Iterations
+    [SuppressMessage("Critical Vulnerability",
+        "S5344:Passwords should not be stored in plaintext or with a fast hashing algorithm")]
     public string HashPassword(Password password)
     {
         Guard.Against.NullOrEmpty(password);

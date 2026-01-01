@@ -31,7 +31,7 @@ namespace NetAuth.Domain.Users;
 /// </remarks>
 public sealed class User : AggregateRoot<Guid>, IAuditableEntity, ISoftDeletableEntity
 {
-    private string _passwordHash = string.Empty;
+    private readonly string _passwordHash = string.Empty;
     private readonly List<Role> _roles = [];
 
     public Email Email { get; } = null!;
