@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using LanguageExt;
 using MediatR;
 using Serilog.Context;
@@ -10,6 +11,7 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
 {
+    [SuppressMessage("Major Code Smell", "S2139:Exceptions should be either logged or rethrown but not both")]
     public async Task<TResponse> Handle(
         TRequest request,
         RequestHandlerDelegate<TResponse> next,
@@ -54,7 +56,8 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
         {
             using (LogContext.PushProperty("Error", exception, true))
             {
-                logger.LogError(exception, "[PipelineBehavior] Completed request {RequestName} with error", requestName);
+                logger.LogError(exception, "[PipelineBehavior] Completed request {RequestName} with error",
+                    requestName);
             }
 
             throw;

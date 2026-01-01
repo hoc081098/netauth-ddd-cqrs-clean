@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Dapper;
 using JetBrains.Annotations;
@@ -158,6 +159,7 @@ internal sealed class OutboxProcessor(
         );
     }
 
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
     private static ValueTask PublishMessage(OutboxMessage message,
         ConcurrentQueue<OutboxUpdate> updateQueue,
         IPublisher publisher,

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using Microsoft.AspNetCore.RateLimiting;
@@ -37,6 +38,7 @@ public static class WebApiDiModule
         return services;
     }
 
+    [SuppressMessage("Major Code Smell", "S125:Sections of code should not be commented out")]
     private static void AddApiVersioningConfiguration(this IServiceCollection services)
     {
         services.AddApiVersioning(options =>

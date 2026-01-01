@@ -7,7 +7,5 @@ namespace NetAuth.Infrastructure.Common;
 /// </summary>
 internal sealed class SystemClock : IClock
 {
-    public DateTimeOffset Now => DateTimeOffset.Now;
-
     public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
 }

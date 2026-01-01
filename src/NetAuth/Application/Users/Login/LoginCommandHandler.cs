@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using LanguageExt;
 using static LanguageExt.Prelude;
 using NetAuth.Application.Abstractions.Authentication;
@@ -25,6 +26,7 @@ internal sealed class LoginCommandHandler(
             .MapAsync(async email => Optional(await userRepository.GetByEmailAsync(email, cancellationToken)))
             .BindAsync(userOption => AuthenticateUserAsync(command, userOption, cancellationToken));
 
+    [SuppressMessage("Performance", "CA1849:Call async methods when in an async method")] // False positive
     private async Task<Either<DomainError, LoginResult>> AuthenticateUserAsync(
         LoginCommand command,
         Option<User> userOption,

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -45,6 +46,7 @@ internal sealed class SoftDeletableEntityInterceptor(IClock clock) : SaveChanges
     /// This method is recursive.
     /// </summary>
     /// <param name="entityEntry">The entity entry.</param>
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions")]
     private static void UpdateDeletedEntityEntryReferencesToUnchanged(EntityEntry entityEntry)
     {
         if (!entityEntry.References.Any())

@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using LanguageExt.UnitTesting;
 using NetAuth.Application.Users.GetUserRoles;
 using NetAuth.Domain.Users;
@@ -7,6 +8,7 @@ using NSubstitute;
 
 namespace NetAuth.UnitTests.Application.Users.GetUserRoles;
 
+[SuppressMessage("Usage", "CA2201:Do not raise reserved exception types")]
 public class GetUserRolesQueryHandlerTests
 {
     // Subject under test (SUT)
@@ -51,7 +53,7 @@ public class GetUserRolesQueryHandlerTests
             Assert.Contains(right.Roles, r => r.Id == Role.Administrator.Id);
             Assert.Contains(right.Roles, r => r.Id == Role.Member.Id);
         });
-        
+
         await _roleRepository.Received(1)
             .GetRolesByUserIdAsync(UserId, Arg.Any<CancellationToken>());
     }
@@ -70,7 +72,7 @@ public class GetUserRolesQueryHandlerTests
 
         // Assert
         result.ShouldBeRight(right => Assert.Empty(right.Roles));
-        
+
         await _roleRepository.Received(1)
             .GetRolesByUserIdAsync(UserId, Arg.Any<CancellationToken>());
     }
@@ -85,7 +87,7 @@ public class GetUserRolesQueryHandlerTests
         // Act & Assert
         await Assert.ThrowsAsync<Exception>(() =>
             _handler.Handle(Query, CancellationToken.None));
-        
+
         await _roleRepository.Received(1)
             .GetRolesByUserIdAsync(UserId, Arg.Any<CancellationToken>());
     }

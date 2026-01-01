@@ -54,6 +54,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI(options =>
     {
         // Build a swagger endpoint for each discovered API version
+#pragma warning disable S3267
         foreach (var description in app.DescribeApiVersions())
         {
             options.SwaggerEndpoint(
@@ -61,6 +62,7 @@ if (app.Environment.IsDevelopment())
                 name: description.GroupName.ToUpperInvariant()
             );
         }
+#pragma warning restore S3267
     });
 
     app.ApplyMigrations();
@@ -88,7 +90,11 @@ app.UseAuthorization();
 
 Log.Information("Running NetAuth Web API...");
 
+// S6966 is suppressed here because app.Run() is the terminal, blocking call in the ASP.NET Core
+// minimal hosting model, and this top-level Program intentionally ends at this point.
+#pragma warning disable S6966
 app.Run();
+#pragma warning restore S6966
 return;
 
 static void MapDemoEndpoints(RouteGroupBuilder routeGroupBuilder)

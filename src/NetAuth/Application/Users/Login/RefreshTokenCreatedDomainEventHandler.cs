@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using NetAuth.Application.Abstractions.Common;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Users;
@@ -10,6 +11,7 @@ internal sealed class RefreshTokenCreatedDomainEventHandler(
     IClock clock,
     ILogger<RefreshTokenCreatedDomainEventHandler> logger) : IDomainEventHandler<RefreshTokenCreatedDomainEvent>
 {
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
     public async Task Handle(RefreshTokenCreatedDomainEvent @event,
         CancellationToken cancellationToken)
     {

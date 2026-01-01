@@ -4,7 +4,6 @@ namespace NetAuth.UnitTests.Application.Abstractions.Common;
 
 public class FixedClock : IClock
 {
-    public required DateTimeOffset Now { get; init; }
     public required DateTimeOffset UtcNow { get; init; }
 
     public static FixedClock CreateWithUtcNow(DateTimeOffset fixedTime)
@@ -17,7 +16,6 @@ public class FixedClock : IClock
 
         return new FixedClock
         {
-            Now = fixedTime.ToLocalTime(),
             UtcNow = fixedTime
         };
     }

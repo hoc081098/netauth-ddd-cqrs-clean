@@ -1,5 +1,8 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace NetAuth.Domain.Core.Primitives;
 
+[SuppressMessage("Major Code Smell", "S4035:Classes implementing \"IEquatable<T>\" should be sealed")]
 public abstract class Entity<TId> : IEquatable<Entity<TId>>
     where TId : IEquatable<TId>
 {
@@ -23,8 +26,10 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
         return obj.GetType() == GetType() && Equals((Entity<TId>)obj);
     }
 
-    public override int GetHashCode() => Id.GetHashCode();
-
+    [SuppressMessage(
+        "Major Code Smell",
+        "S1066:Mergeable \"if\" statements should be combined",
+        Justification = "Nested if improves readability for transient Guid entity equality check.")]
     public bool Equals(Entity<TId>? other)
     {
         if (other is null) return false;
@@ -38,6 +43,8 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
 
         return Id.Equals(other.Id);
     }
+
+    public override int GetHashCode() => Id.GetHashCode();
 
     public static bool operator ==(Entity<TId>? left, Entity<TId>? right) => Equals(left, right);
 

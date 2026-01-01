@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using NetAuth.Application.Abstractions.Authorization;
 using NetAuth.Application.Abstractions.Messaging;
 using NetAuth.Domain.Users.DomainEvents;
@@ -9,6 +10,7 @@ internal sealed class UserRolesChangedDomainEventHandler(
     IPermissionService permissionService
 ) : IDomainEventHandler<UserRolesChangedDomainEvent>
 {
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
     public async Task Handle(UserRolesChangedDomainEvent notification, CancellationToken cancellationToken)
     {
         logger.LogInformation("User {UserId} roles changed from {@OldRoleIds} to {@NewRoleIds}",

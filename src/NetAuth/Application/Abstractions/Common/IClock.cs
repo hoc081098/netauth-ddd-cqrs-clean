@@ -6,12 +6,6 @@ namespace NetAuth.Application.Abstractions.Common;
 public interface IClock
 {
     /// <summary>
-    /// Gets the current date and time.
-    /// </summary>
-    [Obsolete("Use UtcNow property instead.")]
-    public DateTimeOffset Now { get; }
-
-    /// <summary>
     /// Get the current date and time in UTC.
     /// </summary>
     public DateTimeOffset UtcNow { get; }

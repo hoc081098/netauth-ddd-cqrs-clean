@@ -1,8 +1,11 @@
+using System.Diagnostics.CodeAnalysis;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
 namespace NetAuth.Infrastructure.Authentication;
 
+[SuppressMessage("Minor Code Smell",
+    "S2325:Methods and properties that don\'t access instance data should be static")] // False positive for extension methods
 internal static class ClaimsPrincipalExtensions
 {
     /// <param name="principal"></param>
