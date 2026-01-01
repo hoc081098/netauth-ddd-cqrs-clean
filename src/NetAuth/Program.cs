@@ -90,6 +90,8 @@ app.UseAuthorization();
 
 Log.Information("Running NetAuth Web API...");
 
+// S6966 is suppressed here because app.Run() is the terminal, blocking call in the ASP.NET Core
+// minimal hosting model, and this top-level Program intentionally ends at this point.
 #pragma warning disable S6966
 app.Run();
 #pragma warning restore S6966
