@@ -4,6 +4,7 @@ A production-ready authentication service built with .NET 10, implementing Domai
 
 [![Build & Test 🧪](https://github.com/hoc081098/NetAuth/actions/workflows/build.yml/badge.svg)](https://github.com/hoc081098/NetAuth/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/hoc081098/NetAuth/branch/main/graph/badge.svg?token=MNmihx6Pxl)](https://codecov.io/gh/hoc081098/NetAuth)
+[![Hits](https://hits.sh/github.com/hoc081098/netauth-ddd-cqrs-clean.svg)](https://hits.sh/github.com/hoc081098/netauth-ddd-cqrs-clean/)
 
 ## 🏗️ Architecture
 
