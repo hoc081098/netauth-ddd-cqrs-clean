@@ -5,7 +5,7 @@
 
     <ItemGroup>
         <!-- Code Analysis -->
-        <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.17.0.131074"/>
+        <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.18.0.131500"/>
 
         <!-- Core Libraries -->
         <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0"/>
