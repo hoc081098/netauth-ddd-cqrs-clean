@@ -14,10 +14,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Xunit"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\..\src\NetAuth\NetAuth.csproj"/>
     </ItemGroup>
 
