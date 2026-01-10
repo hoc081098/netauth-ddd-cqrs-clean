@@ -39,7 +39,7 @@ public static class InfrastructureDiModule
 
         services.AddScoped<ISaveChangesInterceptor, AuditableEntityInterceptor>();
         services.AddScoped<ISaveChangesInterceptor, SoftDeletableEntityInterceptor>();
-        services.AddSingleton(_ => { return new NpgsqlDataSourceBuilder(dbConnectionString).Build(); });
+        services.AddSingleton(_ => new NpgsqlDataSourceBuilder(dbConnectionString).Build());
         // https://www.npgsql.org/efcore/release-notes/7.0.html#support-for-dbdatasource
         services.AddDbContext<AppDbContext>((serviceProvider, optionsBuilder) =>
             optionsBuilder

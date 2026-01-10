@@ -45,6 +45,7 @@
     <!--    Credit: https://stackoverflow.com/a/73261024-->
     <ItemGroup>
         <InternalsVisibleTo Include="UnitTests"/>
+        <InternalsVisibleTo Include="IntegrationTests"/>
     </ItemGroup>
 
 </Project>
