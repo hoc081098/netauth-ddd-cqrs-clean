@@ -29,21 +29,18 @@ namespace NetAuth.IntegrationTests.Infrastructure;
 // - Start and stop the container instance with IAsyncLifetime
 [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed")]
 [UsedImplicitly]
-internal sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("postgres:18-alpine")
-        .WithName("NetAuth.Database")
         .WithDatabase("NetAuth")
         .WithUsername("postgres")
         .WithPassword("postgres")
         .Build();
 
     private readonly RedisContainer _redisContainer = new RedisBuilder("redis:8.4.0-alpine")
-        .WithName("NetAuth.Redis")
         .Build();
 
     private readonly IContainer _seqContainer = new ContainerBuilder("datalust/seq:latest")
-        .WithName("NetAuth.Seq")
         .WithEnvironment("ACCEPT_EULA", "Y")
         .WithEnvironment("SEQ_FIRSTRUN_ADMINUSERNAME", "admin")
         .WithEnvironment("SEQ_FIRSTRUN_ADMINPASSWORD", "123456")

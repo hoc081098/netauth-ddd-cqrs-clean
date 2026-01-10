@@ -11,7 +11,8 @@ using NetAuth.Infrastructure.Outbox;
 
 namespace NetAuth.Infrastructure;
 
-internal sealed class AppDbContext(
+// TODO: Use `internal` access modifier
+public sealed class AppDbContext(
     DbContextOptions<AppDbContext> options,
     IClock clock
 ) : DbContext(options),

@@ -7,18 +7,19 @@ namespace NetAuth.IntegrationTests.Infrastructure;
 
 [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed")]
 [SuppressMessage("Major Code Smell", "S3881:\"IDisposable\" should be implemented correctly")]
+[SuppressMessage("Design", "CA1063:Implement IDisposable Correctly")]
 #pragma warning disable CA1852
-internal class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, IDisposable
+public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, IDisposable
 #pragma warning restore CA1852
 {
     /// Resolve any scoped services.
     private readonly IServiceScope _scope;
 
     /// To Send commands and queries to run the integration tests
-    protected readonly ISender Sender;
+    private readonly ISender _sender;
 
     /// Used to write any assertions
-    protected readonly AppDbContext DbContext;
+    private readonly AppDbContext _dbContext;
 
     protected BaseIntegrationTest(IntegrationTestWebAppFactory webAppFactory)
     {
@@ -26,13 +27,17 @@ internal class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>
 
         _scope = webAppFactory.Services.CreateScope();
 
-        Sender = _scope.ServiceProvider.GetRequiredService<ISender>();
-        DbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        _sender = _scope.ServiceProvider.GetRequiredService<ISender>();
+        _dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
     }
+
+    protected internal ISender Sender => _sender;
+    protected internal AppDbContext DbContext => _dbContext;
 
     public void Dispose()
     {
         _scope.Dispose();
         Console.WriteLine($"BaseIntegrationTest@{GetHashCode()}: disposed");
+        GC.SuppressFinalize(this);
     }
 }
