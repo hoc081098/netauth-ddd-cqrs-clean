@@ -11,9 +11,13 @@ namespace NetAuth.IntegrationTests.Infrastructure;
 internal class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, IDisposable
 #pragma warning restore CA1852
 {
+    /// Resolve any scoped services.
     private readonly IServiceScope _scope;
 
+    /// To Send commands and queries to run the integration tests
     protected readonly ISender Sender;
+
+    /// Used to write any assertions
     protected readonly AppDbContext DbContext;
 
     protected BaseIntegrationTest(IntegrationTestWebAppFactory webAppFactory)
