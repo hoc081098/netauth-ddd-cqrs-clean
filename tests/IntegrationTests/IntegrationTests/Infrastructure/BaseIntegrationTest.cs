@@ -31,8 +31,8 @@ public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, 
         _dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
     }
 
-    protected internal ISender Sender => _sender;
-    protected internal AppDbContext DbContext => _dbContext;
+    protected ISender Sender => _sender;
+    protected AppDbContext DbContext => _dbContext;
 
     public void Dispose()
     {
