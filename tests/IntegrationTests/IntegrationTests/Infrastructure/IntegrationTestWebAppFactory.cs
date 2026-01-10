@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
+using JetBrains.Annotations;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -27,7 +28,8 @@ namespace NetAuth.IntegrationTests.Infrastructure;
 // - Call ConfigureTestServices to set up EF Core with the container database
 // - Start and stop the container instance with IAsyncLifetime
 [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed")]
-public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
+[UsedImplicitly]
+internal sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("postgres:18-alpine")
         .WithName("NetAuth.Database")
@@ -46,6 +48,11 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         .WithEnvironment("SEQ_FIRSTRUN_ADMINUSERNAME", "admin")
         .WithEnvironment("SEQ_FIRSTRUN_ADMINPASSWORD", "123456")
         .Build();
+
+    public IntegrationTestWebAppFactory()
+    {
+        Console.WriteLine($"IntegrationTestWebAppFactory@{GetHashCode()}: init");
+    }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -76,6 +83,7 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         await _dbContainer.StartAsync();
         await _redisContainer.StartAsync();
         await _seqContainer.StartAsync();
+        Console.WriteLine($"IntegrationTestWebAppFactory@{GetHashCode()}: InitializeAsync");
     }
 
     public new async Task DisposeAsync()
@@ -84,5 +92,6 @@ public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsy
         await _redisContainer.StopAsync();
         await _seqContainer.StopAsync();
         await base.DisposeAsync();
+        Console.WriteLine($"IntegrationTestWebAppFactory@{GetHashCode()}: DisposeAsync");
     }
 }
