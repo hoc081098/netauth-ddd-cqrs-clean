@@ -26,5 +26,9 @@
         <PackageReference Include="xunit.runner.visualstudio"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\..\src\NetAuth\NetAuth.csproj" />
+    </ItemGroup>
+
 
 </Project>
