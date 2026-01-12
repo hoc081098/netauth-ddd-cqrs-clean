@@ -22,6 +22,23 @@ internal sealed class UserRolesChangedDomainEventHandler(
         {
             await permissionService.InvalidatePermissionsCacheAsync(notification.UserId, cancellationToken);
             logger.LogInformation("Invalidated permissions cache for User ID: {UserId}", notification.UserId);
+
+            // NOTE:
+            // Cache invalidation here only affects the local instance
+            // (L1 in-memory cache and the local L2/distributed cache access of this service).
+            // It does NOT invalidate caches held by other nodes or other services.
+            //
+            // To invalidate permission caches across multiple nodes or services,
+            // we must publish an integration event via a message broker.
+            //
+            // Proposed approach:
+            // - Persist an integration event to the Outbox table within the same transaction.
+            // - A background worker (Outbox Processor) publishes the event to a message broker (e.g. RabbitMQ).
+            // - Use a topic exchange to fan-out the event to multiple queues.
+            // - Each service (or node) owns its own queue and subscribes to the event.
+            // - Upon receiving the event, each consumer invalidates its local permission cache.
+            //
+            // This ensures reliable, eventually consistent cache invalidation across the system.
         }
         catch (OperationCanceledException)
         {
