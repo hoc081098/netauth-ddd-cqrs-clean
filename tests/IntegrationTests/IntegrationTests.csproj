@@ -32,7 +32,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\..\src\NetAuth\NetAuth.csproj" />
+        <ProjectReference Include="..\..\src\NetAuth\NetAuth.csproj" />
     </ItemGroup>
 
 

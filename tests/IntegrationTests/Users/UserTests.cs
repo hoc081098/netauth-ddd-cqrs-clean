@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using LanguageExt.UnitTesting;
@@ -11,10 +12,12 @@ using NetAuth.Domain.Users;
 using NetAuth.Infrastructure.Outbox;
 using NetAuth.IntegrationTests.Infrastructure;
 using Xunit.Abstractions;
+using static LanguageExt.Prelude;
 
 namespace NetAuth.IntegrationTests.Users;
 
 [SuppressMessage("Major Code Smell", "S125:Sections of code should not be commented out")]
+[SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local")]
 public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHelper testOutputHelper)
     : BaseIntegrationTest(webAppFactory, testOutputHelper)
 {
@@ -84,80 +87,102 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
 
     #endregion
 
-    // #region Login Tests
-    //
-    // [Fact]
-    // public async Task Login_ShouldCreateRefreshToken()
-    // {
-    //     // Arrange
-    //     const string email = "login_test@example.com";
-    //     const string password = "Password123!";
-    //     var deviceId = Guid.NewGuid();
-    //
-    //     // First, register a user
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "login_test",
-    //         Email: email,
-    //         Password: password
-    //     ));
-    //
-    //     var loginCommand = new LoginCommand(
-    //         Email: email,
-    //         Password: password,
-    //         DeviceId: deviceId
-    //     );
-    //
-    //     // Act
-    //     var result = await Sender.Send(loginCommand);
-    //
-    //     // Assert
-    //     result.ShouldBeRight(r =>
-    //     {
-    //         Assert.NotEmpty(r.AccessToken);
-    //         Assert.NotEmpty(r.RefreshToken);
-    //     });
-    //
-    //     // Verify refresh token was persisted in database
-    //     var refreshTokenExists = await DbContext
-    //         .Set<RefreshToken>()
-    //         .AnyAsync(rt => rt.DeviceId == deviceId);
-    //     Assert.True(refreshTokenExists);
-    // }
-    //
-    // [Fact]
-    // public async Task Login_WithInvalidCredentials_ShouldFail()
-    // {
-    //     // Arrange
-    //     const string email = "invalid_creds@example.com";
-    //
-    //     // First, register a user
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "invalid_creds_user",
-    //         Email: email,
-    //         Password: "CorrectPassword123!"
-    //     ));
-    //
-    //     var refreshTokenCountBefore = await DbContext.Set<RefreshToken>().CountAsync();
-    //
-    //     var loginCommand = new LoginCommand(
-    //         Email: email,
-    //         Password: "WrongPassword123!",
-    //         DeviceId: Guid.NewGuid()
-    //     );
-    //
-    //     // Act
-    //     var result = await Sender.Send(loginCommand);
-    //
-    //     // Assert
-    //     result.ShouldBeLeft(left =>
-    //         Assert.Equal(UsersDomainErrors.User.InvalidCredentials, left));
-    //
-    //     // Verify no new refresh token was created
-    //     var refreshTokenCountAfter = await DbContext.Set<RefreshToken>().CountAsync();
-    //     Assert.Equal(refreshTokenCountBefore, refreshTokenCountAfter);
-    // }
-    //
-    // #endregion
+    #region Login Tests
+
+    [Fact]
+    public async Task Login_ShouldCreateRefreshToken()
+    {
+        // Arrange
+        const string email = "login_test@example.com";
+        const string password = "Password123!";
+        var deviceId = Guid.NewGuid();
+
+        // First, register a user
+        var registerResult = await Sender.Send(
+            new RegisterCommand(
+                Username: "login_test",
+                Email: email,
+                Password: password));
+        registerResult.ShouldBeRight();
+        var userId = registerResult.Match(
+                Left: e =>
+                {
+                    Assert.Fail("Registration failed ");
+                    throw new UnreachableException();
+                },
+                Right: identity)
+            .UserId;
+
+        var loginCommand = new LoginCommand(
+            Email: email,
+            Password: password,
+            DeviceId: deviceId);
+
+        // Act
+        var result = await Sender.Send(loginCommand);
+
+        // Assert
+        result.ShouldBeRight(r =>
+        {
+            Assert.NotEmpty(r.AccessToken);
+            Assert.NotEmpty(r.RefreshToken);
+        });
+
+        // Verify refresh token was persisted in database
+        var refreshToken = await DbContext
+            .RefreshTokens
+            .SingleAsync(rt => rt.DeviceId == deviceId);
+        Assert.NotEmpty(refreshToken.TokenHash);
+        Assert.Equal(userId, refreshToken.UserId);
+        Assert.True(refreshToken.IsValid(DateTimeOffset.UtcNow));
+    }
+
+    [Fact]
+    public async Task Login_WithInvalidCredentials_ShouldFail()
+    {
+        // Arrange
+        const string email = "invalid_creds@example.com";
+
+        // First, register a user
+        var registerResult = await Sender.Send(
+            new RegisterCommand(
+                Username: "invalid_creds_user",
+                Email: email,
+                Password: "CorrectPassword123!"
+            )
+        );
+        registerResult.ShouldBeRight();
+        var userId = registerResult.Match(
+                Left: e =>
+                {
+                    Assert.Fail("Registration failed ");
+                    throw new UnreachableException();
+                },
+                Right: identity)
+            .UserId;
+
+        var refreshTokenCountBefore = await DbContext.RefreshTokens.CountAsync(rt => rt.UserId == userId);
+
+        var loginCommand = new LoginCommand(
+            Email: email,
+            Password: "WrongPassword123!",
+            DeviceId: Guid.NewGuid()
+        );
+
+        // Act
+        var result = await Sender.Send(loginCommand);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(UsersDomainErrors.User.InvalidCredentials, left));
+
+        // Verify no new refresh token was created
+        var refreshTokenCountAfter = await DbContext.RefreshTokens.CountAsync(rt => rt.UserId == userId);
+        Assert.Equal(refreshTokenCountBefore, refreshTokenCountAfter);
+    }
+
+    #endregion
+
     //
     // #region LoginWithRefreshToken Tests
     //
@@ -186,7 +211,7 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
     //         Right: r => r.RefreshToken,
     //         Left: _ => throw new InvalidOperationException("Login failed")
     //     );
-    //     var initialRefreshTokenCount = await DbContext.Set<RefreshToken>().CountAsync();
+    //     var initialRefreshTokenCount = await DbContext.RefreshTokens.CountAsync();
     //
     //     // Act
     //     var refreshResult = await Sender.Send(new LoginWithRefreshTokenCommand(
@@ -203,7 +228,7 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
     //     });
     //
     //     // Verify old refresh token was invalidated and new one was created
-    //     var finalRefreshTokenCount = await DbContext.Set<RefreshToken>().CountAsync();
+    //     var finalRefreshTokenCount = await DbContext.RefreshTokens.CountAsync();
     //     Assert.Equal(initialRefreshTokenCount,
     //         finalRefreshTokenCount); // Count should remain the same (old deleted, new created)
     // }
