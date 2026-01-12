@@ -1,6 +1,7 @@
 using LanguageExt.UnitTesting;
 using NetAuth.Domain.TodoItems;
 using NetAuth.Domain.TodoItems.DomainEvents;
+using NetAuth.TestUtils;
 
 // ReSharper disable ParameterOnlyUsedForPreconditionCheck.Local
 

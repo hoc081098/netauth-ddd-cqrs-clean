@@ -3,6 +3,7 @@ using LanguageExt.UnitTesting;
 using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.TodoItems.Get;
 using NetAuth.Domain.TodoItems;
+using NetAuth.TestUtils;
 using NetAuth.UnitTests.Domain.TodoItems;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;

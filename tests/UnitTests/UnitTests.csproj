@@ -28,6 +28,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\NetAuth\NetAuth.csproj"/>
+        <ProjectReference Include="..\TestUtils\TestUtils.csproj" />
     </ItemGroup>
 
 </Project>

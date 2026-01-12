@@ -1,4 +1,5 @@
 using NetAuth.Domain.Users;
+using NetAuth.TestUtils;
 
 namespace NetAuth.UnitTests.Domain.Users;
 

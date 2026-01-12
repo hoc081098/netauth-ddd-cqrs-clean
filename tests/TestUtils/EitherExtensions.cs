@@ -1,8 +1,9 @@
 using LanguageExt;
 using NetAuth.Domain.Core.Primitives;
+using Xunit;
 using static LanguageExt.Prelude;
 
-namespace NetAuth.UnitTests;
+namespace NetAuth.TestUtils;
 
 public static class EitherExtensions
 {

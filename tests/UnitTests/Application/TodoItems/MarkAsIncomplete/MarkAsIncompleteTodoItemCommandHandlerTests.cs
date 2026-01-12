@@ -3,6 +3,7 @@ using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Application.Abstractions.Data;
 using NetAuth.Application.TodoItems.MarkAsIncomplete;
 using NetAuth.Domain.TodoItems;
+using NetAuth.TestUtils;
 using NetAuth.UnitTests.Domain.TodoItems;
 using NSubstitute;
 

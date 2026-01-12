@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <RootNamespace>NetAuth.TestUtils</RootNamespace>
+        <IsTestProject>false</IsTestProject>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="xunit.assert"  />
+        <PackageReference Include="LanguageExt.Core"  />
+        <PackageReference Include="LanguageExt.UnitTesting"  />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\NetAuth\NetAuth.csproj"/>
+    </ItemGroup>
+
+</Project>

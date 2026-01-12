@@ -2,6 +2,7 @@ using LanguageExt;
 using static LanguageExt.Prelude;
 using LanguageExt.UnitTesting;
 using NetAuth.Domain.TodoItems;
+using NetAuth.TestUtils;
 
 namespace NetAuth.UnitTests.Domain.TodoItems;
 

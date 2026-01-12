@@ -1,18 +1,13 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using LanguageExt.UnitTesting;
 using Microsoft.EntityFrameworkCore;
 using NetAuth.Application.Users.Login;
-using NetAuth.Application.Users.LoginWithRefreshToken;
 using NetAuth.Application.Users.Register;
-using NetAuth.Application.Users.SetUserRoles;
-using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
-using NetAuth.Infrastructure.Outbox;
 using NetAuth.IntegrationTests.Infrastructure;
+using NetAuth.TestUtils;
 using Xunit.Abstractions;
-using static LanguageExt.Prelude;
 
 namespace NetAuth.IntegrationTests.Users;
 
@@ -103,15 +98,7 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
                 Username: "login_test",
                 Email: email,
                 Password: password));
-        registerResult.ShouldBeRight();
-        var userId = registerResult.Match(
-                Left: e =>
-                {
-                    Assert.Fail("Registration failed ");
-                    throw new UnreachableException();
-                },
-                Right: identity)
-            .UserId;
+        var userId = registerResult.RightValueOrThrow().UserId;
 
         var loginCommand = new LoginCommand(
             Email: email,
@@ -151,15 +138,7 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
                 Password: "CorrectPassword123!"
             )
         );
-        registerResult.ShouldBeRight();
-        var userId = registerResult.Match(
-                Left: e =>
-                {
-                    Assert.Fail("Registration failed ");
-                    throw new UnreachableException();
-                },
-                Right: identity)
-            .UserId;
+        var userId = registerResult.RightValueOrThrow().UserId;
 
         var refreshTokenCountBefore = await DbContext.RefreshTokens.CountAsync(rt => rt.UserId == userId);
 
