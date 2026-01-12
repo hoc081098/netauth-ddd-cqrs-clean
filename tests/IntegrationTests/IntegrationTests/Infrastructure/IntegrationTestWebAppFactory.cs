@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using JetBrains.Annotations;
@@ -48,7 +49,7 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
 
     public IntegrationTestWebAppFactory()
     {
-        Console.WriteLine($"IntegrationTestWebAppFactory@{GetHashCode()}: init");
+        Console.WriteLine($"IntegrationTestWebAppFactory@{RuntimeHelpers.GetHashCode(this)}: init");
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -80,7 +81,7 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
         await _dbContainer.StartAsync();
         await _redisContainer.StartAsync();
         await _seqContainer.StartAsync();
-        Console.WriteLine($"IntegrationTestWebAppFactory@{GetHashCode()}: InitializeAsync");
+        Console.WriteLine($"IntegrationTestWebAppFactory@{RuntimeHelpers.GetHashCode(this)}: InitializeAsync");
     }
 
     public new async Task DisposeAsync()
@@ -89,6 +90,6 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
         await _redisContainer.StopAsync();
         await _seqContainer.StopAsync();
         await base.DisposeAsync();
-        Console.WriteLine($"IntegrationTestWebAppFactory@{GetHashCode()}: DisposeAsync");
+        Console.WriteLine($"IntegrationTestWebAppFactory@{RuntimeHelpers.GetHashCode(this)}: DisposeAsync");
     }
 }

@@ -1,7 +1,9 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using NetAuth.Infrastructure;
+using Xunit.Abstractions;
 
 namespace NetAuth.IntegrationTests.Infrastructure;
 
@@ -12,6 +14,8 @@ namespace NetAuth.IntegrationTests.Infrastructure;
 public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, IDisposable
 #pragma warning restore CA1852
 {
+    private readonly ITestOutputHelper _testOutputHelper;
+
     /// Resolve any scoped services.
     private readonly IServiceScope _scope;
 
@@ -21,9 +25,14 @@ public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, 
     /// Used to write any assertions
     private readonly AppDbContext _dbContext;
 
-    protected BaseIntegrationTest(IntegrationTestWebAppFactory webAppFactory)
+    protected BaseIntegrationTest(
+        IntegrationTestWebAppFactory webAppFactory,
+        ITestOutputHelper testOutputHelper
+    )
     {
-        Console.WriteLine($"BaseIntegrationTest@{GetHashCode()}: init");
+        _testOutputHelper = testOutputHelper;
+        testOutputHelper.WriteLine(
+            $"BaseIntegrationTest@{RuntimeHelpers.GetHashCode(this)}: init");
 
         _scope = webAppFactory.Services.CreateScope();
 
@@ -37,7 +46,7 @@ public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, 
     public void Dispose()
     {
         _scope.Dispose();
-        Console.WriteLine($"BaseIntegrationTest@{GetHashCode()}: disposed");
+        _testOutputHelper.WriteLine($"BaseIntegrationTest@{RuntimeHelpers.GetHashCode(this)}: disposed");
         GC.SuppressFinalize(this);
     }
 }
