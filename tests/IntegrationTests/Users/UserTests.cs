@@ -19,7 +19,7 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
     #region Register Tests
 
     [Fact]
-    public async Task Register_ShouldCreateNewUserAndStoreOutboxMessage()
+    public async Task Register_WithValidData_ShouldCreateNewUserAndStoreOutboxMessage()
     {
         // Arrange
         var registerCommand = new RegisterCommand(
@@ -85,7 +85,7 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
     #region Login Tests
 
     [Fact]
-    public async Task Login_ShouldCreateRefreshToken()
+    public async Task Login_WithValidCredentials_ShouldCreateRefreshToken()
     {
         // Arrange
         const string email = "login_test@example.com";
@@ -116,9 +116,11 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
         });
 
         // Verify refresh token was persisted in database
-        var refreshToken = await DbContext
-            .RefreshTokens
-            .SingleAsync(rt => rt.DeviceId == deviceId);
+        var refreshToken = await DbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.DeviceId == deviceId)
+            .OrderByDescending(rt => rt.CreatedOnUtc)
+            .FirstAsync();
+
         Assert.NotEmpty(refreshToken.TokenHash);
         Assert.Equal(userId, refreshToken.UserId);
         Assert.True(refreshToken.IsValid(DateTimeOffset.UtcNow));
@@ -156,6 +158,11 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
             Assert.Equal(UsersDomainErrors.User.InvalidCredentials, left));
 
         // Verify no new refresh token was created
+        Assert.Null(
+            await DbContext.RefreshTokens
+                .Where(rt => rt.UserId == userId && rt.DeviceId == loginCommand.DeviceId)
+                .FirstOrDefaultAsync());
+
         var refreshTokenCountAfter = await DbContext.RefreshTokens.CountAsync(rt => rt.UserId == userId);
         Assert.Equal(refreshTokenCountBefore, refreshTokenCountAfter);
     }
