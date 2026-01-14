@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Dapper;
 using Microsoft.Extensions.Options;
 using Npgsql;
@@ -23,16 +24,24 @@ internal sealed class OutboxCleanupJob(
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
         var totalDeleted = 0;
-        while (true)
+        var batchCount = 0;
+        while (batchCount < settings.MaxCleanupBatchesPerRun)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var deleted = await DeleteBatchAsync(connection, settings, cancellationToken);
             totalDeleted += deleted;
+            batchCount++;
 
-            if (deleted == 0)
+            if (deleted < settings.CleanupBatchSize)
             {
                 break;
+            }
+
+            // Optional: delay between cleanup batches to reduce DB load.
+            if (settings.CleanupDelay > TimeSpan.Zero)
+            {
+                await Task.Delay(settings.CleanupDelay, cancellationToken);
             }
         }
 
@@ -42,11 +51,19 @@ internal sealed class OutboxCleanupJob(
         }
     }
 
+    [SuppressMessage("Major Code Smell", "S125:Sections of code should not be commented out")]
     private static Task<int> DeleteBatchAsync(
         NpgsqlConnection connection,
         OutboxSettings settings,
         CancellationToken cancellationToken)
     {
+        // Must create an index on (occurred_on_utc) to optimize this query.
+        // ```
+        // CREATE INDEX idx_outbox_cleanup 
+        // ON outbox_messages (occurred_on_utc, id) 
+        // WHERE processed_on_utc IS NOT NULL AND error IS NULL;
+        // ```
+
         return connection.ExecuteAsync(
             new CommandDefinition(
                 commandText:
@@ -57,6 +74,7 @@ internal sealed class OutboxCleanupJob(
                     WHERE processed_on_utc IS NOT NULL
                         AND error IS NULL
                         AND occurred_on_utc < (now() - @Retention)
+                    ORDER BY occurred_on_utc, id
                     LIMIT @BatchSize
                 )
                 DELETE FROM outbox_messages
