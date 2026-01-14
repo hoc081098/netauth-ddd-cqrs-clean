@@ -23,15 +23,13 @@ internal sealed class OutboxCleanupJob(
 
         await using var connection = await dataSource.OpenConnectionAsync(cancellationToken);
 
-        var totalDeleted = 0;
-        var batchCount = 0;
-        while (batchCount < settings.MaxCleanupBatchesPerRun)
+        var state = (totalDeleted: 0, batchCount: 0);
+        while (state.batchCount < settings.MaxCleanupBatchesPerRun)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             var deleted = await DeleteBatchAsync(connection, settings, cancellationToken);
-            totalDeleted += deleted;
-            batchCount++;
+            state = (state.totalDeleted + deleted, state.batchCount + 1);
 
             if (deleted < settings.CleanupBatchSize)
             {
@@ -45,9 +43,13 @@ internal sealed class OutboxCleanupJob(
             }
         }
 
-        if (totalDeleted > 0)
+        if (state.totalDeleted > 0)
         {
-            OutboxCleanupLoggers.LogDeleted(logger, totalDeleted);
+            OutboxCleanupLoggers.LogDeleted(logger, state.totalDeleted, state.batchCount);
+        }
+        else
+        {
+            OutboxCleanupLoggers.LogNoop(logger);
         }
     }
 
@@ -58,7 +60,7 @@ internal sealed class OutboxCleanupJob(
         CancellationToken cancellationToken)
     {
         // Must create an index on (occurred_on_utc) to optimize this query.
-        // ```
+        // ```sql
         // CREATE INDEX idx_outbox_cleanup 
         // ON outbox_messages (occurred_on_utc, id) 
         // WHERE processed_on_utc IS NOT NULL AND error IS NULL;
@@ -95,6 +97,10 @@ internal sealed class OutboxCleanupJob(
 internal static partial class OutboxCleanupLoggers
 {
     [LoggerMessage(Level = LogLevel.Information,
-        Message = "Outbox cleanup deleted {DeletedCount} messages.")]
-    internal static partial void LogDeleted(ILogger logger, int deletedCount);
+        Message = "Outbox cleanup deleted {DeletedCount} messages in {BatchCount} batches.")]
+    internal static partial void LogDeleted(ILogger logger, int deletedCount, int batchCount);
+
+    [LoggerMessage(Level = LogLevel.Information,
+        Message = "Outbox cleanup found no messages to delete.")]
+    internal static partial void LogNoop(ILogger logger);
 }
