@@ -170,7 +170,6 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
 
     #endregion
 
-
     #region LoginWithRefreshToken Tests
 
     [Fact]
@@ -255,9 +254,11 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
     //         Assert.Equal(UsersDomainErrors.RefreshToken.Invalid, left));
     // }
     //
-    // #endregion
-    //
-    // #region SetUserRoles Tests
+
+    #endregion
+
+    #region SetUserRoles Tests
+
     //
     // [Fact]
     // public async Task SetUserRoles_ShouldUpdateRolesAndCreateOutboxMessage()
