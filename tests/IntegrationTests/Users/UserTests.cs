@@ -236,24 +236,22 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
         replay.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Revoked, left));
     }
 
-    //
-    // [Fact]
-    // public async Task LoginWithRefreshToken_WithInvalidToken_ShouldFail()
-    // {
-    //     // Arrange
-    //     var loginWithRefreshTokenCommand = new LoginWithRefreshTokenCommand(
-    //         RefreshToken: "invalid_token_here",
-    //         DeviceId: Guid.NewGuid()
-    //     );
-    //
-    //     // Act
-    //     var result = await Sender.Send(loginWithRefreshTokenCommand);
-    //
-    //     // Assert
-    //     result.ShouldBeLeft(left =>
-    //         Assert.Equal(UsersDomainErrors.RefreshToken.Invalid, left));
-    // }
-    //
+
+    [Fact]
+    public async Task LoginWithRefreshToken_WithInvalidToken_ShouldFail()
+    {
+        // Arrange
+        var loginWithRefreshTokenCommand = new LoginWithRefreshTokenCommand(
+            RefreshToken: "invalid_token_here",
+            DeviceId: Guid.NewGuid());
+
+        // Act
+        var result = await Sender.Send(loginWithRefreshTokenCommand);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(UsersDomainErrors.RefreshToken.Invalid, left));
+    }
 
     #endregion
 
