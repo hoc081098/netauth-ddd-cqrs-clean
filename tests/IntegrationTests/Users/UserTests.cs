@@ -3,6 +3,7 @@ using System.Text.Json;
 using LanguageExt.UnitTesting;
 using Microsoft.EntityFrameworkCore;
 using NetAuth.Application.Users.Login;
+using NetAuth.Application.Users.LoginWithRefreshToken;
 using NetAuth.Application.Users.Register;
 using NetAuth.Domain.Users;
 using NetAuth.IntegrationTests.Infrastructure;
@@ -169,55 +170,73 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
 
     #endregion
 
-    //
-    // #region LoginWithRefreshToken Tests
-    //
-    // [Fact]
-    // public async Task LoginWithRefreshToken_ShouldRotateRefreshToken()
-    // {
-    //     // Arrange
-    //     const string email = "refresh_test@example.com";
-    //     const string password = "Password123!";
-    //     var deviceId = Guid.NewGuid();
-    //
-    //     // Register and login to get initial refresh token
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "refresh_test",
-    //         Email: email,
-    //         Password: password
-    //     ));
-    //
-    //     var loginResult = await Sender.Send(new LoginCommand(
-    //         Email: email,
-    //         Password: password,
-    //         DeviceId: deviceId
-    //     ));
-    //
-    //     var initialRefreshToken = loginResult.Match(
-    //         Right: r => r.RefreshToken,
-    //         Left: _ => throw new InvalidOperationException("Login failed")
-    //     );
-    //     var initialRefreshTokenCount = await DbContext.RefreshTokens.CountAsync();
-    //
-    //     // Act
-    //     var refreshResult = await Sender.Send(new LoginWithRefreshTokenCommand(
-    //         RefreshToken: initialRefreshToken,
-    //         DeviceId: deviceId
-    //     ));
-    //
-    //     // Assert
-    //     refreshResult.ShouldBeRight(r =>
-    //     {
-    //         Assert.NotEmpty(r.AccessToken);
-    //         Assert.NotEmpty(r.RefreshToken);
-    //         Assert.NotEqual(initialRefreshToken, r.RefreshToken); // Token should be rotated
-    //     });
-    //
-    //     // Verify old refresh token was invalidated and new one was created
-    //     var finalRefreshTokenCount = await DbContext.RefreshTokens.CountAsync();
-    //     Assert.Equal(initialRefreshTokenCount,
-    //         finalRefreshTokenCount); // Count should remain the same (old deleted, new created)
-    // }
+
+    #region LoginWithRefreshToken Tests
+
+    [Fact]
+    public async Task LoginWithRefreshToken_ShouldRotateRefreshToken()
+    {
+        // Arrange
+        const string email = "refresh_test@example.com";
+        const string password = "Password123!";
+        var deviceId = Guid.NewGuid();
+
+        // Register
+        var registerResult = await Sender.Send(
+            new RegisterCommand(
+                Username: "refresh_test",
+                Email: email,
+                Password: password));
+        var userId = registerResult.RightValueOrThrow().UserId;
+
+        // Login to grab the initial refresh token
+        var loginResultEither = await Sender.Send(new LoginCommand(
+            Email: email,
+            Password: password,
+            DeviceId: deviceId));
+        var loginResult = loginResultEither.RightValueOrThrow();
+
+        // Snapshot token currently active for this device
+        var oldRefreshToken = await DbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.DeviceId == deviceId)
+            .OrderByDescending(rt => rt.CreatedOnUtc)
+            .FirstAsync();
+
+        // Act
+        var refreshResult = await Sender.Send(
+            new LoginWithRefreshTokenCommand(
+                RefreshToken: loginResult.RefreshToken,
+                DeviceId: deviceId));
+
+        // Assert
+        refreshResult.ShouldBeRight(r =>
+        {
+            Assert.NotEmpty(r.AccessToken);
+            Assert.NotEmpty(r.RefreshToken);
+            Assert.NotEqual(loginResult.RefreshToken, r.RefreshToken); // Token should be rotated
+        });
+
+        // Assert new token issued
+        var newRefreshToken = await DbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.DeviceId == deviceId)
+            .OrderByDescending(rt => rt.CreatedOnUtc)
+            .FirstAsync();
+
+        // Hashes should differ and newRefreshToken should be valid
+        Assert.NotEqual(oldRefreshToken.TokenHash, newRefreshToken.TokenHash);
+        Assert.True(newRefreshToken.IsValid(DateTimeOffset.UtcNow));
+
+        // Assert old token revoked
+        var oldTokenReloaded =
+            await DbContext.RefreshTokens.SingleAsync(rt => rt.TokenHash == oldRefreshToken.TokenHash);
+        Assert.Equal(RefreshTokenStatus.Revoked, oldTokenReloaded.Status);
+
+        // Replay should fail
+        var replay = await Sender.Send(
+            new LoginWithRefreshTokenCommand(loginResult.RefreshToken, deviceId));
+        replay.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Revoked, left));
+    }
+
     //
     // [Fact]
     // public async Task LoginWithRefreshToken_WithInvalidToken_ShouldFail()
@@ -422,5 +441,6 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
     //     Assert.Contains(unchangedUser.Roles, r => r.Id == Role.Administrator.Id);
     // }
     //
-    // #endregion
+
+    #endregion
 }
