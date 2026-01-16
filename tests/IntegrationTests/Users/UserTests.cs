@@ -5,7 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using NetAuth.Application.Users.Login;
 using NetAuth.Application.Users.LoginWithRefreshToken;
 using NetAuth.Application.Users.Register;
+using NetAuth.Application.Users.SetUserRoles;
 using NetAuth.Domain.Users;
+using NetAuth.Domain.Users.DomainEvents;
+using NetAuth.Infrastructure.Outbox;
 using NetAuth.IntegrationTests.Infrastructure;
 using NetAuth.TestUtils;
 using Xunit.Abstractions;
@@ -43,8 +46,10 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
         // Verify outbox message was created in the same transaction
         // ANOTHER WAY: var userIdJson = $$"""{"UserId":"{{createdUser.Id}}"}""";
         var userIdJson = JsonSerializer.Serialize(new { UserId = createdUser.Id });
+        var userCreatedDomainEventTypeFullName = typeof(UserCreatedDomainEvent).FullName;
         var outboxMessage = await DbContext.OutboxMessages
-            .Where(om => EF.Functions.JsonContains(om.Content, userIdJson))
+            .Where(om => EF.Functions.JsonContains(om.Content, userIdJson) &&
+                         om.Type == userCreatedDomainEventTypeFullName)
             .SingleAsync();
 
         Assert.Null(outboxMessage.ProcessedOnUtc); // Not processed yet
@@ -257,69 +262,69 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
 
     #region SetUserRoles Tests
 
-    //
-    // [Fact]
-    // public async Task SetUserRoles_ShouldUpdateRolesAndCreateOutboxMessage()
-    // {
-    //     // Arrange
-    //     const string email = "roles_test@example.com";
-    //
-    //     // Register a user (will have Member role by default)
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "roles_test",
-    //         Email: email,
-    //         Password: "Password123!"
-    //     ));
-    //
-    //     var user = await DbContext
-    //         .Users
-    //         .Include(u => u.Roles)
-    //         .FirstAsync(u => u.Email.Value == email);
-    //
-    //     Assert.Single(user.Roles);
-    //     Assert.Equal(Role.Member.Id, user.Roles[0].Id);
-    //
-    //     var setRolesCommand = new SetUserRolesCommand(
-    //         UserId: user.Id,
-    //         RoleIds: [Role.Administrator.Id.Value, Role.Member.Id.Value],
-    //         RoleChangeActor: RoleChangeActor.System
-    //     );
-    //
-    //     var outboxCountBefore = await DbContext.Set<OutboxMessage>().CountAsync();
-    //
-    //     // Act
-    //     var result = await Sender.Send(setRolesCommand);
-    //
-    //     // Assert
-    //     result.ShouldBeRight();
-    //
-    //     // Verify roles were updated in database
-    //     var updatedUser = await DbContext
-    //         .Users
-    //         .Include(u => u.Roles)
-    //         .FirstAsync(u => u.Id == user.Id);
-    //
-    //     Assert.Equal(2, updatedUser.Roles.Count);
-    //     Assert.Contains(updatedUser.Roles, r => r.Id == Role.Administrator.Id);
-    //     Assert.Contains(updatedUser.Roles, r => r.Id == Role.Member.Id);
-    //
-    //     // Verify outbox message was created for UserRolesChangedDomainEvent
-    //     var outboxCountAfter = await DbContext.Set<OutboxMessage>().CountAsync();
-    //     Assert.True(outboxCountAfter > outboxCountBefore, "New outbox message should be created");
-    //
-    //     // Verify the UserRolesChangedDomainEvent was created
-    //     var rolesChangedEvents = await DbContext
-    //         .Set<OutboxMessage>()
-    //         .Where(m => m.Type == "NetAuth.Domain.Users.DomainEvents.UserRolesChangedDomainEvent")
-    //         .OrderByDescending(m => m.OccurredOnUtc)
-    //         .ToListAsync();
-    //
-    //     var rolesChangedEvent =
-    //         rolesChangedEvents.FirstOrDefault(m => m.Content.Contains(user.Id.ToString(), StringComparison.Ordinal));
-    //     Assert.NotNull(rolesChangedEvent);
-    //     Assert.Null(rolesChangedEvent.ProcessedOnUtc);
-    // }
-    //
+    [Fact]
+    public async Task SetUserRoles_ShouldUpdateRolesAndCreateOutboxMessage()
+    {
+        // Arrange
+        const string email = "roles_test@example.com";
+
+        // Register a user (will have Member role by default)
+        var registerEither = await Sender.Send(
+            new RegisterCommand(
+                Username: "roles_test",
+                Email: email,
+                Password: "Password123!"));
+        var userId = registerEither.RightValueOrThrow().UserId;
+
+        var user = await DbContext
+            .Users
+            .Include(u => u.Roles)
+            .SingleAsync(u => u.Id == userId);
+
+        Assert.Single(user.Roles);
+        Assert.Equal(Role.Member.Id, user.Roles[0].Id);
+
+        // Change user's roles to Administrator & Member
+        var setRolesCommand = new SetUserRolesCommand(
+            UserId: user.Id,
+            RoleIds: [Role.Administrator.Id.Value, Role.Member.Id.Value],
+            RoleChangeActor: RoleChangeActor.System);
+
+        var outboxCountBefore = await DbContext.OutboxMessages.CountAsync();
+
+        // Act
+        var result = await Sender.Send(setRolesCommand);
+
+        // Assert
+        result.ShouldBeRight();
+
+        // Verify roles were updated in database
+        var updatedUser = await DbContext
+            .Users
+            .Include(u => u.Roles)
+            .SingleAsync(u => u.Id == userId);
+
+        Assert.Equal(2, updatedUser.Roles.Count);
+        Assert.Contains(updatedUser.Roles, r => r.Id == Role.Administrator.Id);
+        Assert.Contains(updatedUser.Roles, r => r.Id == Role.Member.Id);
+
+        // Verify outbox message was created for UserRolesChangedDomainEvent
+        var outboxCountAfter = await DbContext.Set<OutboxMessage>().CountAsync();
+        Assert.True(outboxCountAfter > outboxCountBefore, "New outbox message should be created");
+
+        // Verify the UserRolesChangedDomainEvent was created
+        var userIdJson = JsonSerializer.Serialize(new { UserId = userId });
+        var userRolesChangedDomainEventTypeFullName = typeof(UserRolesChangedDomainEvent).FullName;
+        var rolesChangedEvents = await DbContext
+            .OutboxMessages
+            .Where(om => EF.Functions.JsonContains(om.Content, userIdJson) &&
+                         om.Type == userRolesChangedDomainEventTypeFullName)
+            .OrderByDescending(m => m.OccurredOnUtc)
+            .ToListAsync();
+
+        Assert.NotEmpty(rolesChangedEvents);
+    }
+
     // [Fact]
     // public async Task SetUserRoles_WithNonExistentRole_ShouldFail()
     // {
