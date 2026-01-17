@@ -36,4 +36,15 @@ internal sealed record OutboxSettings
     /// </summary>
     [Range(minimum: 1, maximum: 10_000, ErrorMessage = "CleanupBatchSize must be between 1 and 10_000.")]
     public required int CleanupBatchSize { get; init; }
+
+    /// <summary>
+    /// Maximum number of cleanup batches to run per job execution.
+    /// </summary>
+    [Range(minimum: 1, maximum: 1000, ErrorMessage = "MaxCleanupBatchesPerRun must be between 1 and 1000.")]
+    public required int MaxCleanupBatchesPerRun { get; init; }
+
+    /// <summary>
+    /// Delay between cleanup batches to reduce DB load.
+    /// </summary>
+    public required TimeSpan CleanupDelay { get; init; }
 }

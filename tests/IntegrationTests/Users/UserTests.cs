@@ -3,8 +3,13 @@ using System.Text.Json;
 using LanguageExt.UnitTesting;
 using Microsoft.EntityFrameworkCore;
 using NetAuth.Application.Users.Login;
+using NetAuth.Application.Users.LoginWithRefreshToken;
 using NetAuth.Application.Users.Register;
+using NetAuth.Application.Users.SetUserRoles;
+using NetAuth.Domain.Core.Primitives;
 using NetAuth.Domain.Users;
+using NetAuth.Domain.Users.DomainEvents;
+using NetAuth.Infrastructure.Outbox;
 using NetAuth.IntegrationTests.Infrastructure;
 using NetAuth.TestUtils;
 using Xunit.Abstractions;
@@ -42,8 +47,10 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
         // Verify outbox message was created in the same transaction
         // ANOTHER WAY: var userIdJson = $$"""{"UserId":"{{createdUser.Id}}"}""";
         var userIdJson = JsonSerializer.Serialize(new { UserId = createdUser.Id });
+        var userCreatedDomainEventTypeFullName = typeof(UserCreatedDomainEvent).FullName;
         var outboxMessage = await DbContext.OutboxMessages
-            .Where(om => EF.Functions.JsonContains(om.Content, userIdJson))
+            .Where(om => EF.Functions.JsonContains(om.Content, userIdJson) &&
+                         om.Type == userCreatedDomainEventTypeFullName)
             .SingleAsync();
 
         Assert.Null(outboxMessage.ProcessedOnUtc); // Not processed yet
@@ -169,258 +176,280 @@ public class UserTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHe
 
     #endregion
 
-    //
-    // #region LoginWithRefreshToken Tests
-    //
-    // [Fact]
-    // public async Task LoginWithRefreshToken_ShouldRotateRefreshToken()
-    // {
-    //     // Arrange
-    //     const string email = "refresh_test@example.com";
-    //     const string password = "Password123!";
-    //     var deviceId = Guid.NewGuid();
-    //
-    //     // Register and login to get initial refresh token
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "refresh_test",
-    //         Email: email,
-    //         Password: password
-    //     ));
-    //
-    //     var loginResult = await Sender.Send(new LoginCommand(
-    //         Email: email,
-    //         Password: password,
-    //         DeviceId: deviceId
-    //     ));
-    //
-    //     var initialRefreshToken = loginResult.Match(
-    //         Right: r => r.RefreshToken,
-    //         Left: _ => throw new InvalidOperationException("Login failed")
-    //     );
-    //     var initialRefreshTokenCount = await DbContext.RefreshTokens.CountAsync();
-    //
-    //     // Act
-    //     var refreshResult = await Sender.Send(new LoginWithRefreshTokenCommand(
-    //         RefreshToken: initialRefreshToken,
-    //         DeviceId: deviceId
-    //     ));
-    //
-    //     // Assert
-    //     refreshResult.ShouldBeRight(r =>
-    //     {
-    //         Assert.NotEmpty(r.AccessToken);
-    //         Assert.NotEmpty(r.RefreshToken);
-    //         Assert.NotEqual(initialRefreshToken, r.RefreshToken); // Token should be rotated
-    //     });
-    //
-    //     // Verify old refresh token was invalidated and new one was created
-    //     var finalRefreshTokenCount = await DbContext.RefreshTokens.CountAsync();
-    //     Assert.Equal(initialRefreshTokenCount,
-    //         finalRefreshTokenCount); // Count should remain the same (old deleted, new created)
-    // }
-    //
-    // [Fact]
-    // public async Task LoginWithRefreshToken_WithInvalidToken_ShouldFail()
-    // {
-    //     // Arrange
-    //     var loginWithRefreshTokenCommand = new LoginWithRefreshTokenCommand(
-    //         RefreshToken: "invalid_token_here",
-    //         DeviceId: Guid.NewGuid()
-    //     );
-    //
-    //     // Act
-    //     var result = await Sender.Send(loginWithRefreshTokenCommand);
-    //
-    //     // Assert
-    //     result.ShouldBeLeft(left =>
-    //         Assert.Equal(UsersDomainErrors.RefreshToken.Invalid, left));
-    // }
-    //
-    // #endregion
-    //
-    // #region SetUserRoles Tests
-    //
-    // [Fact]
-    // public async Task SetUserRoles_ShouldUpdateRolesAndCreateOutboxMessage()
-    // {
-    //     // Arrange
-    //     const string email = "roles_test@example.com";
-    //
-    //     // Register a user (will have Member role by default)
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "roles_test",
-    //         Email: email,
-    //         Password: "Password123!"
-    //     ));
-    //
-    //     var user = await DbContext
-    //         .Users
-    //         .Include(u => u.Roles)
-    //         .FirstAsync(u => u.Email.Value == email);
-    //
-    //     Assert.Single(user.Roles);
-    //     Assert.Equal(Role.Member.Id, user.Roles[0].Id);
-    //
-    //     var setRolesCommand = new SetUserRolesCommand(
-    //         UserId: user.Id,
-    //         RoleIds: [Role.Administrator.Id.Value, Role.Member.Id.Value],
-    //         RoleChangeActor: RoleChangeActor.System
-    //     );
-    //
-    //     var outboxCountBefore = await DbContext.Set<OutboxMessage>().CountAsync();
-    //
-    //     // Act
-    //     var result = await Sender.Send(setRolesCommand);
-    //
-    //     // Assert
-    //     result.ShouldBeRight();
-    //
-    //     // Verify roles were updated in database
-    //     var updatedUser = await DbContext
-    //         .Users
-    //         .Include(u => u.Roles)
-    //         .FirstAsync(u => u.Id == user.Id);
-    //
-    //     Assert.Equal(2, updatedUser.Roles.Count);
-    //     Assert.Contains(updatedUser.Roles, r => r.Id == Role.Administrator.Id);
-    //     Assert.Contains(updatedUser.Roles, r => r.Id == Role.Member.Id);
-    //
-    //     // Verify outbox message was created for UserRolesChangedDomainEvent
-    //     var outboxCountAfter = await DbContext.Set<OutboxMessage>().CountAsync();
-    //     Assert.True(outboxCountAfter > outboxCountBefore, "New outbox message should be created");
-    //
-    //     // Verify the UserRolesChangedDomainEvent was created
-    //     var rolesChangedEvents = await DbContext
-    //         .Set<OutboxMessage>()
-    //         .Where(m => m.Type == "NetAuth.Domain.Users.DomainEvents.UserRolesChangedDomainEvent")
-    //         .OrderByDescending(m => m.OccurredOnUtc)
-    //         .ToListAsync();
-    //
-    //     var rolesChangedEvent =
-    //         rolesChangedEvents.FirstOrDefault(m => m.Content.Contains(user.Id.ToString(), StringComparison.Ordinal));
-    //     Assert.NotNull(rolesChangedEvent);
-    //     Assert.Null(rolesChangedEvent.ProcessedOnUtc);
-    // }
-    //
-    // [Fact]
-    // public async Task SetUserRoles_WithNonExistentRole_ShouldFail()
-    // {
-    //     // Arrange
-    //     const string email = "roles_invalid@example.com";
-    //
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "roles_invalid",
-    //         Email: email,
-    //         Password: "Password123!"
-    //     ));
-    //
-    //     var user = await DbContext
-    //         .Users
-    //         .FirstAsync(u => u.Email.Value == email);
-    //
-    //     var setRolesCommand = new SetUserRolesCommand(
-    //         UserId: user.Id,
-    //         RoleIds: [999], // Non-existent role
-    //         RoleChangeActor: RoleChangeActor.System
-    //     );
-    //
-    //     // Act
-    //     var result = await Sender.Send(setRolesCommand);
-    //
-    //     // Assert
-    //     result.ShouldBeLeft(left =>
-    //         Assert.Equal(UsersDomainErrors.User.OneOrMoreRolesNotFound, left));
-    //
-    //     // Verify roles were not changed
-    //     var unchangedUser = await DbContext
-    //         .Users
-    //         .Include(u => u.Roles)
-    //         .FirstAsync(u => u.Id == user.Id);
-    //
-    //     Assert.Single(unchangedUser.Roles);
-    //     Assert.Equal(Role.Member.Id, unchangedUser.Roles[0].Id);
-    // }
-    //
-    // [Fact]
-    // public async Task SetUserRoles_WithEmptyRoles_ShouldFail()
-    // {
-    //     // Arrange
-    //     const string email = "roles_empty@example.com";
-    //
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "roles_empty",
-    //         Email: email,
-    //         Password: "Password123!"
-    //     ));
-    //
-    //     var user = await DbContext
-    //         .Users
-    //         .FirstAsync(u => u.Email.Value == email);
-    //
-    //     var setRolesCommand = new SetUserRolesCommand(
-    //         UserId: user.Id,
-    //         RoleIds: [],
-    //         RoleChangeActor: RoleChangeActor.System
-    //     );
-    //
-    //     // Act
-    //     var result = await Sender.Send(setRolesCommand);
-    //
-    //     // Assert - FluentValidation catches this before domain logic
-    //     result.ShouldBeLeft(left =>
-    //     {
-    //         Assert.Equal("General.ValidationError", left.Code);
-    //         Assert.Equal(DomainError.ErrorType.Validation, left.Type);
-    //     });
-    // }
-    //
-    // [Fact]
-    // public async Task SetUserRoles_UserModifyingOwnAdminRole_ShouldFail()
-    // {
-    //     // Arrange
-    //     const string email = "admin_self_modify@example.com";
-    //
-    //     await Sender.Send(new RegisterCommand(
-    //         Username: "admin_self_modify",
-    //         Email: email,
-    //         Password: "Password123!"
-    //     ));
-    //
-    //     var user = await DbContext
-    //         .Users
-    //         .Include(u => u.Roles)
-    //         .FirstAsync(u => u.Email.Value == email);
-    //
-    //     // First, grant admin role using System actor
-    //     await Sender.Send(new SetUserRolesCommand(
-    //         UserId: user.Id,
-    //         RoleIds: [Role.Administrator.Id.Value, Role.Member.Id.Value],
-    //         RoleChangeActor: RoleChangeActor.System
-    //     ));
-    //
-    //     // Now try to remove admin role as a regular user (not System/Privileged)
-    //     var setRolesCommand = new SetUserRolesCommand(
-    //         UserId: user.Id,
-    //         RoleIds: [Role.Member.Id.Value], // Trying to remove Admin role
-    //         RoleChangeActor: RoleChangeActor.User
-    //     );
-    //
-    //     // Act
-    //     var result = await Sender.Send(setRolesCommand);
-    //
-    //     // Assert
-    //     result.ShouldBeLeft(left =>
-    //         Assert.Equal(UsersDomainErrors.User.CannotModifyOwnAdminRoles, left));
-    //
-    //     // Verify roles remain unchanged
-    //     var unchangedUser = await DbContext
-    //         .Users
-    //         .Include(u => u.Roles)
-    //         .FirstAsync(u => u.Id == user.Id);
-    //
-    //     Assert.Equal(2, unchangedUser.Roles.Count);
-    //     Assert.Contains(unchangedUser.Roles, r => r.Id == Role.Administrator.Id);
-    // }
-    //
-    // #endregion
+    #region LoginWithRefreshToken Tests
+
+    [Fact]
+    public async Task LoginWithRefreshToken_ShouldRotateRefreshToken()
+    {
+        // Arrange
+        const string email = "refresh_test@example.com";
+        const string password = "Password123!";
+        var deviceId = Guid.NewGuid();
+
+        // Register
+        var registerResult = await Sender.Send(
+            new RegisterCommand(
+                Username: "refresh_test",
+                Email: email,
+                Password: password));
+        var userId = registerResult.RightValueOrThrow().UserId;
+
+        // Login to grab the initial refresh token
+        var loginResultEither = await Sender.Send(new LoginCommand(
+            Email: email,
+            Password: password,
+            DeviceId: deviceId));
+        var loginResult = loginResultEither.RightValueOrThrow();
+
+        // Snapshot token currently active for this device
+        var oldRefreshToken = await DbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.DeviceId == deviceId)
+            .OrderByDescending(rt => rt.CreatedOnUtc)
+            .FirstAsync();
+
+        // Act
+        var refreshResult = await Sender.Send(
+            new LoginWithRefreshTokenCommand(
+                RefreshToken: loginResult.RefreshToken,
+                DeviceId: deviceId));
+
+        // Assert
+        refreshResult.ShouldBeRight(r =>
+        {
+            Assert.NotEmpty(r.AccessToken);
+            Assert.NotEmpty(r.RefreshToken);
+            Assert.NotEqual(loginResult.RefreshToken, r.RefreshToken); // Token should be rotated
+        });
+
+        // Assert new token issued
+        var newRefreshToken = await DbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId && rt.DeviceId == deviceId)
+            .OrderByDescending(rt => rt.CreatedOnUtc)
+            .FirstAsync();
+
+        // Hashes should differ and newRefreshToken should be valid
+        Assert.NotEqual(oldRefreshToken.TokenHash, newRefreshToken.TokenHash);
+        Assert.True(newRefreshToken.IsValid(DateTimeOffset.UtcNow));
+
+        // Assert old token revoked
+        var oldTokenReloaded =
+            await DbContext.RefreshTokens.SingleAsync(rt => rt.TokenHash == oldRefreshToken.TokenHash);
+        Assert.Equal(RefreshTokenStatus.Revoked, oldTokenReloaded.Status);
+
+        // Replay should fail
+        var replay = await Sender.Send(
+            new LoginWithRefreshTokenCommand(loginResult.RefreshToken, deviceId));
+        replay.ShouldBeLeft(left => Assert.Equal(UsersDomainErrors.RefreshToken.Revoked, left));
+    }
+
+
+    [Fact]
+    public async Task LoginWithRefreshToken_WithInvalidToken_ShouldFail()
+    {
+        // Arrange
+        var loginWithRefreshTokenCommand = new LoginWithRefreshTokenCommand(
+            RefreshToken: "invalid_token_here",
+            DeviceId: Guid.NewGuid());
+
+        // Act
+        var result = await Sender.Send(loginWithRefreshTokenCommand);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(UsersDomainErrors.RefreshToken.Invalid, left));
+    }
+
+    #endregion
+
+    #region SetUserRoles Tests
+
+    [Fact]
+    public async Task SetUserRoles_ShouldUpdateRolesAndCreateOutboxMessage()
+    {
+        // Arrange
+        const string email = "roles_test@example.com";
+
+        // Register a user (will have Member role by default)
+        var registerEither = await Sender.Send(
+            new RegisterCommand(
+                Username: "roles_test",
+                Email: email,
+                Password: "Password123!"));
+        var userId = registerEither.RightValueOrThrow().UserId;
+
+        var user = await DbContext
+            .Users
+            .Include(u => u.Roles)
+            .SingleAsync(u => u.Id == userId);
+
+        Assert.Single(user.Roles);
+        Assert.Equal(Role.Member.Id, user.Roles[0].Id);
+
+        // Change user's roles to Administrator & Member
+        var setRolesCommand = new SetUserRolesCommand(
+            UserId: user.Id,
+            RoleIds: [Role.Administrator.Id.Value, Role.Member.Id.Value],
+            RoleChangeActor: RoleChangeActor.System);
+
+        var outboxCountBefore = await DbContext.OutboxMessages.CountAsync();
+
+        // Act
+        var result = await Sender.Send(setRolesCommand);
+
+        // Assert
+        result.ShouldBeRight();
+
+        // Verify roles were updated in database
+        var updatedUser = await DbContext
+            .Users
+            .Include(u => u.Roles)
+            .SingleAsync(u => u.Id == userId);
+
+        Assert.Equal(2, updatedUser.Roles.Count);
+        Assert.Contains(updatedUser.Roles, r => r.Id == Role.Administrator.Id);
+        Assert.Contains(updatedUser.Roles, r => r.Id == Role.Member.Id);
+
+        // Verify outbox message was created for UserRolesChangedDomainEvent
+        var outboxCountAfter = await DbContext.Set<OutboxMessage>().CountAsync();
+        Assert.True(outboxCountAfter > outboxCountBefore, "New outbox message should be created");
+
+        // Verify the UserRolesChangedDomainEvent was created
+        var userIdJson = JsonSerializer.Serialize(new { UserId = userId });
+        var userRolesChangedDomainEventTypeFullName = typeof(UserRolesChangedDomainEvent).FullName;
+        var rolesChangedEvents = await DbContext
+            .OutboxMessages
+            .Where(om => EF.Functions.JsonContains(om.Content, userIdJson) &&
+                         om.Type == userRolesChangedDomainEventTypeFullName)
+            .OrderByDescending(m => m.OccurredOnUtc)
+            .ToListAsync();
+
+        Assert.NotEmpty(rolesChangedEvents);
+    }
+
+    [Fact]
+    public async Task SetUserRoles_WithNonExistentRole_ShouldFail()
+    {
+        // Arrange
+        const string email = "roles_invalid@example.com";
+
+        var registerEither = await Sender.Send(
+            new RegisterCommand(
+                Username: "roles_invalid",
+                Email: email,
+                Password: "Password123!"));
+        var userId = registerEither.RightValueOrThrow().UserId;
+
+        var user = await DbContext
+            .Users
+            .SingleAsync(u => u.Id == userId);
+
+        var maxRoleId = await DbContext.Roles.MaxAsync(r => r.Id);
+        var invalidRoleId = maxRoleId.Value + 100; // Non-existent role
+        var setRolesCommand = new SetUserRolesCommand(
+            UserId: user.Id,
+            RoleIds: [invalidRoleId],
+            RoleChangeActor: RoleChangeActor.System);
+
+        // Act
+        var result = await Sender.Send(setRolesCommand);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(UsersDomainErrors.User.OneOrMoreRolesNotFound, left));
+
+        // Verify roles were not changed
+        var unchangedUser = await DbContext
+            .Users
+            .Include(u => u.Roles)
+            .FirstAsync(u => u.Id == user.Id);
+
+        Assert.Single(unchangedUser.Roles);
+        Assert.Equal(Role.Member.Id, unchangedUser.Roles[0].Id);
+    }
+
+    [Fact]
+    public async Task SetUserRoles_WithEmptyRoles_ShouldFail()
+    {
+        // Arrange
+        const string email = "roles_empty@example.com";
+
+        var registerEither = await Sender.Send(new RegisterCommand(
+            Username: "roles_empty",
+            Email: email,
+            Password: "Password123!"));
+        var userId = registerEither.RightValueOrThrow().UserId;
+
+        var user = await DbContext
+            .Users
+            .SingleAsync(u => u.Id == userId);
+
+        var setRolesCommand = new SetUserRolesCommand(
+            UserId: user.Id,
+            RoleIds: [],
+            RoleChangeActor: RoleChangeActor.System);
+
+        // Act
+        var result = await Sender.Send(setRolesCommand);
+
+        // Assert - FluentValidation catches this before domain logic
+        result.ShouldBeLeft(left => Assert.Equal(DomainError.ErrorType.Validation, left.Type));
+
+        // Verify roles were not changed
+        var unchangedUser = await DbContext
+            .Users
+            .Include(u => u.Roles)
+            .FirstAsync(u => u.Id == user.Id);
+
+        Assert.Single(unchangedUser.Roles);
+        Assert.Equal(Role.Member.Id, unchangedUser.Roles[0].Id);
+    }
+
+    [Fact]
+    public async Task SetUserRoles_UserModifyingOwnAdminRole_ShouldFail()
+    {
+        // Arrange
+        const string email = "admin_self_modify@example.com";
+
+        var registerEither = await Sender.Send(new RegisterCommand(
+            Username: "admin_self_modify",
+            Email: email,
+            Password: "Password123!"));
+        var userId = registerEither.RightValueOrThrow().UserId;
+
+        var user = await DbContext
+            .Users
+            .Include(u => u.Roles)
+            .SingleAsync(u => u.Id == userId);
+
+        // First, grant admin role using System actor
+        var grantAdminRoleEither = await Sender.Send(new SetUserRolesCommand(
+            UserId: user.Id,
+            RoleIds: [Role.Administrator.Id.Value, Role.Member.Id.Value],
+            RoleChangeActor: RoleChangeActor.System));
+        grantAdminRoleEither.RightValueOrThrow();
+
+        // Now try to remove admin role as a regular user (not System/Privileged)
+        var setRolesCommand = new SetUserRolesCommand(
+            UserId: user.Id,
+            RoleIds: [Role.Member.Id.Value], // Trying to remove Admin role
+            RoleChangeActor: RoleChangeActor.User);
+
+        // Act
+        var result = await Sender.Send(setRolesCommand);
+
+        // Assert
+        result.ShouldBeLeft(left =>
+            Assert.Equal(UsersDomainErrors.User.CannotModifyOwnAdminRoles, left));
+
+        // Verify roles remain unchanged
+        var unchangedUser = await DbContext
+            .Users
+            .Include(u => u.Roles)
+            .SingleAsync(u => u.Id == user.Id);
+
+        Assert.Equal(2, unchangedUser.Roles.Count);
+        Assert.Contains(unchangedUser.Roles, r => r.Id == Role.Administrator.Id);
+    }
+
+    #endregion
 }
