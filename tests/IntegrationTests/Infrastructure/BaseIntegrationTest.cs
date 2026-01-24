@@ -28,6 +28,8 @@ public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, 
         testOutputHelper.WriteLine(
             $"BaseIntegrationTest@{RuntimeHelpers.GetHashCode(this)}: init");
 
+        // Since webAppFactory.Services is shared across tests,
+        // so we need to create a scope for each test instance.
         _scope = webAppFactory.Services.CreateScope();
 
         Sender = _scope.ServiceProvider.GetRequiredService<ISender>();
