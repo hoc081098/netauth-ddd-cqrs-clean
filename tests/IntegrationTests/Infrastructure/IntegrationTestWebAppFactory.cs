@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using NetAuth.Application.Abstractions.Authentication;
 using NetAuth.Infrastructure;
 using Npgsql;
 using Testcontainers.PostgreSql;
@@ -73,6 +74,12 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
 
             services.Configure<RedisCacheOptions>(redisCacheOptions =>
                 redisCacheOptions.Configuration = _redisContainer.GetConnectionString());
+
+            // Replace real UserContext with TestUserContext for testing
+            services.RemoveAll<IUserContext>();
+            services.AddScoped<TestUserContext>();
+            // Bind IUserContext to the TestUserContext instance
+            services.AddScoped<IUserContext>(sp => sp.GetRequiredService<TestUserContext>());
         });
     }
 
