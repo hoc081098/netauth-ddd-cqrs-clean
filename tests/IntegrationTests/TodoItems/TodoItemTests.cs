@@ -18,9 +18,16 @@ namespace NetAuth.IntegrationTests.TodoItems;
 
 [SuppressMessage("Major Code Smell", "S125:Sections of code should not be commented out")]
 [SuppressMessage("ReSharper", "ParameterOnlyUsedForPreconditionCheck.Local")]
+[SuppressMessage("Usage", "CA1816:Dispose methods should call SuppressFinalize")]
 public class TodoItemTests(IntegrationTestWebAppFactory webAppFactory, ITestOutputHelper testOutputHelper)
     : BaseIntegrationTest(webAppFactory, testOutputHelper)
 {
+    public override void Dispose()
+    {
+        TestUserContext.ClearCurrentUser();
+        base.Dispose();
+    }
+
     #region Helper Methods
 
     /// <summary>

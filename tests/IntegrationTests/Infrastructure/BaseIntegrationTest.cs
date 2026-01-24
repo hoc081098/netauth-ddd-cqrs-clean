@@ -46,7 +46,7 @@ public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, 
     /// Test user context for simulating authenticated users
     protected TestUserContext TestUserContext { get; }
 
-    public void Dispose()
+    public virtual void Dispose()
     {
         _scope.Dispose();
         _testOutputHelper.WriteLine($"BaseIntegrationTest@{RuntimeHelpers.GetHashCode(this)}: disposed");
