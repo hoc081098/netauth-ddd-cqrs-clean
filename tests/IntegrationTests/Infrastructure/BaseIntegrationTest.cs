@@ -19,12 +19,6 @@ public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, 
     /// Resolve any scoped services.
     private readonly IServiceScope _scope;
 
-    /// To Send commands and queries to run the integration tests
-    private readonly ISender _sender;
-
-    /// Used to write any assertions
-    private readonly AppDbContext _dbContext;
-
     protected BaseIntegrationTest(
         IntegrationTestWebAppFactory webAppFactory,
         ITestOutputHelper testOutputHelper
@@ -36,12 +30,19 @@ public class BaseIntegrationTest : IClassFixture<IntegrationTestWebAppFactory>, 
 
         _scope = webAppFactory.Services.CreateScope();
 
-        _sender = _scope.ServiceProvider.GetRequiredService<ISender>();
-        _dbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        Sender = _scope.ServiceProvider.GetRequiredService<ISender>();
+        DbContext = _scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        TestUserContext = _scope.ServiceProvider.GetRequiredService<TestUserContext>();
     }
 
-    protected ISender Sender => _sender;
-    protected AppDbContext DbContext => _dbContext;
+    /// To Send commands and queries to run the integration tests
+    protected ISender Sender { get; }
+
+    /// Used to write any assertions
+    protected AppDbContext DbContext { get; }
+
+    /// Test user context for simulating authenticated users
+    protected TestUserContext TestUserContext { get; }
 
     public void Dispose()
     {
