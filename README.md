@@ -1,12 +1,34 @@
 # NetAuth - ASP.NET Core Authentication Service
 
-A production-ready authentication service built with .NET 10, implementing Domain-Driven Design (DDD), CQRS, Clean Architecture.
+NetAuth is an educational ASP.NET Core authentication service built with .NET 10, designed to learn and apply modern software architecture patterns including Domain-Driven Design (DDD), CQRS, Clean Architecture, RBAC with permission-based authorization, and the Transactional Outbox Pattern.
 
 [![Build & Test 🧪](https://github.com/hoc081098/NetAuth/actions/workflows/build.yml/badge.svg)](https://github.com/hoc081098/NetAuth/actions/workflows/build.yml)
 [![codecov](https://codecov.io/gh/hoc081098/netauth-ddd-cqrs-clean/graph/badge.svg?token=MNmihx6Pxl)](https://codecov.io/gh/hoc081098/netauth-ddd-cqrs-clean)
 [![Hits](https://hits.sh/github.com/hoc081098/netauth-ddd-cqrs-clean.svg)](https://hits.sh/github.com/hoc081098/netauth-ddd-cqrs-clean/)
 
-## 🏗️ Architecture
+---
+
+## Table of Contents
+
+- [I. Architecture](#i-architecture)
+- [II. Features](#ii-features)
+- [III. Technology Stack](#iii-technology-stack)
+- [IV. Getting Started](#iv-getting-started)
+- [V. Project Structure](#v-project-structure)
+- [VI. Design Patterns & Principles](#vi-design-patterns--principles)
+- [VII. Security Features](#vii-security-features)
+- [VIII. Domain Errors Best Practice](#viii-domain-errors-best-practice)
+- [IX. Testing](#ix-testing)
+- [X. Configuration](#x-configuration)
+- [XI. API Documentation](#xi-api-documentation)
+- [XII. Performance Considerations](#xii-performance-considerations)
+- [XIII. Observability](#xiii-observability)
+- [XIV. Roadmap](#xiv-roadmap)
+- [XV. License](#xv-license)
+
+---
+
+## I. 🏗️ Architecture
 
 NetAuth follows Clean Architecture principles with clear separation of concerns:
 
@@ -15,7 +37,7 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 - **Infrastructure Layer** - Technical implementations and external dependencies
 - **Web.Api Layer** - HTTP endpoints and API contracts
 
-## ✨ Features
+## II. ✨ Features
 
 - ✅ **User Registration & Authentication**
 - ✅ **JWT-based Authentication** with access tokens
@@ -30,7 +52,7 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 - ✅ **Hybrid Cache** for permission lookups (memory + Redis)
 - ✅ **API Versioning** (v1, v2) with grouped endpoints
 
-## 🛠️ Technology Stack
+## III. 🛠️ Technology Stack
 
 ### Core
 - **.NET 10** with C# 14
@@ -76,7 +98,7 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 - **LanguageExt.UnitTesting** for Either/Option assertions
 - **Coverlet** for code coverage
 
-## 🚀 Getting Started
+## IV. 🚀 Getting Started
 
 ### Prerequisites
 
@@ -112,7 +134,7 @@ The API will be available at:
 - HTTP: `http://localhost:5215`
 - Swagger UI: `https://localhost:7169/swagger`
 
-## 📁 Project Structure
+## V. 📁 Project Structure
 
 ```
 NetAuth/
@@ -174,7 +196,7 @@ NetAuth/
     └── OpenApi/              # OpenAPI configuration
 ```
 
-## 🎯 Design Patterns & Principles
+## VI. 🎯 Design Patterns & Principles
 
 ### Domain-Driven Design (DDD)
 - **Aggregates**: User is the aggregate root managing RefreshTokens
@@ -205,7 +227,7 @@ Ensures reliable event processing:
 3. Uses `FOR UPDATE SKIP LOCKED` to avoid double processing
 4. Parallel publish with a capped degree of parallelism and bulk update of processed rows
 
-## 🔒 Security Features
+## VII. 🔒 Security Features
 
 ### Password Security
 - **PBKDF2** algorithm with 80,000 iterations (v1, salted, constant-time verify)
@@ -224,7 +246,7 @@ Ensures reliable event processing:
 - **Claims Transformation**: Role permissions loaded and cached
 - **Policy-Based**: Custom authorization policies
 
-## 📝 Domain Errors Best Practice
+## VIII. 📝 Domain Errors Best Practice
 
 All domain and validation errors use `static readonly` fields for optimal performance:
 
@@ -250,7 +272,7 @@ public static class UsersDomainErrors
 - Thread-safe by CLR static initialization guarantee
 - Clear, centralized error catalog
 
-## 🧪 Testing
+## IX. 🧪 Testing
 
 ### Test Structure
 
@@ -305,7 +327,7 @@ dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 dotnet test --filter "FullyQualifiedName~UnitTests.Domain"
 ```
 
-## 🔧 Configuration
+## X. 🔧 Configuration
 
 ### First-Time Setup (Required)
 
@@ -385,7 +407,7 @@ Key configuration sections in `appsettings.json`:
 ```
 > Development settings override JWT expirations (access: 1 hour, refresh: 2 hours) and include localhost connection strings for PostgreSQL and Redis.
 
-## 📚 API Documentation
+## XI. 📚 API Documentation
 
 Visit `/swagger` for interactive API documentation.
 > Available in Development environment (enabled when `ASPNETCORE_ENVIRONMENT=Development`).
@@ -406,14 +428,14 @@ Authentication endpoints are protected with rate limiting:
 - **/auth/refresh**: Sliding window 20 requests per minute per IP
 - **Global**: Sliding window 100 requests per minute per IP for all other endpoints
 
-## 🎯 Performance Considerations
+## XII. 🎯 Performance Considerations
 
 - Static readonly domain errors (zero allocation per access)
 - Outbox processor uses SKIP LOCKED + bulk updates + limited parallel publish
 - Permission caching via HybridCache (memory + Redis)
 - Rate limiting on auth endpoints and global limiter
 
-## 📊 Observability
+## XIII. 📊 Observability
 
 ### Health Checks
 - PostgreSQL database connectivity
@@ -427,7 +449,7 @@ Authentication endpoints are protected with rate limiting:
 - Audit logging via domain events
 - Request/response logging with timing
 
-## 🛣️ Roadmap
+## XIV. 🛣️ Roadmap
 
 ### ✅ Completed
 - [x] Unit tests and architecture tests (465 tests: 459 Unit + 6 Architecture)
@@ -449,7 +471,7 @@ Authentication endpoints are protected with rate limiting:
 - [ ] Add response compression and caching
 - [ ] Implement pagination and sorting
 
-## 📄 License
+## XV. 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
