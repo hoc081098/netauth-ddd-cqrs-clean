@@ -35,22 +35,46 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 ### Core
 - **.NET 10** with C# 14
 - **ASP.NET Core** Minimal APIs
-- **Entity Framework Core** with PostgreSQL
-- **MediatR** for CQRS
-- **FluentValidation** for validation
-- **LanguageExt** for functional programming (Either, Option)
-- **Serilog** for structured logging (Console/File/Seq)
+- **Entity Framework Core 10** with PostgreSQL
+- **MediatR 12** for CQRS
+- **FluentValidation 12** for validation
+- **LanguageExt 4** for functional programming (Either, Option)
+- **Ardalis.GuardClauses** for defensive programming
+- **Humanizer** for string transformations
 
 ### Security
-- **JWT Bearer Authentication**
+- **JWT Bearer Authentication** (Microsoft.AspNetCore.Authentication.JwtBearer)
 - **PBKDF2** for password hashing
 - **Permission-based authorization**
 
-### Infrastructure
-- **Dapper** for raw SQL queries
+### Database & Data Access
 - **Npgsql** for PostgreSQL
-- **Quartz.NET** for background jobs
-- **Redis** for distributed caching
+- **Dapper** for raw SQL queries (Outbox)
+- **EFCore.NamingConventions** for snake_case naming
+
+### Caching
+- **HybridCache** for distributed caching with local cache fallback
+- **StackExchange.Redis** for Redis connectivity
+
+### Background Jobs
+- **Quartz.NET 3** for scheduled jobs (Outbox processing)
+
+### API & Documentation
+- **Asp.Versioning** for API versioning (v1, v2)
+- **Swashbuckle** for Swagger/OpenAPI documentation
+- **Microsoft.AspNetCore.OpenApi** for OpenAPI support
+
+### Observability
+- **Serilog** for structured logging (Console/File/Seq)
+- **AspNetCore.HealthChecks** for health monitoring (PostgreSQL, Redis, UI)
+
+### Testing
+- **xUnit** for test framework
+- **NSubstitute** for mocking
+- **Testcontainers** for integration tests (PostgreSQL, Redis)
+- **NetArchTest** for architecture tests
+- **LanguageExt.UnitTesting** for Either/Option assertions
+- **Coverlet** for code coverage
 
 ## 🚀 Getting Started
 
@@ -242,6 +266,10 @@ tests/
 │       ├── Users/               # Login, Register, RefreshToken handlers & validators
 │       └── TodoItems/           # Create, Update, Complete, MarkAsIncomplete handlers & validators
 │
+├── IntegrationTests/            # 24 tests
+│   ├── Users/                   # Register, Login, RefreshToken, SetUserRoles
+│   └── TodoItems/               # Create, Complete, MarkAsIncomplete, Update, GetTodoItems
+│
 └── ArchitectureTests/           # 6 tests
     └── LayerTest.cs             # Domain, Application, Infrastructure, WebApi layer rules
 ```
@@ -251,6 +279,13 @@ tests/
 - Command/query handlers with mocked dependencies (NSubstitute)
 - Validators with FluentValidation test helpers
 - Uses xUnit and LanguageExt.UnitTesting
+
+### Integration Tests
+- Full application pipeline with real database (PostgreSQL via Testcontainers)
+- Tests DI wiring, EF Core mappings, transaction behavior
+- Verifies outbox pattern: domain events stored in same transaction
+- Tests authorization and ownership validation
+- Uses WebApplicationFactory for realistic HTTP pipeline
 
 ### Architecture Tests
 - Dependency rules enforcement (NetArchTest)
@@ -395,13 +430,13 @@ Authentication endpoints are protected with rate limiting:
 ## 🛣️ Roadmap
 
 ### ✅ Completed
-- [x] Unit tests and architecture tests in place (465 tests: 459 Unit + 6 Architecture)
+- [x] Unit tests and architecture tests (465 tests: 459 Unit + 6 Architecture)
+- [x] Integration tests for critical flows (24 tests: Users + TodoItems)
 - [x] CI/CD pipeline with GitHub Actions
 - [x] Correlation ID logging for request tracing
 - [x] JWT SecretKey configuration with documentation
 - [x] XML documentation for complex business logic
 - [x] API versioning (v1, v2)
-- [x] Integration tests for critical flows (24 tests: Register, Login, RefreshToken, SetUserRoles, TodoItem CRUD)
 
 ### 🔄 In Progress / Planned
 - [ ] Implement user profile management
