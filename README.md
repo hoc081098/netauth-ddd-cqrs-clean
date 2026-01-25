@@ -401,9 +401,9 @@ Authentication endpoints are protected with rate limiting:
 - [x] JWT SecretKey configuration with documentation
 - [x] XML documentation for complex business logic
 - [x] API versioning (v1, v2)
+- [x] Integration tests for critical flows (24 tests: Register, Login, RefreshToken, SetUserRoles, TodoItem CRUD)
 
 ### 🔄 In Progress / Planned
-- [ ] Integration tests for critical flows
 - [ ] Implement user profile management
 - [ ] Add email verification
 - [ ] Implement password reset flow
