@@ -89,6 +89,8 @@ NetAuth follows Clean Architecture principles with clear separation of concerns:
 ### Observability
 - **Serilog** for structured logging (Console/File/Seq)
 - **AspNetCore.HealthChecks** for health monitoring (PostgreSQL, Redis, UI)
+- **OpenTelemetry** for distributed tracing (OTLP Exporter, ASP.NET Core/HttpClient/EF Core/Redis/Npgsql instrumentation)
+- **Jaeger** for trace visualization
 
 ### Testing
 - **xUnit** for test framework
@@ -437,6 +439,11 @@ Authentication endpoints are protected with rate limiting:
 
 ## XIII. 📊 Observability
 
+### Distributed Tracing (OpenTelemetry)
+- **Jaeger** for trace visualization (UI at port 16686)
+- **OTLP Exporter** for sending traces to Jaeger
+- **Instrumentation** for: ASP.NET Core, HttpClient, Entity Framework Core, Redis, Npgsql
+
 ### Health Checks
 - PostgreSQL database connectivity
 - Redis connectivity
@@ -459,6 +466,7 @@ Authentication endpoints are protected with rate limiting:
 - [x] JWT SecretKey configuration with documentation
 - [x] XML documentation for complex business logic
 - [x] API versioning (v1, v2)
+- [x] Distributed tracing with OpenTelemetry (Jaeger)
 
 ### 🔄 In Progress / Planned
 - [ ] Implement user profile management
@@ -466,7 +474,6 @@ Authentication endpoints are protected with rate limiting:
 - [ ] Implement password reset flow
 - [ ] Add account lockout after failed attempts
 - [ ] Implement MFA (Multi-Factor Authentication)
-- [ ] Add distributed tracing with OpenTelemetry
 - [ ] Add GraphQL endpoint
 - [ ] Add response compression and caching
 - [ ] Implement pagination and sorting
