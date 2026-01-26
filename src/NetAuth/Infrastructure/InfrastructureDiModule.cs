@@ -174,6 +174,7 @@ public static class InfrastructureDiModule
                 .ConfigureResource(resource => resource.AddService("NetAuth.Api"))
                 .WithTracing(tracing =>
                 {
+                    // Add instrumentations. 
                     tracing
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
@@ -181,6 +182,10 @@ public static class InfrastructureDiModule
                         .AddRedisInstrumentation()
                         .AddNpgsql();
 
+                    // Add OTLP exporter.
+                    // We also need to configure an environment variable for the exporter added with AddOtlpExporter to work correctly.
+                    // We can set OTEL_EXPORTER_OTLP_ENDPOINT through application settings.
+                    // The address specified here will point to a local Jaeger instance.
                     tracing.AddOtlpExporter();
                 });
 
