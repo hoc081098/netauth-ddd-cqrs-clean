@@ -24,7 +24,8 @@ App (OTLP exporter)
 OTEL Collector
   (receiver → processor → exporter)
         ↓
-    Backend
+Observability Backend
+  (store + index + query)
         ↓
         UI
 ```
