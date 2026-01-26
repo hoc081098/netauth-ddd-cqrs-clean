@@ -14,6 +14,8 @@
   - UI (16686)
 ```
 
+> It is called `Collector-lite` because it receives OTLP but does not have a standard `receiver-processor-exporter` pipeline.
+
 ## Collector-first
 
 ```
