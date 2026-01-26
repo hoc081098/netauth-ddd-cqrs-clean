@@ -1,5 +1,6 @@
 # OpenTelemetry Note
 
+## Jaeger All-in-One
 ```
         [ App ]
           |
@@ -11,6 +12,19 @@
   - OTLP receiver (4317)
   - Trace backend
   - UI (16686)
+```
+
+## Collector-first
+
+```
+App (OTLP exporter)
+        ↓
+OTEL Collector
+  (receiver → processor → exporter)
+        ↓
+    Backend
+        ↓
+        UI
 ```
 
 ## I. Install Packages
