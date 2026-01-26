@@ -1,5 +1,18 @@
 # OpenTelemetry Note
 
+```
+        [ App ]
+          |
+          |  AddOtlpExporter()
+          |  OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+          |
+          v
+[ Jaeger all-in-one ]
+  - OTLP receiver (4317)
+  - Trace backend
+  - UI (16686)
+```
+
 ## I. Install Packages
 
 ```
