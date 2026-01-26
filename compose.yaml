@@ -34,6 +34,15 @@ services:
       - "8081:80"   # Seq UI and API
     volumes:
       - seq_data:/data
+  
+  # Jaeger all-in-one = OTLP receiver (Collector-lite) + Observability backend (Trace storage + query) + UI.
+  netauth.jaeger:
+    image: jaegertracing/all-in-one:1.76.0
+    container_name: netauth.jaeger
+    restart: unless-stopped
+    ports:
+      - "4317:4317" # gRPC - OTLP (OpenTelemetry Protocol) - Primary endpoint for receiving gRPC-based trace data from OpenTelemetry instrumented applications.
+      - "16686:16686" # TCP - Jaeger UI - The web interface for viewing and searching traces.
 
 volumes:
   postgres_netauth:

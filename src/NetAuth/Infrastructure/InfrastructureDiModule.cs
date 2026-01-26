@@ -21,6 +21,8 @@ using NetAuth.Infrastructure.Interceptors;
 using NetAuth.Infrastructure.Outbox;
 using NetAuth.Infrastructure.Repositories;
 using Npgsql;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Quartz;
 using SystemClock = NetAuth.Infrastructure.Common.SystemClock;
 
@@ -159,6 +161,30 @@ public static class InfrastructureDiModule
             .AddDbContextCheck<AppDbContext>()
             .AddCheck<OutboxHealthCheck>(name: "outbox");
 
+        services.AddOpenTelemetryConfiguration();
+
         return services;
+    }
+
+    extension(IServiceCollection services)
+    {
+        private IServiceCollection AddOpenTelemetryConfiguration()
+        {
+            services.AddOpenTelemetry()
+                .ConfigureResource(resource => resource.AddService("NetAuth.Api"))
+                .WithTracing(tracing =>
+                {
+                    tracing
+                        .AddAspNetCoreInstrumentation()
+                        .AddHttpClientInstrumentation()
+                        .AddEntityFrameworkCoreInstrumentation()
+                        .AddRedisInstrumentation()
+                        .AddNpgsql();
+
+                    tracing.AddOtlpExporter();
+                });
+
+            return services;
+        }
     }
 }
