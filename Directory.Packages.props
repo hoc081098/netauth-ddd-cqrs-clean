@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Code Analysis -->
-    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.18.0.131500" />
+    <PackageVersion Include="SonarAnalyzer.CSharp" Version="10.19.0.132793" />
     <!-- Core Libraries -->
     <PackageVersion Include="Ardalis.GuardClauses" Version="5.0.0" />
     <PackageVersion Include="Humanizer.Core" Version="3.0.1" />
