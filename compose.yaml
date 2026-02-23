@@ -2,7 +2,7 @@
 
 services:
   netauth.redis:
-    image: redis:8.4.0-alpine
+    image: redis:8.6.1-alpine
     container_name: NetAuth.Redis
     restart: unless-stopped
     ports:
