@@ -34,7 +34,7 @@
     <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.2" />
     <!-- Background Jobs -->
-    <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.15.1" />
+    <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.16.0" />
     <!-- Logging -->
     <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
     <PackageVersion Include="Serilog.Sinks.Seq" Version="9.0.0" />
