@@ -44,7 +44,7 @@
     <!-- Testing -->
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="coverlet.msbuild" Version="6.0.4" />
-    <PackageVersion Include="LanguageExt.UnitTesting" Version="4.4.9.1" />
+    <PackageVersion Include="LanguageExt.UnitTesting" Version="4.4.11" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.2" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageVersion Include="NetArchTest.Rules" Version="1.3.2" />
