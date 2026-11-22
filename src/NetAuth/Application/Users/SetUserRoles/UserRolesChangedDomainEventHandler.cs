@@ -1,11 +1,12 @@
 using System.Diagnostics.CodeAnalysis;
 using NetAuth.Application.Abstractions.Authorization;
 using NetAuth.Application.Abstractions.Messaging;
+using NetAuth.Domain.Users;
 using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Application.Users.SetUserRoles;
 
-internal sealed class UserRolesChangedDomainEventHandler(
+internal sealed partial class UserRolesChangedDomainEventHandler(
     ILogger<UserRolesChangedDomainEventHandler> logger,
     IPermissionService permissionService
 ) : IDomainEventHandler<UserRolesChangedDomainEvent>
@@ -13,15 +14,12 @@ internal sealed class UserRolesChangedDomainEventHandler(
     [SuppressMessage("Design", "CA1031:Do not catch general exception types")]
     public async Task Handle(UserRolesChangedDomainEvent notification, CancellationToken cancellationToken)
     {
-        logger.LogInformation("User {UserId} roles changed from {@OldRoleIds} to {@NewRoleIds}",
-            notification.UserId,
-            notification.OldRoleIds,
-            notification.NewRoleIds);
+        LogUsersRolesChanged(notification.UserId, notification.OldRoleIds, notification.NewRoleIds);
 
         try
         {
             await permissionService.InvalidatePermissionsCacheAsync(notification.UserId, cancellationToken);
-            logger.LogInformation("Invalidated permissions cache for User ID: {UserId}", notification.UserId);
+            LogInvalidatedPermissionsCache(notification.UserId);
 
             // NOTE:
             // Cache invalidation here only affects the local instance
@@ -46,9 +44,16 @@ internal sealed class UserRolesChangedDomainEventHandler(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex,
-                "Failed to invalidate permissions cache for User ID: {UserId}",
-                notification.UserId);
+            LogFailedToInvalidatePermissionsCache(notification.UserId, ex);
         }
     }
+
+    [LoggerMessage(LogLevel.Information, "User {UserId} roles changed from {@OldRoleIds} to {@NewRoleIds}")]
+    partial void LogUsersRolesChanged(Guid userId, HashSet<RoleId> @oldRoleIds, HashSet<RoleId> @newRoleIds);
+
+    [LoggerMessage(LogLevel.Information, "Invalidated permissions cache for User ID: {UserId}")]
+    partial void LogInvalidatedPermissionsCache(Guid userId);
+
+    [LoggerMessage(LogLevel.Error, "Failed to invalidate permissions cache for User ID: {UserId}")]
+    partial void LogFailedToInvalidatePermissionsCache(Guid userId, Exception exception);
 }

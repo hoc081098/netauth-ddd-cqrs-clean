@@ -13,7 +13,7 @@ public sealed class Username : ValueObject
     private const string UsernameRegexPattern = @"^[a-zA-Z0-9_\-]+$";
 
     private static readonly Lazy<Regex> UsernameRegex = new(() =>
-        new(UsernameRegexPattern, RegexOptions.Compiled));
+        new(UsernameRegexPattern, RegexOptions.Compiled | RegexOptions.NonBacktracking));
 
     public required string Value { get; init; }
 

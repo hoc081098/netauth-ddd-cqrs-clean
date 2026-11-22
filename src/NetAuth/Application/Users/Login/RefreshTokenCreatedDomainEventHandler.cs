@@ -6,7 +6,7 @@ using NetAuth.Domain.Users.DomainEvents;
 
 namespace NetAuth.Application.Users.Login;
 
-internal sealed class RefreshTokenCreatedDomainEventHandler(
+internal sealed partial class RefreshTokenCreatedDomainEventHandler(
     IServiceScopeFactory scopeFactory,
     IClock clock,
     ILogger<RefreshTokenCreatedDomainEventHandler> logger) : IDomainEventHandler<RefreshTokenCreatedDomainEvent>
@@ -24,10 +24,7 @@ internal sealed class RefreshTokenCreatedDomainEventHandler(
                 clock.UtcNow,
                 cancellationToken);
 
-            logger.LogInformation(
-                "Deleted {ExpiredRefreshTokenRowsDeleted} expired refresh tokens for User ID: {UserId}",
-                rowsDelete,
-                @event.UserId);
+            LogDeletedExpiredRefreshTokens(rowsDelete, @event.UserId);
         }
         catch (OperationCanceledException)
         {
@@ -35,9 +32,13 @@ internal sealed class RefreshTokenCreatedDomainEventHandler(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex,
-                "Error deleting expired refresh tokens for User ID: {UserId}",
-                @event.UserId);
+            LogFailedToDeleteExpiredRefreshTokens(@event.UserId, ex);
         }
     }
+
+    [LoggerMessage(LogLevel.Information, "Deleted {ExpiredRefreshTokenRowsDeleted} expired refresh tokens for User ID: {UserId}")]
+    partial void LogDeletedExpiredRefreshTokens(int expiredRefreshTokenRowsDeleted, Guid userId);
+
+    [LoggerMessage(LogLevel.Error, "Error deleting expired refresh tokens for User ID: {UserId}")]
+    partial void LogFailedToDeleteExpiredRefreshTokens(Guid userId, Exception exception);
 }

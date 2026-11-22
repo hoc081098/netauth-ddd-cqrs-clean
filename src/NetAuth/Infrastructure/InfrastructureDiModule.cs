@@ -168,7 +168,7 @@ public static class InfrastructureDiModule
 
     extension(IServiceCollection services)
     {
-        private IServiceCollection AddOpenTelemetryConfiguration()
+        private void AddOpenTelemetryConfiguration()
         {
             services.AddOpenTelemetry()
                 .ConfigureResource(resource => resource.AddService("NetAuth.Api"))
@@ -188,8 +188,6 @@ public static class InfrastructureDiModule
                     // The address specified here will point to a local Jaeger instance.
                     tracing.AddOtlpExporter();
                 });
-
-            return services;
         }
     }
 }
