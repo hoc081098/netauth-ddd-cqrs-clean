@@ -19,7 +19,7 @@ internal sealed partial class RequestLoggingPipelineBehavior<TRequest, TResponse
     {
         var requestName = typeof(TRequest).Name;
 
-        LogProcessing(requestName);
+        LogProcessingRequest(requestName);
         try
         {
             var result = await next(cancellationToken);
@@ -61,7 +61,7 @@ internal sealed partial class RequestLoggingPipelineBehavior<TRequest, TResponse
     }
 
     [LoggerMessage(LogLevel.Information, "[PipelineBehavior] Processing request {RequestName}")]
-    partial void LogProcessing(string requestName);
+    partial void LogProcessingRequest(string requestName);
 
     [LoggerMessage(LogLevel.Information, "[PipelineBehavior] Completed request {RequestName}")]
     partial void LogCompletedRequest(string requestName);
