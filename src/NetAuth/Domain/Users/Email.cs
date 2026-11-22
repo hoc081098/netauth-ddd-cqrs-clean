@@ -47,7 +47,7 @@ public sealed class Email : ValueObject
         @"^[A-Za-z0-9._%+\-]+@(?:[A-Za-z0-9](?:[A-Za-z0-9\-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,}$";
 
     private static readonly Lazy<Regex> EmailRegex = new(() =>
-        new(EmailRegexPattern, RegexOptions.Compiled | RegexOptions.IgnoreCase));
+        new(EmailRegexPattern, RegexOptions.Compiled | RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1)));
 
     public required string Value { get; init; }
 

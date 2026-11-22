@@ -35,7 +35,7 @@ public class TodoItemTests : BaseTest
             Assert.Equal(userId, todoItem.UserId);
             Assert.Equal(title, todoItem.Title.Value);
             Assert.NotNull(todoItem.Description);
-            Assert.Equal(description, todoItem.Description!.Value);
+            Assert.Equal(description, todoItem.Description.Value);
             Assert.Equal(dueDateOnUtc, todoItem.DueDateOnUtc);
             Assert.Equal(labels, todoItem.Labels);
             Assert.False(todoItem.IsCompleted);
