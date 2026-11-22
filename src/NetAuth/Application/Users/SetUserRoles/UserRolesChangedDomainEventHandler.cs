@@ -49,7 +49,7 @@ internal sealed partial class UserRolesChangedDomainEventHandler(
     }
 
     [LoggerMessage(LogLevel.Information, "User {UserId} roles changed from {@OldRoleIds} to {@NewRoleIds}")]
-    partial void LogUsersRolesChanged(Guid userId, HashSet<RoleId> @OldRoleIds, HashSet<RoleId> @NewRoleIds);
+    partial void LogUsersRolesChanged(Guid userId, HashSet<RoleId> oldRoleIds, HashSet<RoleId> newRoleIds);
 
     [LoggerMessage(LogLevel.Information, "Invalidated permissions cache for User ID: {UserId}")]
     partial void LogInvalidatedPermissionsCache(Guid userId);
