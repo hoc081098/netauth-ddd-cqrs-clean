@@ -53,7 +53,7 @@ internal sealed partial class RequestLoggingPipelineBehavior<TRequest, TResponse
         {
             using (LogContext.PushProperty("Error", exception, true))
             {
-                LogCompletedWithError(requestName, exception);
+                LogCompletedRequestWithError(requestName, exception);
             }
 
             throw;
@@ -70,5 +70,5 @@ internal sealed partial class RequestLoggingPipelineBehavior<TRequest, TResponse
     partial void LogCompletedRequestDomainError(string requestName, object domainError);
 
     [LoggerMessage(LogLevel.Error, "[PipelineBehavior] Completed request {RequestName} with error")]
-    partial void LogCompletedWithError(string requestName, Exception exception);
+    partial void LogCompletedRequestWithError(string requestName, Exception exception);
 }
