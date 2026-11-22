@@ -67,7 +67,7 @@ internal sealed partial class RequestLoggingPipelineBehavior<TRequest, TResponse
     partial void LogCompletedRequest(string requestName);
 
     [LoggerMessage(LogLevel.Information, "[PipelineBehavior] Completed request {RequestName} with domain error: {@DomainError}")]
-    partial void LogCompletedRequestDomainError(string requestName, object domainError);
+    partial void LogCompletedRequestDomainError(string requestName, object @domainError);
 
     [LoggerMessage(LogLevel.Error, "[PipelineBehavior] Completed request {RequestName} with error")]
     partial void LogCompletedRequestWithError(string requestName, Exception exception);
