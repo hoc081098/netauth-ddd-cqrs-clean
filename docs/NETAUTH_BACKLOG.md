@@ -4,9 +4,8 @@
 >
 > **Repository:** [hoc081098/netauth-ddd-cqrs-clean](https://github.com/hoc081098/netauth-ddd-cqrs-clean)  
 > **Đường dẫn đề xuất trong repo:** `docs/NETAUTH_BACKLOG.md`  
-> **Đối chiếu GitHub:** 22/11/2026; đọc source trên default branch, tests, CI workflow và CI job log.  
-> **Commit mới nhất trả về từ tìm kiếm:** [`dcb5fe1`](https://github.com/hoc081098/netauth-ddd-cqrs-clean/commit/dcb5fe10de6d6301d5bbe85a6348add4eb017b04) (16/10/2026).  
-> **Giới hạn xác minh:** Chưa chạy build/tests ở runtime. Không thể kết luận các task chưa được làm trên local hoặc nhánh chưa merge.
+> **Đối chiếu GitHub:** 23/11/2026; đọc source trên default branch, tests, CI workflow và CI job log.  
+> **Commit mới nhất:** [`1665b26`](https://github.com/hoc081098/netauth-ddd-cqrs-clean/commit/1665b26) (22/11/2026, Merge PR #61).
 
 ## 0. Nguyên tắc tracking
 
@@ -26,7 +25,7 @@ NetAuth **đã có** nền tảng DDD/CQRS, JWT + Refresh Token Rotation, Role/P
 
 | # | ID | Công việc | Priority | Effort | Dependency | Status | PR / Evidence |
 |---:|---|---|---|---|---|---|---|
-| 1 | [NA-01](#na-01--restore-ci--fix-logging-ca1873) | Restore CI & fix logging CA1873 | **P0** | 1–2h | — | OPEN | — |
+| 1 | [NA-01](#na-01--restore-ci--fix-logging-ca1873) | Restore CI & fix logging CA1873 | **P0** | 1–2h | — | DONE | [PR #61](https://github.com/hoc081098/netauth-ddd-cqrs-clean/pull/61) |
 | 2 | [NA-02](#na-02--http-authentication--authorization-integration-tests) | HTTP AuthN/AuthZ tests + permission revocation | **P1** | 3–4h | NA-01 | OPEN | — |
 | 3 | [NA-03](#na-03--concurrent-refresh-token-rotation) | Concurrent refresh token rotation | **P1** | 2–3h | NA-01 | OPEN | — |
 | 4 | [NA-04](#na-04--outbox-retry-backoff--failure-semantics) | Outbox backoff, retry & failure handling | **P1** | 3–4h | NA-01 | OPEN | — |
@@ -41,8 +40,8 @@ NetAuth **đã có** nền tảng DDD/CQRS, JWT + Refresh Token Rotation, Role/P
 
 ## NA-01 — Restore CI & Fix Logging CA1873
 
-**Priority:** P0 · **Status:** OPEN · **Effort:** 1–2h · **Dependency:** Không có  
-**Tham chiếu:** [build.yml](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/.github/workflows/build.yml) · [Directory.Build.props](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/Directory.Build.props) · [Failed CI run](https://github.com/hoc081098/netauth-ddd-cqrs-clean/actions/runs/38858961738)
+**Priority:** P0 · **Status:** DONE · **Effort:** 1–2h · **Dependency:** Không có  
+**Tham chiếu:** [build.yml](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/.github/workflows/build.yml) · [Directory.Build.props](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/Directory.Build.props) · [Failed CI run](https://github.com/hoc081098/netauth-ddd-cqrs-clean/actions/runs/38858961738) · [PR #61](https://github.com/hoc081098/netauth-ddd-cqrs-clean/pull/61)
 
 ### Mục tiêu
 
@@ -63,11 +62,11 @@ Workflow đang chạy **Restore → Release Build → Tests → Codecov**, dùng
 
 ### Implementation checklist
 
-- [ ] Reproduce **diagnostic hiện tại** với .NET SDK/build configuration tương ứng CI; ghi rõ compiler/analyzer output.
-- [ ] Fix các callsite CA1873. Ưu tiên `[LoggerMessage]` source generation khi hợp lý (Outbox đang có ví dụ), hoặc `ILogger.IsEnabled(...)` để tránh tính argument tốn chi phí khi log level bị tắt. Không suppress hàng loạt.
-- [ ] Review `RequestLoggingPipelineBehavior`: không log password, refresh token, access token, Authorization header hoặc raw request chứa dữ liệu nhạy cảm; ưu tiên allowlist/redaction.
-- [ ] Chạy đúng các lệnh build/test trong pipeline và tạo PR sửa lỗi.
-- [ ] Verify GitHub Actions **Success** trên commit mới, ghi link vào evidence.
+- [x] Reproduce **diagnostic hiện tại** với .NET SDK/build configuration tương ứng CI; ghi rõ compiler/analyzer output.
+- [x] Fix các callsite CA1873. Ưu tiên `[LoggerMessage]` source generation khi hợp lý (Outbox đang có ví dụ), hoặc `ILogger.IsEnabled(...)` để tránh tính argument tốn chi phí khi log level bị tắt. Không suppress hàng loạt.
+- [x] Review `RequestLoggingPipelineBehavior`: không log password, refresh token, access token, Authorization header hoặc raw request chứa dữ liệu nhạy cảm; ưu tiên allowlist/redaction.
+- [x] Chạy đúng các lệnh build/test trong pipeline và tạo PR sửa lỗi.
+- [x] Verify GitHub Actions **Success** trên commit mới, ghi link vào evidence.
 
 ```bash
 dotnet restore
@@ -78,13 +77,13 @@ dotnet test --configuration Release --no-build --verbosity normal \
 
 ### Definition of Done
 
-- [ ] Release build thành công, vẫn giữ analyzer/`TreatWarningsAsErrors`.
-- [ ] Tất cả unit, architecture, integration tests hiện có pass trong CI (bao gồm Testcontainers nếu test yêu cầu Docker).
-- [ ] Logging không làm lộ secret và không tạo expensive work không cần thiết khi tắt log level.
-- [ ] Có PR/commit và link Actions run **Success**.
+- [x] Release build thành công, vẫn giữ analyzer/`TreatWarningsAsErrors`.
+- [x] Tất cả unit, architecture, integration tests hiện có pass trong CI (bao gồm Testcontainers nếu test yêu cầu Docker).
+- [x] Logging không làm lộ secret và không tạo expensive work không cần thiết khi tắt log level.
+- [x] Có PR/commit và link Actions run **Success**.
 
-**Evidence:** `PR: TBD` · `Commit: TBD` · `CI: TBD`  
-**Học được:** MSBuild, Roslyn analyzers, logging performance, source generation, CI reliability.
+**Evidence:** `PR: [#61](https://github.com/hoc081098/netauth-ddd-cqrs-clean/pull/61)` · `Commit: [1665b26](https://github.com/hoc081098/netauth-ddd-cqrs-clean/commit/1665b26)` · `CI: [Run 45063107010 (Success)](https://github.com/hoc081098/netauth-ddd-cqrs-clean/actions/runs/45063107010/job/137333201411)`  
+**Học được:** MSBuild, Roslyn analyzers, logging performance, `[LoggerMessage]` source generation, Serilog destructuring với `{@Property}` syntax, `@` prefix trên parameters để an toàn với .NET 10 source generator, CI reliability.
 
 ---
 
@@ -285,7 +284,8 @@ DI đang cấu hình `.WithTracing(...)` với ASP.NET Core, HttpClient, EF Core
 - [RefreshTokenRepository](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/src/NetAuth/Infrastructure/Repositories/RefreshTokenRepository.cs), [IntegrationTestWebAppFactory](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/tests/IntegrationTests/Infrastructure/IntegrationTestWebAppFactory.cs), [UserTests](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/tests/IntegrationTests/Users/UserTests.cs)
 - [InfrastructureDiModule](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/src/NetAuth/Infrastructure/InfrastructureDiModule.cs), [GetRolesEndpoint](https://github.com/hoc081098/netauth-ddd-cqrs-clean/blob/main/src/NetAuth/Web.Api/Endpoints/Users/GetRolesEndpoint.cs)
 
-**CI evidence:** [Failed run 16/10/2026](https://github.com/hoc081098/netauth-ddd-cqrs-clean/actions/runs/38858961738): Restore Success, Build Failure với 8 `CA1873`, Tests/Codecov Skipped. Một CI run mới thành công sẽ thay thế đánh giá lịch sử này.
+**CI evidence:** [Failed run 16/10/2026](https://github.com/hoc081098/netauth-ddd-cqrs-clean/actions/runs/38858961738): Restore Success, Build Failure với 8 `CA1873`, Tests/Codecov Skipped.  
+**CI evidence (mới):** PR #61 đã merge (commit `1665b26`); CI run thành công trên main: [Run 45063107010](https://github.com/hoc081098/netauth-ddd-cqrs-clean/actions/runs/45063107010/job/137333201411).
 
 **Điều quan trọng khi cập nhật tracker:**
 
@@ -301,7 +301,7 @@ Chỉ ghi **khi có tiến triển thực tế**. Không tạo thêm task mỗi 
 | Date | Task | Work done / Finding | Evidence | Next |
 |---|---|---|---|---|
 | 2026-11-22 | Backlog setup | Gom 6 task và đối chiếu source/CI; chưa đánh dấu task nào DONE | Tài liệu này | NA-01 |
-| YYYY-MM-DD | NA-__ | ... | PR / test / CI URL | ... |
+| 2026-11-22 | NA-01 | Fix CA1873 logging warnings: migrate 4 files to `[LoggerMessage]` source generation. Bump SonarQube to 10.19.0. Learn about `@` prefix for Serilog destructuring safety with .NET 10 source generator. Merged PR #61. CI passed. | [PR #61](https://github.com/hoc081098/netauth-ddd-cqrs-clean/pull/61), [commit 1665b26](https://github.com/hoc081098/netauth-ddd-cqrs-clean/commit/1665b26), [CI Run 45063107010](https://github.com/hoc081098/netauth-ddd-cqrs-clean/actions/runs/45063107010/job/137333201411) | NA-02 |
 
 **Mẫu cập nhật khi hoàn thành một task:**
 
