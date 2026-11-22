@@ -6,7 +6,7 @@ using Unit = MediatR.Unit;
 
 namespace NetAuth.Application.Core.Behaviors;
 
-internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
+internal sealed partial class RequestLoggingPipelineBehavior<TRequest, TResponse>(
     ILogger<RequestLoggingPipelineBehavior<TRequest, TResponse>> logger)
     : IPipelineBehavior<TRequest, TResponse>
     where TRequest : notnull
@@ -19,7 +19,7 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
     {
         var requestName = typeof(TRequest).Name;
 
-        logger.LogInformation("[PipelineBehavior] Processing request {RequestName}", requestName);
+        LogProcessing(requestName);
         try
         {
             var result = await next(cancellationToken);
@@ -28,22 +28,19 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
                 either.MatchUntyped(
                     Right: _ =>
                     {
-                        logger.LogInformation("[PipelineBehavior] Completed request {RequestName}", requestName);
+                        LogCompletedRequest(requestName);
                         return Unit.Value;
                     },
                     Left: error =>
                     {
-                        logger.LogInformation(
-                            "[PipelineBehavior] Completed request {RequestName} with domain error: {@DomainError}",
-                            requestName,
-                            error);
+                        LogCompletedRequestDomainError(requestName, error);
                         return Unit.Value;
                     }
                 );
             }
             else
             {
-                logger.LogInformation("[PipelineBehavior] Completed request {RequestName}", requestName);
+                LogCompletedRequest(requestName);
             }
 
             return result;
@@ -56,11 +53,22 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(
         {
             using (LogContext.PushProperty("Error", exception, true))
             {
-                logger.LogError(exception, "[PipelineBehavior] Completed request {RequestName} with error",
-                    requestName);
+                LogCompletedWithError(requestName, exception);
             }
 
             throw;
         }
     }
+
+    [LoggerMessage(LogLevel.Information, "[PipelineBehavior] Processing request {RequestName}")]
+    partial void LogProcessing(string requestName);
+
+    [LoggerMessage(LogLevel.Information, "[PipelineBehavior] Completed request {RequestName}")]
+    partial void LogCompletedRequest(string requestName);
+
+    [LoggerMessage(LogLevel.Information, "[PipelineBehavior] Completed request {RequestName} with domain error: {@DomainError}")]
+    partial void LogCompletedRequestDomainError(string requestName, object domainError);
+
+    [LoggerMessage(LogLevel.Error, "[PipelineBehavior] Completed request {RequestName} with error")]
+    partial void LogCompletedWithError(string requestName, Exception exception);
 }
