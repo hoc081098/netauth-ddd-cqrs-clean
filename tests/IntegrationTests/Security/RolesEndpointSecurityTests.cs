@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text;
 using LanguageExt.UnitTesting;
@@ -18,6 +19,8 @@ using NetAuth.Infrastructure.Authentication;
 using NetAuth.Infrastructure.Outbox;
 using NetAuth.IntegrationTests.Infrastructure;
 using NetAuth.TestUtils;
+using NetAuth.Web.Api.Contracts;
+using NetAuth.Web.Api.Endpoints.Users;
 using MediatR;
 using System.Text.Json;
 
