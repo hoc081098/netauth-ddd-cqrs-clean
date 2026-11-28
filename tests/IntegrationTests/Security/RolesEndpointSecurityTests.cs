@@ -98,6 +98,15 @@ public class RolesEndpointSecurityTests(HttpTestWebAppFactory factory) : IClassF
         using var response = await GetRolesAsync(accessToken);
         
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var body = await response.Content.ReadFromJsonAsync<GetRolesEndpoint.Response>();
+        Assert.NotNull(body);
+        Assert.Equivalent(
+            new[]
+            {
+                new RoleResponse(Role.Administrator.Id.Value, Role.Administrator.Name),
+                new RoleResponse(Role.Member.Id.Value, Role.Member.Name)
+            },
+            body.Roles);
     }
 
     [Fact]
