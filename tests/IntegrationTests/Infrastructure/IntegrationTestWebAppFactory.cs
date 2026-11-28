@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,7 +32,7 @@ namespace NetAuth.IntegrationTests.Infrastructure;
 // - Start and stop the container instance with IAsyncLifetime
 [SuppressMessage("Usage", "CA2213:Disposable fields should be disposed")]
 [UsedImplicitly]
-public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
+public class IntegrationTestWebAppFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("postgres:18-alpine")
         .WithDatabase("NetAuth")
@@ -53,9 +54,28 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
         Console.WriteLine($"IntegrationTestWebAppFactory@{RuntimeHelpers.GetHashCode(this)}: init");
     }
 
+    /// <summary>
+    /// When <c>true</c>, the production <see cref="IUserContext"/> (JWT-based) is kept,
+    /// so tests exercise the real HTTP security pipeline.
+    /// </summary>
+    protected virtual bool UseRealUserContext => false;
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         base.ConfigureWebHost(builder);
+
+        // The secret is normally supplied by user-secrets / environment, which CI doesn't have.
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            var current = configuration.Build()["Jwt:SecretKey"];
+            if (string.IsNullOrWhiteSpace(current))
+            {
+                configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                {
+                    ["Jwt:SecretKey"] = "integration-tests-only-secret-key-0123456789abcdef"
+                });
+            }
+        });
 
         // ConfigureTestServices came from Microsoft.AspNetCore.TestHost
         builder.ConfigureTestServices(services =>
@@ -75,11 +95,14 @@ public sealed class IntegrationTestWebAppFactory : WebApplicationFactory<Program
             services.Configure<RedisCacheOptions>(redisCacheOptions =>
                 redisCacheOptions.Configuration = _redisContainer.GetConnectionString());
 
-            // Replace real UserContext with TestUserContext for testing
-            services.RemoveAll<IUserContext>();
-            services.AddScoped<TestUserContext>();
-            // Bind IUserContext to the TestUserContext instance
-            services.AddScoped<IUserContext>(sp => sp.GetRequiredService<TestUserContext>());
+            if (!UseRealUserContext)
+            {
+                // Replace real UserContext with TestUserContext for testing
+                services.RemoveAll<IUserContext>();
+                services.AddScoped<TestUserContext>();
+                // Bind IUserContext to the TestUserContext instance
+                services.AddScoped<IUserContext>(sp => sp.GetRequiredService<TestUserContext>());
+            }
         });
     }
 
