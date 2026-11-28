@@ -96,7 +96,7 @@ public class RolesEndpointSecurityTests(HttpTestWebAppFactory factory) : IClassF
         await SetRolesAndWaitForOutboxAsync(userId, Role.Administrator, Role.Member);
 
         using var response = await GetRolesAsync(accessToken);
-        
+
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var body = await response.Content.ReadFromJsonAsync<GetRolesEndpoint.Response>();
         Assert.NotNull(body);
@@ -176,7 +176,7 @@ public class RolesEndpointSecurityTests(HttpTestWebAppFactory factory) : IClassF
             .RightValueOrThrow().UserId;
         var login = (await sender.Send(new LoginCommand(email, Password, Guid.NewGuid())))
             .RightValueOrThrow();
-        
+
         return (userId, login.AccessToken);
     }
 
@@ -211,13 +211,29 @@ public class RolesEndpointSecurityTests(HttpTestWebAppFactory factory) : IClassF
             await scope.ServiceProvider.GetRequiredService<OutboxProcessor>().Execute(cts.Token);
 
             var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var pending = await dbContext.OutboxMessages
+            var matchedOutboxMessages = await dbContext.OutboxMessages
                 .AsNoTracking()
-                .AnyAsync(m => m.Type == eventType &&
-                               EF.Functions.JsonContains(m.Content, userIdJson) &&
-                               m.ProcessedOnUtc == null,
-                    cts.Token);
-            if (!pending) return;
+                .Where(m => m.Type == eventType &&
+                            EF.Functions.JsonContains(m.Content, userIdJson))
+                .OrderByDescending(m => m.OccurredOnUtc)
+                .ToArrayAsync(cts.Token);
+
+            var hasProcessedMessage = matchedOutboxMessages.Any(m =>
+                m is { ProcessedOnUtc: not null, Error: null });
+            if (hasProcessedMessage)
+            {
+                return;
+            }
+
+            // A failed publish keeps ProcessedOnUtc null (for retry) but records the error and bumps AttemptCount;
+            // only deserialization failures set ProcessedOnUtc together with Error.
+            var hasFailedMessage = matchedOutboxMessages.Any(m => m.Error is not null);
+            if (hasFailedMessage)
+            {
+                Assert.Fail(
+                    $"Outbox message for {eventType} (UserId: {userId}) failed to process. " +
+                    $"Check the logs for details.");
+            }
 
             await Task.Delay(100, cts.Token);
         }
